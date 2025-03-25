@@ -12,7 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.android.purrytify.R // Import your resources
+import com.android.purrytify.R
 
 data class BottomNavItem(
     val route: String,
@@ -37,7 +37,7 @@ fun BottomNavbar(navController: NavController) {
     NavigationBar(
         modifier = Modifier
             .fillMaxWidth(),
-        containerColor = Color.Black
+        containerColor = Color(0xFF121212)
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
