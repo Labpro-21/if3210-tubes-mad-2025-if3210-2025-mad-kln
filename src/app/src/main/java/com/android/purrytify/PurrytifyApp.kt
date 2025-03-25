@@ -32,10 +32,10 @@ fun PurrytifyApp() {
             startDestination = "login",
             modifier = androidx.compose.ui.Modifier.padding(paddingValues)
         ) {
+            composable("login") { LoginScreen() }
             composable("home") { HomeScreen() }
             composable("library") { LibraryScreen() }
             composable("profile") { ProfileScreen() }
-            composable("login") { LoginScreen() }
         }
     }
 }
