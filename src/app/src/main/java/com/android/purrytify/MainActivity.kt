@@ -29,9 +29,9 @@ class MainActivity : ComponentActivity() {
             database.clearAllTables()
 
             val mockSongs = listOf(
-                Song(0,"Song 1", "Author 1", "image_uri_1", "song_uri_1"),
-                Song(1, "Song 2", "Author 2", "image_uri_2", "song_uri_2"),
-                Song(2, "Song 3", "Author 3", "image_uri_3", "song_uri_3")
+                Song(title = "Song 1", artist = "Artist 1", imageUri = "image_uri_1", songUri = "song_uri_1"),
+                Song(title = "Song 2", artist = "Artist 2", imageUri = "image_uri_2", songUri = "song_uri_2"),
+                Song(title = "Song 3", artist = "Artist 3", imageUri = "image_uri_3", songUri = "song_uri_3"),
             )
 
             songRepository.insertSongs(mockSongs)
