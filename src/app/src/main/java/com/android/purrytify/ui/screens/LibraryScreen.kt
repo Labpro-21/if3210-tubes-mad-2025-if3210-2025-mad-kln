@@ -3,57 +3,50 @@ package com.android.purrytify.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import com.android.purrytify.data.local.entities.Song
+import com.android.purrytify.data.local.repositories.SongRepository
 import com.android.purrytify.ui.components.SongCard
+import com.android.purrytify.ui.components.SongCardFake
+import com.android.purrytify.ui.components.SongCardFakeProps
 import com.android.purrytify.ui.components.SongCardProps
+import kotlinx.coroutines.launch
+import android.net.Uri
 
 @Composable
-fun LibraryScreen() {
+fun LibraryScreen(songRepository: SongRepository) {
     var isAllSelected = remember { mutableStateOf<Boolean>(true) }
     var isLikedSelected = remember { mutableStateOf<Boolean>(false) }
 
     val likedSongs = listOf(
-        SongCardProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
-        SongCardProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),
-        SongCardProps("flower rhapsody", "Sakura Miko", "#808080"),
-        SongCardProps("Break It Down", "Vestia Zeta", "#808080"),
-        SongCardProps("Weight of the World", "Hakos Baelz", "#808080")
+        SongCardFakeProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
+        SongCardFakeProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),
+        SongCardFakeProps("flower rhapsody", "Sakura Miko", "#808080"),
+        SongCardFakeProps("Break It Down", "Vestia Zeta", "#808080"),
+        SongCardFakeProps("Weight of the World", "Hakos Baelz", "#808080")
     )
 
-    val allSongs = listOf(
-        SongCardProps("Haru", "Yorushika", "#808080"),
-        SongCardProps("Kaisou Ressha", "Minato Aqua", "#808080"),
-        SongCardProps("Hatsukoi", "Inui Toko", "#808080"),
-        SongCardProps("melting", "Nakiri Ayame", "#808080"),
-        SongCardProps("Catch the Moment", "LiSA", "#808080"),
-        SongCardProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
-        SongCardProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),
-        SongCardProps("flower rhapsody", "Sakura Miko", "#808080"),
-        SongCardProps("Break It Down", "Vestia Zeta", "#808080"),
-        SongCardProps("Weight of the World", "Hakos Baelz", "#808080"),
-        SongCardProps("Haru", "Yorushika", "#808080"),
-        SongCardProps("Kaisou Ressha", "Minato Aqua", "#808080"),
-        SongCardProps("Hatsukoi", "Inui Toko", "#808080"),
-        SongCardProps("melting", "Nakiri Ayame", "#808080"),
-        SongCardProps("Catch the Moment", "LiSA", "#808080"),
-        SongCardProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
-        SongCardProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),
-        SongCardProps("flower rhapsody", "Sakura Miko", "#808080"),
-        SongCardProps("Break It Down", "Vestia Zeta", "#808080"),
-        SongCardProps("Weight of the World", "Hakos Baelz", "#808080")
-    )
+    var allSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
+
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            allSongs.value = (songRepository.getAllSongs() ?: emptyList())
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFF121212),
@@ -104,8 +97,18 @@ fun LibraryScreen() {
                     .background(Color(0xFF121212))
                     .padding(paddingValues)
             ) {
-                items(if (isAllSelected.value) allSongs else likedSongs) { song ->
-                    SongCard(type = "small", song = song)
+                if (isAllSelected.value) {
+                    items(allSongs.value) { song ->
+                        SongCard(type = "small", song = SongCardProps(
+                            title = song.title,
+                            artist = song.artist,
+                            imageUri = Uri.parse(song.imageUri)
+                        ))
+                    }
+                } else {
+                    items(likedSongs) { song ->
+                        SongCardFake(type = "small", song = song)
+                    }
                 }
             }
         }

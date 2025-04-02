@@ -20,11 +20,15 @@ class SongRepository(private val songDao: SongDao) {
 
     fun insertSongs(songs: List<Song>) {
         CoroutineScope(Dispatchers.IO).launch {
-            songDao.deleteAllSongs()
-
             for (song in songs) {
                 insertSong(song)
             }
+        }
+    }
+
+    fun deleteAllSongs() {
+        CoroutineScope(Dispatchers.IO).launch {
+            songDao.deleteAllSongs()
         }
     }
 

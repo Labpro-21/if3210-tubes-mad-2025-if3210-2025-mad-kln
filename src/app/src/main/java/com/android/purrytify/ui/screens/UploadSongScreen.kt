@@ -95,7 +95,7 @@ fun UploadSongScreen(songRepository: SongRepository) {
                                 title = title.value,
                                 artist = artist.value,
                                 imageUri = photoUri.value.toString(),
-                                songUri = audioUri.value.toString()
+                                audioUri = audioUri.value.toString()
                             )
                             CoroutineScope(Dispatchers.IO).launch {
                                 songRepository.insertSong(newSong)

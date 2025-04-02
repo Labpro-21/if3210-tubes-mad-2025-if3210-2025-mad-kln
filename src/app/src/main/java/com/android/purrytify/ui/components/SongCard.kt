@@ -1,5 +1,6 @@
 package com.android.purrytify.ui.components
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +19,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.layout.ContentScale
 
 data class SongCardProps(
     val title: String,
     val artist: String,
-    val image: String
+    val imageUri: Uri,
 )
 
 @Composable
@@ -42,11 +47,13 @@ fun SmallSongCard(song: SongCardProps) {
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
+        Image(
+            painter = rememberAsyncImagePainter(song.imageUri),
+            contentDescription = null,
             modifier = Modifier
                 .size(50.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(Color(android.graphics.Color.parseColor(song.image)))
+                .clip(RoundedCornerShape(6.dp)),
+            contentScale = ContentScale.Crop
         )
         Column(
             modifier = Modifier.padding(start = 12.dp)
@@ -71,11 +78,13 @@ fun LargeSongCard(song: SongCardProps) {
         modifier = Modifier.width(120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
+        Image(
+            painter = rememberAsyncImagePainter(song.imageUri),
+            contentDescription = null,
             modifier = Modifier
                 .size(100.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(Color(android.graphics.Color.parseColor(song.image)))
+                .clip(RoundedCornerShape(6.dp)),
+            contentScale = ContentScale.Crop
         )
         Text(
             text = song.title,

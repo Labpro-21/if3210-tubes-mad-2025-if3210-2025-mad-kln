@@ -36,7 +36,7 @@ fun PurrytifyApp(songRepository: SongRepository) {
         ) {
             composable("login") { LoginScreen() }
             composable("home") { HomeScreen() }
-            composable("library") { LibraryScreen() }
+            composable("library") { LibraryScreen(songRepository) }
             composable("profile") { ProfileScreen() }
             composable("upload_song") { UploadSongScreen(songRepository) } 
         }
