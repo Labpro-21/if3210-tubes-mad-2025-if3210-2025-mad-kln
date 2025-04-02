@@ -22,19 +22,19 @@ data class Song(val title: String, val artist: String, val image: String)
 @Composable
 fun HomeScreen() {
     val newSongs = listOf(
-        Song("Caramel Pain", "Hoshimachi Suisei", "#3c49ed"),
-        Song("Kirei Goto", "Hoshimachi Suisei", "#3642d9"),
-        Song("flower rhapsody", "Sakura Miko", "#fcd1d7"),
+        Song("Caramel Pain", "Hoshimachi Suisei", "#808080"),
+        Song("Kirei Goto", "Hoshimachi Suisei", "#808080"),
+        Song("flower rhapsody", "Sakura Miko", "#808080"),
         Song("Break It Down", "Vestia Zeta", "#808080"),
-        Song("Weight of the World", "Hakos Baelz", "#e43333")
+        Song("Weight of the World", "Hakos Baelz", "#808080")
     )
 
     val recentlyPlayed = listOf(
-        Song("Haru", "Yorushika", "#faee69"),
-        Song("Kaisou Ressha", "Minato Aqua", "#e9b1cd"),
-        Song("Hatsukoi", "Inui Toko", "#7e0d00"),
-        Song("melting", "Nakiri Ayame", "#bb1704"),
-        Song("Catch the Moment", "LiSA", "#b71401")
+        Song("Haru", "Yorushika", "#808080"),
+        Song("Kaisou Ressha", "Minato Aqua", "#808080"),
+        Song("Hatsukoi", "Inui Toko", "#808080"),
+        Song("melting", "Nakiri Ayame", "#808080"),
+        Song("Catch the Moment", "LiSA", "#808080"),
     )
 
     Scaffold(

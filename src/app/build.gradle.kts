@@ -59,9 +59,11 @@ dependencies {
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.31.6-rc")
 
     // Room Database
-    implementation("androidx.room:room-runtime:2.6.0")
-    ksp("androidx.room:room-compiler:2.6.0")
-    implementation("androidx.room:room-ktx:2.6.0")
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
 
     // Lifecycle & ViewModel
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
@@ -89,4 +91,7 @@ dependencies {
     // Debugging
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }

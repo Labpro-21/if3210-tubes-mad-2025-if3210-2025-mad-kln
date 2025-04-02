@@ -13,7 +13,7 @@ fun LibraryScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            Text("Your Library Page")
+            Text("Your Librarys Page")
         }
     }
 }

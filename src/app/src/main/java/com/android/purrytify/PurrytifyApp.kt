@@ -11,11 +11,13 @@ import com.android.purrytify.ui.screens.HomeScreen
 import com.android.purrytify.ui.screens.LibraryScreen
 import com.android.purrytify.ui.screens.LoginScreen
 import com.android.purrytify.ui.screens.ProfileScreen
+import com.android.purrytify.ui.screens.UploadSongScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.LaunchedEffect
+import com.android.purrytify.data.local.repositories.SongRepository
 
 @Composable
-fun PurrytifyApp() {
+fun PurrytifyApp(songRepository: SongRepository) {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
 
@@ -36,6 +38,7 @@ fun PurrytifyApp() {
             composable("home") { HomeScreen() }
             composable("library") { LibraryScreen() }
             composable("profile") { ProfileScreen() }
+            composable("upload_song") { UploadSongScreen(songRepository) } 
         }
     }
 }
