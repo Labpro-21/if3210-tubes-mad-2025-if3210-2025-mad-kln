@@ -30,7 +30,7 @@ object SongInitializer {
                 context = context
             ),
             createSong(
-                title = "Shiney Smiley Story",
+                title = "Shiny Smily Story",
                 artist = "Hololive",
                 drawableResId = R.drawable.photo_sss,
                 audioResId = R.raw.audio_sss,
