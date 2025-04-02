@@ -11,7 +11,6 @@ import com.android.purrytify.ui.screens.HomeScreen
 import com.android.purrytify.ui.screens.LibraryScreen
 import com.android.purrytify.ui.screens.LoginScreen
 import com.android.purrytify.ui.screens.ProfileScreen
-import com.android.purrytify.ui.screens.UploadSongScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.LaunchedEffect
 import com.android.purrytify.data.local.repositories.SongRepository
@@ -38,7 +37,6 @@ fun PurrytifyApp(songRepository: SongRepository) {
             composable("home") { HomeScreen() }
             composable("library") { LibraryScreen(songRepository) }
             composable("profile") { ProfileScreen() }
-            composable("upload_song") { UploadSongScreen(songRepository) } 
         }
     }
 }

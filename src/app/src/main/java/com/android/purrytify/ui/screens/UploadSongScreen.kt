@@ -41,78 +41,89 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UploadSongScreen(songRepository: SongRepository) {
+fun UploadSongModal(
+    isVisible: Boolean,
+    onDismiss: (refresh: Boolean) -> Unit,
+    songRepository: SongRepository
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
+
     val title = remember { mutableStateOf("") }
     val artist = remember { mutableStateOf("") }
     val photoUri = remember { mutableStateOf<Uri?>(null) }
     val audioUri = remember { mutableStateOf<Uri?>(null) }
 
-    Scaffold(
-        containerColor = Color(0xFF121212),
-        contentWindowInsets = WindowInsets(0.dp)
-    ) { paddingValues ->
+    if (isVisible) {
+        ModalBottomSheet(
+            onDismissRequest = { onDismiss(false) },
+            sheetState = sheetState,
+            dragHandle = null,
+            containerColor = Color(0xFF212121)
+        ) {
+            CustomHandle()
+            UploadSongContent(
+                title = title,
+                artist = artist,
+                photoUri = photoUri,
+                audioUri = audioUri,
+                onCancel = {
+                    title.value = ""
+                    artist.value = ""
+                    photoUri.value = null
+                    audioUri.value = null
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        onDismiss(false)
+                    }
+                },
+                onSave = {
+                    if (title.value.isNotEmpty() && artist.value.isNotEmpty() && photoUri.value != null && audioUri.value != null) {
+                        val newSong = Song(
+                            title = title.value,
+                            artist = artist.value,
+                            imageUri = photoUri.value.toString(),
+                            audioUri = audioUri.value.toString()
+                        )
+                        CoroutineScope(Dispatchers.IO).launch {
+                            songRepository.insertSong(newSong)
+                            CoroutineScope(Dispatchers.Main).launch {
+                                title.value = ""
+                                artist.value = ""
+                                photoUri.value = null
+                                audioUri.value = null
+                            }
+                        }
+                        coroutineScope.launch {
+                            sheetState.hide()
+                            onDismiss(true)
+                        }
+                        Log.d("UploadSongModal", "Song saved: $newSong")
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun CustomHandle(){
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 24.dp)
+            .background(Color(0xFF212121)),
+        contentAlignment = Alignment.Center
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black),
-            ) {
-                Text(
-                    text = "TODO:",
-                    color = Color.White,
-                )
-                Text(
-                    text = "1. Ubah title dan artist otomatis dari metadata file",
-                    color = Color.White,
-                )
-                Text(
-                    text = "2. Buat photo default jika tidak ada photo",
-                    color = Color.White,
-                )
-                Text(
-                    text = "3. Buat komponen jadi sebuah pop up",
-                    color = Color.White,
-                )
-                UploadSongContent(
-                    title = title,
-                    artist = artist,
-                    photoUri = photoUri,
-                    audioUri = audioUri,
-                    onCancel = {
-                        title.value = ""
-                        artist.value = ""
-                        photoUri.value = null
-                        audioUri.value = null
-                    },
-                    onSave = {
-                        if (title.value.isNotEmpty() && artist.value.isNotEmpty() && photoUri.value != null && audioUri.value != null) {
-                            val newSong = Song(
-                                title = title.value,
-                                artist = artist.value,
-                                imageUri = photoUri.value.toString(),
-                                audioUri = audioUri.value.toString()
-                            )
-                            CoroutineScope(Dispatchers.IO).launch {
-                                songRepository.insertSong(newSong)
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    title.value = ""
-                                    artist.value = ""
-                                    photoUri.value = null
-                                    audioUri.value = null
-                                }
-                            }
-
-                            Log.d("UploadSongScreen", "Song saved: $newSong")
-                        }
-                    }
-                )
-            }
-        }
+                .width(50.dp)
+                .height(5.dp)
+                .background(Color.Gray, shape = RoundedCornerShape(50))
+        )
     }
 }
 
@@ -127,17 +138,26 @@ fun UploadSongContent(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Yellow)
+            .padding(0.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .background(Color(0xFF212121), shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .padding(16.dp)
+                .background(Color(0xFF212121))
+                .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 0.dp)
         ) {
-            UploadHeader()
+            Text(
+                text = "Upload Song",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
             Spacer(modifier = Modifier.height(16.dp))
             UploadMediaRow(photoUri, audioUri)
             Spacer(modifier = Modifier.height(16.dp))
@@ -145,24 +165,8 @@ fun UploadSongContent(
             Spacer(modifier = Modifier.height(16.dp))
             InputField(artist.value, { artist.value = it }, "Artist")
             UploadButtons(onCancel, onSave)
+            Spacer(modifier = Modifier.height(16.dp))
         }
-    }
-}
-
-@Composable
-fun UploadHeader() {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.padding(top = 2.dp).fillMaxWidth()) {
-            Box(
-                modifier = Modifier.width(60.dp).height(6.dp)
-                    .clip(RoundedCornerShape(8.dp)).background(Color.DarkGray)
-                    .align(Alignment.Center)
-            )
-        }
-        Text(
-            text = "Upload Song", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp)
-        )
     }
 }
 

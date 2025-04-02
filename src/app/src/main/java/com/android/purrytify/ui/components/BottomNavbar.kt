@@ -30,7 +30,6 @@ fun BottomNavbar(navController: NavController) {
         BottomNavItem("home", "Home", R.drawable.ic_home_active, R.drawable.ic_home_inactive, Color.White, Color.Gray),
         BottomNavItem("library", "Your Library", R.drawable.ic_library_active, R.drawable.ic_library_inactive, Color.White, Color.Gray),
         BottomNavItem("profile", "Profile", R.drawable.ic_profile_active, R.drawable.ic_profile_inactive, Color.White, Color.Gray),
-        BottomNavItem("upload_song", "Upload", R.drawable.ic_home_active, R.drawable.ic_home_inactive, Color.White, Color.Gray),
     )
 
     val navBackStackEntry = navController.currentBackStackEntryAsState()

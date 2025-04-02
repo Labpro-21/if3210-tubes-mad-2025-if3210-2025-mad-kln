@@ -25,11 +25,13 @@ import com.android.purrytify.ui.components.SongCardFakeProps
 import com.android.purrytify.ui.components.SongCardProps
 import kotlinx.coroutines.launch
 import android.net.Uri
+import android.util.Log
 
 @Composable
 fun LibraryScreen(songRepository: SongRepository) {
-    var isAllSelected = remember { mutableStateOf<Boolean>(true) }
-    var isLikedSelected = remember { mutableStateOf<Boolean>(false) }
+    var isAllSelected = remember { mutableStateOf(true) }
+    var isLikedSelected = remember { mutableStateOf(false) }
+    var isModalVisible = remember { mutableStateOf(false) }
 
     val likedSongs = listOf(
         SongCardFakeProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
@@ -42,21 +44,27 @@ fun LibraryScreen(songRepository: SongRepository) {
     var allSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
 
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
+
+    fun fetchSongs() {
         coroutineScope.launch {
-            allSongs.value = (songRepository.getAllSongs() ?: emptyList())
+            allSongs.value = songRepository.getAllSongs() ?: emptyList()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        fetchSongs()
     }
 
     Scaffold(
         containerColor = Color(0xFF121212),
-        contentWindowInsets = WindowInsets(0.dp)
+        contentWindowInsets = WindowInsets(0.dp),
     ) { paddingValues ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
-
-            PageHeader()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            PageHeader(onClick = { isModalVisible.value = true })
 
             Row(
                 modifier = Modifier
@@ -99,11 +107,14 @@ fun LibraryScreen(songRepository: SongRepository) {
             ) {
                 if (isAllSelected.value) {
                     items(allSongs.value) { song ->
-                        SongCard(type = "small", song = SongCardProps(
-                            title = song.title,
-                            artist = song.artist,
-                            imageUri = Uri.parse(song.imageUri)
-                        ))
+                        SongCard(
+                            type = "small",
+                            song = SongCardProps(
+                                title = song.title,
+                                artist = song.artist,
+                                imageUri = Uri.parse(song.imageUri)
+                            )
+                        )
                     }
                 } else {
                     items(likedSongs) { song ->
@@ -113,10 +124,26 @@ fun LibraryScreen(songRepository: SongRepository) {
             }
         }
     }
+
+    UploadSongModal(
+        isVisible = isModalVisible.value,
+        onDismiss = { refresh ->
+            isModalVisible.value = false
+            if (refresh) {
+                Log.d("LibraryScreen", "Modal closed: Refreshing songs")
+                fetchSongs()
+            } else {
+                Log.d("LibraryScreen", "Modal closed: Not refreshing songs")
+            }
+        },
+        songRepository = songRepository
+    )
 }
 
+
+
 @Composable
-fun PageHeader() {
+fun PageHeader(onClick: (() -> Unit)?) {
     Row (modifier = Modifier
         .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -130,7 +157,7 @@ fun PageHeader() {
                 .padding(start = 16.dp, top = 40.dp, bottom = 8.dp)
         )
         Button(
-            onClick = {  },
+            onClick = { onClick?.invoke() },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             modifier = Modifier
                 .padding(0.dp),
