@@ -14,6 +14,7 @@ import com.android.purrytify.ui.screens.ProfileScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.LaunchedEffect
 import com.android.purrytify.data.local.repositories.SongRepository
+import com.android.purrytify.ui.screens.NowPlayingScreen
 
 @Composable
 fun PurrytifyApp(songRepository: SongRepository) {
@@ -36,7 +37,7 @@ fun PurrytifyApp(songRepository: SongRepository) {
             composable("login") { LoginScreen() }
             composable("home") { HomeScreen() }
             composable("library") { LibraryScreen(songRepository) }
-            composable("profile") { ProfileScreen() }
+            composable("profile") { NowPlayingScreen {navController.popBackStack()} }
         }
     }
 }

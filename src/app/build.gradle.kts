@@ -57,6 +57,7 @@ dependencies {
 
     // Accompanist (for system UI controller)
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.31.6-rc")
+    implementation(libs.androidx.palette.ktx)
 
     // Room Database
     val room_version = "2.6.1"
