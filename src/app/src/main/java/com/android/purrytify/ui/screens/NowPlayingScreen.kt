@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.palette.graphics.Palette
 import com.android.purrytify.R
+import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.ui.components.SongDetailButton
 import kotlinx.coroutines.delay
 
@@ -157,7 +158,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     modifier = Modifier.size(28.dp)
                 )
             }
-            SongDetailButton()
+            SongDetailButton(song = Song(id=0, songName, "Artist Name", "", ""))
         }
 
         Spacer(modifier = Modifier.height(32.dp))

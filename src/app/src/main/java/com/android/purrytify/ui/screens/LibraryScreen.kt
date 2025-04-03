@@ -26,6 +26,7 @@ import com.android.purrytify.ui.components.SongCardProps
 import kotlinx.coroutines.launch
 import android.net.Uri
 import android.util.Log
+import com.android.purrytify.ui.modal.SongUploadModal
 
 @Composable
 fun LibraryScreen(songRepository: SongRepository) {
@@ -125,7 +126,7 @@ fun LibraryScreen(songRepository: SongRepository) {
         }
     }
 
-    UploadSongModal(
+    SongUploadModal(
         isVisible = isModalVisible.value,
         onDismiss = { refresh ->
             isModalVisible.value = false

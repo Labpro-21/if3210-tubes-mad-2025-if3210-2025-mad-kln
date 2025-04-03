@@ -1,4 +1,4 @@
-package com.android.purrytify.ui.screens
+package com.android.purrytify.ui.modal
 
 import android.net.Uri
 import android.util.Log
@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun UploadSongModal(
+fun SongUploadModal(
     isVisible: Boolean,
     onDismiss: (refresh: Boolean) -> Unit,
     songRepository: SongRepository
