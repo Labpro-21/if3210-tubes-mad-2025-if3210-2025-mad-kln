@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.palette.graphics.Palette
 import com.android.purrytify.R
+import com.android.purrytify.ui.components.SongDetailButton
 import kotlinx.coroutines.delay
 
 @Composable
@@ -67,10 +68,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             setOnCompletionListener {
                 nextSong()
             }
-            start()
+//            start()
         }
         currentIndex = index
-        isPlaying = true
+//        isPlaying = true
     }
 
     nextSong = {
@@ -156,15 +157,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     modifier = Modifier.size(28.dp)
                 )
             }
-
-            IconButton(onClick = { /* TODO: Edit Song */ }) { // Edit Button
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_more),
-                    contentDescription = "More",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            SongDetailButton()
         }
 
         Spacer(modifier = Modifier.height(32.dp))
