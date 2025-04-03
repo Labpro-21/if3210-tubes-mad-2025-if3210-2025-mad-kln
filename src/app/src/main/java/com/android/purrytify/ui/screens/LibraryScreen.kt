@@ -140,8 +140,6 @@ fun LibraryScreen(songRepository: SongRepository) {
     )
 }
 
-
-
 @Composable
 fun PageHeader(onClick: (() -> Unit)?) {
     Row (modifier = Modifier
