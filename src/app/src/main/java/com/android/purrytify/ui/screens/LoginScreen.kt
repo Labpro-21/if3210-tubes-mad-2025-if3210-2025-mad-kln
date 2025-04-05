@@ -1,5 +1,6 @@
 package com.android.purrytify.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,14 +21,25 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.android.purrytify.R
+import com.android.purrytify.datastore.TokenManager
+import com.android.purrytify.network.LoginRequest
+import com.android.purrytify.network.RetrofitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(context: Context ,navController: NavController) {
+    val scope = rememberCoroutineScope()
+
     var email by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -44,7 +56,7 @@ fun LoginScreen() {
                     .height(250.dp)
             ) {
                 AsyncImage(
-                    model = "",
+                    model = "", // Ganti dengan banner URL jika ada
                     contentDescription = "Top Banner",
                     modifier = Modifier.fillMaxSize()
                 )
@@ -52,14 +64,13 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Logo & Branding
             Image(
-                painter = painterResource(id = R.drawable.ic_logo_3_white), 
+                painter = painterResource(id = R.drawable.ic_logo_3_white),
                 contentDescription = "Logo",
                 modifier = Modifier.size(80.dp)
             )
             Text(
-                text = "Millions of Songs.\nOnly on Purritify.",
+                text = "Millions of Songs.\nOnly on Purrytify.",
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -96,11 +107,9 @@ fun LoginScreen() {
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (passwordVisible)
-                        Icons.Filled.Visibility
-                    else Icons.Filled.VisibilityOff
-
+                        Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Toggle Password Visibility", tint = Color.White)
+                        Icon(imageVector = image, contentDescription = null, tint = Color.White)
                     }
                 },
                 modifier = Modifier
@@ -115,16 +124,43 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Login Button
             Button(
-                onClick = { /* Handle login */ },
+                onClick = {
+                    isLoading = true
+                    errorMessage = null
+                    scope.launch {
+                        try {
+                            val response = RetrofitClient.instance.login(
+                                LoginRequest(email.text, password.text)
+                            )
+                            TokenManager.saveToken(context, response.token)
+
+                            withContext(Dispatchers.Main) {
+                                navController.navigate("home")
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Login failed. Please check your credentials."
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DB954)),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(50.dp)
             ) {
-                Text(text = "Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                } else {
+                    Text(text = "Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                }
+            }
+
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(it, color = Color.Red)
             }
         }
     }
