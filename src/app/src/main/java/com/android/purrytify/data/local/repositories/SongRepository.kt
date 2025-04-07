@@ -86,4 +86,16 @@ class SongRepository(private val songDao: SongDao) {
             songDao.getRecentSongsByUploader(uploaderId, limit)
         }
     }
+
+    suspend fun toggleLikeSong(songId: Int, liked: Boolean) {
+        withContext(Dispatchers.IO) {
+            songDao.toggleLikeSong(songId, liked)
+        }
+    }
+
+    suspend fun isSongLiked(songId: Int): Boolean {
+        return withContext(Dispatchers.IO) {
+            songDao.isSongLiked(songId)
+        }
+    }
 }
