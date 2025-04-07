@@ -1,6 +1,7 @@
 package com.android.purrytify.ui.screens
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,13 +27,14 @@ import coil.compose.AsyncImage
 import com.android.purrytify.R
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.network.LoginRequest
+import com.android.purrytify.network.LoginResponse
 import com.android.purrytify.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun LoginScreen(context: Context ,navController: NavController) {
+fun LoginScreen(context: Context, navController: NavController) {
     val scope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf(TextFieldValue("")) }
@@ -56,7 +58,7 @@ fun LoginScreen(context: Context ,navController: NavController) {
                     .height(250.dp)
             ) {
                 AsyncImage(
-                    model = "", // Ganti dengan banner URL jika ada
+                    model = "",
                     contentDescription = "Top Banner",
                     modifier = Modifier.fillMaxSize()
                 )
@@ -69,6 +71,7 @@ fun LoginScreen(context: Context ,navController: NavController) {
                 contentDescription = "Logo",
                 modifier = Modifier.size(80.dp)
             )
+
             Text(
                 text = "Millions of Songs.\nOnly on Purrytify.",
                 color = Color.White,
@@ -106,10 +109,9 @@ fun LoginScreen(context: Context ,navController: NavController) {
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val image = if (passwordVisible)
-                        Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = null, tint = Color.White)
+                        Icon(imageVector = icon, contentDescription = null, tint = Color.White)
                     }
                 },
                 modifier = Modifier
@@ -124,22 +126,38 @@ fun LoginScreen(context: Context ,navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Login Button
             Button(
                 onClick = {
+                    if (email.text.isBlank() || password.text.isBlank()) {
+                        errorMessage = "Email and password cannot be empty."
+                        return@Button
+                    }
+
                     isLoading = true
                     errorMessage = null
+
                     scope.launch {
+                        Log.d("LOGIN_DEBUG", "Sending request with email: ${email.text}")
                         try {
-                            val response = RetrofitClient.instance.login(
-                                LoginRequest(email.text, password.text)
+                            val response = RetrofitClient.api.login(
+                                LoginRequest(email.text.trim(), password.text)
                             )
-                            TokenManager.saveToken(context, response.token)
+
+                            Log.d("LOGIN_DEBUG", "Login successful: ${response.body()?.accessToken}")
+
+                            response.body()?.let { TokenManager.saveToken(context, it.accessToken) }
 
                             withContext(Dispatchers.Main) {
-                                navController.navigate("home")
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true }
+                                }
                             }
                         } catch (e: Exception) {
-                            errorMessage = "Login failed. Please check your credentials."
+                            Log.e("LOGIN_DEBUG", "Login error: ${e.localizedMessage}", e)
+                            withContext(Dispatchers.Main) {
+                                errorMessage = "Login failed. Please check your credentials or connection."
+                            }
                         } finally {
                             isLoading = false
                         }
@@ -152,9 +170,18 @@ fun LoginScreen(context: Context ,navController: NavController) {
                     .height(50.dp)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
                 } else {
-                    Text(text = "Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text(
+                        text = "Log In",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
                 }
             }
 

@@ -1,12 +1,13 @@
 package com.android.purrytify.network
 
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
 data class LoginRequest(val email: String, val password: String)
-data class LoginResponse(val token: String)
+data class LoginResponse(val accessToken: String, val refreshToken: String)
 
 interface ApiService {
-    @POST("api/login")
-    suspend fun login(@Body request: LoginRequest): LoginResponse
+    @POST("/api/login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 }

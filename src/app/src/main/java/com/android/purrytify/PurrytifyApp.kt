@@ -27,7 +27,7 @@ import com.android.purrytify.ui.screens.NowPlayingScreen
 fun PurrytifyApp(songRepository: SongRepository, context: Context) {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
-    val token by TokenManager.getTokenFlow(context).collectAsState(initial = null)
+    val token by TokenManager.getToken(context).collectAsState(initial = null)
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
@@ -69,7 +69,7 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
 @Composable
 fun CheckAuth(navController: NavController, context: Context) {
     var isAuthenticated by remember { mutableStateOf(false) }
-    val token by TokenManager.getTokenFlow(context).collectAsState(initial = null)
+    val token by TokenManager.getToken(context).collectAsState(initial = null)
 
     LaunchedEffect(token) {
         isAuthenticated = token.isNullOrEmpty()
