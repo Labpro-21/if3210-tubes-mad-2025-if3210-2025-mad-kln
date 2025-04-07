@@ -8,6 +8,7 @@ import com.android.purrytify.data.local.AppDatabase
 import com.android.purrytify.data.local.repositories.*
 import com.android.purrytify.data.local.initializer.*
 import androidx.lifecycle.lifecycleScope
+import com.android.purrytify.data.local.RepositoryProvider
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -19,6 +20,8 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         val songRepository = SongRepository(database.songDao())
         val userRepository = UserRepository(database.userDao())
+
+        RepositoryProvider.init(songRepository, userRepository)
 
         var isReady = false
 

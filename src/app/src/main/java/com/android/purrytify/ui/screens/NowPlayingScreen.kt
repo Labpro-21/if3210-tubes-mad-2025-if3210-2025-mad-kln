@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
+import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
 import extractDominantColor
@@ -135,14 +136,9 @@ fun NowPlayingScreen(
                     )
                 }
 
-                IconButton(onClick = { /* TODO: Like functionality */ }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_heart),
-                        contentDescription = "Like",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                LikeButton(
+                    songId = it.id,
+                )
             }
         }
 
