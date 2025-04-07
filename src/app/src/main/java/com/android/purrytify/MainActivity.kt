@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            PurrytifyApp(songRepository)
+            PurrytifyApp(songRepository, this@MainActivity)
         }
     }
 }
