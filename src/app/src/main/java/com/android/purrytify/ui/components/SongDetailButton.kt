@@ -17,7 +17,7 @@ import com.android.purrytify.ui.modal.EditSongModal
 import com.android.purrytify.ui.modal.SongDetailModal
 
 @Composable
-fun SongDetailButton(song: Song) {
+fun SongDetailButton(song: Song, onDeleteSuccess: () -> Unit) {
     val isDetailModalVisible = remember { mutableStateOf(false) }
     val isEditModalVisible = remember { mutableStateOf(false) }
 
@@ -35,14 +35,15 @@ fun SongDetailButton(song: Song) {
 
     if (isDetailModalVisible.value) {
         SongDetailModal(
+            song = song,
             onEditClick = {
                 isDetailModalVisible.value = false
                 isEditModalVisible.value = true
             },
-            onDeleteClick = {
+            onDismiss = { isDetailModalVisible.value = false },
+            onDeleteSuccess = {
                 isDetailModalVisible.value = false
-            },
-            onDismiss = { isDetailModalVisible.value = false }
+            }
         )
     }
 

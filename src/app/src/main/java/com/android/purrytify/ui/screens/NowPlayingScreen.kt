@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -33,6 +34,7 @@ import com.android.purrytify.R
 import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
+import darkenColor
 import extractDominantColor
 import loadBitmapFromUri
 
@@ -51,7 +53,6 @@ fun NowPlayingScreen(
     var dominantColor by remember { mutableStateOf(Color.Black) }
 
     LaunchedEffect(song?.imageUri) {
-        Log.d("dominantColor", "URI: ${song?.imageUri}")
         song?.imageUri?.let { uri ->
             val bitmap = loadBitmapFromUri(context, uri)
             bitmap?.let {
@@ -60,158 +61,183 @@ fun NowPlayingScreen(
         }
     }
 
+    val darkerColor = darkenColor(dominantColor)
     val gradient = Brush.verticalGradient(
-        colors = listOf(dominantColor, Color.Black)
+        colors = listOf(dominantColor, darkerColor)
     )
 
-    Column(
+    val flagDim = dominantColor.luminance() > 0.5f
+    val scrimColor = if (flagDim) Color.Black.copy(alpha = 0.3f) else Color.Transparent
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(gradient)
-            .padding(horizontal = 16.dp),
     ) {
-        // Close & Song Detail Button
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .matchParentSize()
+                .background(scrimColor)
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
         ) {
-            IconButton(onClick = onClose) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_caret),
-                    contentDescription = "Minimize",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            // Close & Song Detail Button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_caret),
+                        contentDescription = "Minimize",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
 
             song?.let {
-                SongDetailButton(song = it)
+                SongDetailButton(
+                    song = it,
+                    onDeleteSuccess = { })
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        // Album Art
-        song?.imageUri?.let {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(it),
-                    contentDescription = null,
+            // Album Art
+            song?.imageUri?.let {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(it),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(336.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Title, Artist, Like Button
+            song?.let {
+                Row(
                     modifier = Modifier
-                        .size(336.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    contentScale = ContentScale.Crop
-                )
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = it.title,
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = it.artist,
+                            color = Color.LightGray,
+                            fontSize = 16.sp
+                        )
+                    }
+
+                    LikeButton(
+                        type = "heart",
+                        songId = it.id,
+                    )
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-        // Title, Artist, Like Button
-        song?.let {
+            // Progress Bar
+            Slider(
+                value = progress,
+                onValueChange = { viewModel.seekTo(it) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color.White,
+                    inactiveTrackColor = Color.Gray
+                )
+            )
+
+            // Duration
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    formatTime(currentTime),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                Text(
+                    formatTime(totalDuration),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Playback
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = it.title,
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = it.artist,
-                        color = Color.LightGray,
-                        fontSize = 16.sp
+                IconButton(
+                    onClick = { viewModel.playPrevious(context) },
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_previous),
+                        contentDescription = "Previous",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
                     )
                 }
 
-                LikeButton(
-                    type = "heart",
-                    songId = it.id,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Progress Bar
-        Slider(
-            value = progress,
-            onValueChange = { viewModel.seekTo(it) },
-            modifier = Modifier.fillMaxWidth(),
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = Color.White,
-                inactiveTrackColor = Color.Gray
-            )
-        )
-
-        // Duration
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(formatTime(currentTime), color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
-            Text(formatTime(totalDuration), color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Playback
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { viewModel.playPrevious(context) },
-                modifier = Modifier.size(64.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_previous),
-                    contentDescription = "Previous",
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-
-            IconButton(
-                onClick = { viewModel.togglePlayPause() },
-                modifier = Modifier.size(80.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = Color.White,
+                IconButton(
+                    onClick = { viewModel.togglePlayPause() },
                     modifier = Modifier.size(80.dp)
-                )
-            }
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
+                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        tint = Color.White,
+                        modifier = Modifier.size(80.dp)
+                    )
+                }
 
-            IconButton(
-                onClick = { viewModel.playNext(context) },
-                modifier = Modifier.size(64.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_next),
-                    contentDescription = "Next",
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp)
-                )
+                IconButton(
+                    onClick = { viewModel.playNext(context) },
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_next),
+                        contentDescription = "Next",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
         }
     }

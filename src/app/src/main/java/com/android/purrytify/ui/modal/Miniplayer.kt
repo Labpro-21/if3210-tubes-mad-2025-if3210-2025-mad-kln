@@ -1,5 +1,6 @@
 package com.android.purrytify.ui.modal
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -41,6 +42,7 @@ import com.android.purrytify.R
 import com.android.purrytify.ui.components.LikeButton
 import extractDominantColor
 import com.android.purrytify.view_model.PlayerViewModel
+import darkenColor
 import loadBitmapFromUri
 
 @Composable
@@ -52,17 +54,19 @@ fun MiniPlayer(
     val isPlaying by viewModel.isPlaying.collectAsState()
     val progress by viewModel.progress.collectAsState()
 
-    var backgroundColor by remember { mutableStateOf(Color.Black) }
+    var dominantColor by remember { mutableStateOf(Color.Black) }
     val context = LocalContext.current
 
     LaunchedEffect(song?.imageUri) {
         song?.imageUri?.let { uri ->
             val bitmap = loadBitmapFromUri(context, uri)
             bitmap?.let {
-                backgroundColor = extractDominantColor(it)
+                dominantColor = extractDominantColor(it)
             }
         }
     }
+
+    var backgroundColor = darkenColor(dominantColor,0.5f)
 
     AnimatedVisibility(visible = song != null, enter = fadeIn(), exit = fadeOut()) {
         song?.let {
