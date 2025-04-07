@@ -87,7 +87,9 @@ fun NowPlayingScreen(
             }
 
             song?.let {
-                SongDetailButton(song = it)
+                SongDetailButton(
+                    song = it,
+                    onDeleteSuccess = { })
             }
         }
 
