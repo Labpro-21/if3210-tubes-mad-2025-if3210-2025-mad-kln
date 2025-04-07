@@ -48,6 +48,7 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
 
     LaunchedEffect(token) {
         systemUiController.isStatusBarVisible = false
+
         if (token.isNullOrEmpty()) {
             navController.navigate("login") {
                 popUpTo(0)
@@ -67,25 +68,16 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
         },
         contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = "login",
-            modifier = androidx.compose.ui.Modifier.padding(paddingValues)
-        ) {
-            composable("login") { LoginScreen(context, navController) }
-            composable("home") { HomeScreen() }
-            composable("library") { LibraryScreen(songRepository) }
-            composable("profile") { NowPlayingScreen { navController.popBackStack() } }
         Box(
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
 
             NavHost(
                 navController = navController,
-                startDestination = "home",
+                startDestination = "login",
             ) {
                 composable("login") {
-                    LoginScreen()
+                    LoginScreen(context, navController)
                 }
                 composable("home") {
                     HomeScreen(
@@ -126,7 +118,6 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
         }
     }
 }
-
 @Composable
 fun CheckAuth(navController: NavController, context: Context) {
     var isAuthenticated by remember { mutableStateOf(false) }
