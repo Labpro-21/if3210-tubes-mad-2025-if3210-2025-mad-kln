@@ -98,4 +98,8 @@ class SongRepository(private val songDao: SongDao) {
             songDao.isSongLiked(songId)
         }
     }
+
+    suspend fun updateSongInfo(songId: Int, imageUri: String?, artist: String, title: String) {
+        songDao.updateSongInfo(songId, imageUri, artist, title)
+    }
 }

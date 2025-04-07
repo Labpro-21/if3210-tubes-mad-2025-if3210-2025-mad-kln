@@ -13,7 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.android.purrytify.R
 import com.android.purrytify.data.local.entities.Song
-import com.android.purrytify.ui.modal.EditSongModal
+import com.android.purrytify.ui.modal.SongEditModal
 import com.android.purrytify.ui.modal.SongDetailModal
 
 @Composable
@@ -48,7 +48,8 @@ fun SongDetailButton(song: Song, onDeleteSuccess: () -> Unit) {
     }
 
     if (isEditModalVisible.value) {
-        EditSongModal(
+        SongEditModal(
+            song = song,
             onDismiss = { isEditModalVisible.value = false }
         )
     }

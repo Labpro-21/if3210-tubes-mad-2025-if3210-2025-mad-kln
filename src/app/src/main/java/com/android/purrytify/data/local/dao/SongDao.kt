@@ -39,5 +39,8 @@ interface SongDao {
 
     @Query("SELECT liked FROM songs WHERE id = :songId")
     suspend fun isSongLiked(songId: Int): Boolean
+
+    @Query("UPDATE songs SET imageUri = :imageUri, artist = :artist, title = :title WHERE id = :songId")
+    suspend fun updateSongInfo(songId: Int, imageUri: String?, artist: String, title: String)
 }
 
