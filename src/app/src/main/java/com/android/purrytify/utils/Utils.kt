@@ -22,3 +22,12 @@ fun extractDominantColor(bitmap: Bitmap): Color {
     val dominantSwatch = palette.dominantSwatch
     return if (dominantSwatch != null) Color(dominantSwatch.rgb) else Color.Black
 }
+
+fun darkenColor(color: Color, factor: Float = 0.7f): Color {
+    return Color(
+        red = color.red * factor,
+        green = color.green * factor,
+        blue = color.blue * factor,
+        alpha = color.alpha
+    )
+}
