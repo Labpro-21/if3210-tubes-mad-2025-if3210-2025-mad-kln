@@ -5,10 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.android.purrytify.data.local.AppDatabase
-import com.android.purrytify.data.local.repositories.SongRepository
+import com.android.purrytify.data.local.repositories.*
+import com.android.purrytify.data.local.initializer.*
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import com.android.purrytify.data.local.initializer.SongInitializer
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,22 +18,20 @@ class MainActivity : ComponentActivity() {
 
         val database = AppDatabase.getDatabase(applicationContext)
         val songRepository = SongRepository(database.songDao())
+        val userRepository = UserRepository(database.userDao())
 
         var isReady = false
 
         splashScreen.setKeepOnScreenCondition { !isReady }
 
         lifecycleScope.launch {
-            initializeSongData(songRepository)
+            SongInitializer.initializeSongs(songRepository, applicationContext)
+            UserInitializer.initializeUsers(userRepository)
             isReady = true
         }
 
         setContent {
             PurrytifyApp(songRepository)
         }
-    }
-
-    private suspend fun initializeSongData(songRepository: SongRepository) {
-        SongInitializer.initializeSongs(songRepository, applicationContext)
     }
 }

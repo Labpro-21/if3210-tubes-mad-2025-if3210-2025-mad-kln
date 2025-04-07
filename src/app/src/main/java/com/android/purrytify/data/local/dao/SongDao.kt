@@ -21,4 +21,17 @@ interface SongDao {
 
     @Query("DELETE FROM songs")
     suspend fun deleteAllSongs()
+
+    @Query("UPDATE songs SET lastPlayedDate = :date WHERE id = :songId")
+    suspend fun updateLastPlayedDate(songId: Int, date: String)
+
+    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId")
+    suspend fun getSongsByUploader(uploaderId: Int): List<Song>
+
+    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND liked = 1")
+    suspend fun getLikedSongsByUploader(uploaderId: Int): List<Song>
+
+    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY uploadDate DESC LIMIT :limit")
+    suspend fun getRecentSongsByUploader(uploaderId: Int, limit: Int): List<Song>
 }
+
