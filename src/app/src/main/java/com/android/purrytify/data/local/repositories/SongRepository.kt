@@ -1,20 +1,32 @@
 package com.android.purrytify.data.local.repositories
 
+import android.util.Log
 import com.android.purrytify.data.local.dao.SongDao
 import com.android.purrytify.data.local.entities.Song
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.util.Log
-
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SongRepository(private val songDao: SongDao) {
 
+    private fun getCurrentDate(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return dateFormat.format(Date())
+    }
+
     fun insertSong(song: Song) {
         CoroutineScope(Dispatchers.IO).launch {
-            songDao.insertSong(song)
-            Log.d("Database", "Inserted Song: $song")
+            val finalSong = if (song.uploadDate == null) {
+                song.copy(uploadDate = getCurrentDate())
+            } else {
+                song
+            }
+
+            songDao.insertSong(finalSong)
+            Log.d("Database", "Inserted Song: $finalSong")
         }
     }
 
@@ -32,7 +44,6 @@ class SongRepository(private val songDao: SongDao) {
         }
     }
 
-
     suspend fun getSongById(songId: Int): Song? {
         return withContext(Dispatchers.IO) {
             songDao.getSongById(songId)
@@ -48,6 +59,43 @@ class SongRepository(private val songDao: SongDao) {
     suspend fun deleteSong(songId: Int) {
         withContext(Dispatchers.IO) {
             songDao.deleteSong(songId)
+        }
+    }
+
+    suspend fun updateLastPlayedDate(songId: Int, date: String = getCurrentDate()) {
+        withContext(Dispatchers.IO) {
+            songDao.updateLastPlayedDate(songId, date)
+        }
+    }
+
+
+    suspend fun getSongsByUploader(uploaderId: Int): List<Song> {
+        return withContext(Dispatchers.IO) {
+            songDao.getSongsByUploader(uploaderId)
+        }
+    }
+
+    suspend fun getLikedSongsByUploader(uploaderId: Int): List<Song> {
+        return withContext(Dispatchers.IO) {
+            songDao.getLikedSongsByUploader(uploaderId)
+        }
+    }
+
+    suspend fun getRecentSongsByUploader(uploaderId: Int, limit: Int): List<Song> {
+        return withContext(Dispatchers.IO) {
+            songDao.getRecentSongsByUploader(uploaderId, limit)
+        }
+    }
+
+    suspend fun toggleLikeSong(songId: Int, liked: Boolean) {
+        withContext(Dispatchers.IO) {
+            songDao.toggleLikeSong(songId, liked)
+        }
+    }
+
+    suspend fun isSongLiked(songId: Int): Boolean {
+        return withContext(Dispatchers.IO) {
+            songDao.isSongLiked(songId)
         }
     }
 }

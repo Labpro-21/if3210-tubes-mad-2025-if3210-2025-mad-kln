@@ -22,14 +22,20 @@ import com.android.purrytify.data.local.repositories.SongRepository
 import com.android.purrytify.ui.components.SongCard
 import com.android.purrytify.ui.components.SongCardFake
 import com.android.purrytify.ui.components.SongCardFakeProps
-import com.android.purrytify.ui.components.SongCardProps
 import kotlinx.coroutines.launch
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
 import com.android.purrytify.ui.modal.SongUploadModal
+import com.android.purrytify.view_model.PlayerViewModel
 
 @Composable
-fun LibraryScreen(songRepository: SongRepository) {
+fun LibraryScreen(
+    songRepository: SongRepository,
+    mediaPlayerViewModel: PlayerViewModel,
+    onMiniplayerClick: () -> Unit
+) {
     var isAllSelected = remember { mutableStateOf(true) }
     var isLikedSelected = remember { mutableStateOf(false) }
     var isModalVisible = remember { mutableStateOf(false) }
@@ -46,6 +52,8 @@ fun LibraryScreen(songRepository: SongRepository) {
 
     val coroutineScope = rememberCoroutineScope()
 
+    val context = LocalContext.current
+
     fun fetchSongs() {
         coroutineScope.launch {
             allSongs.value = songRepository.getAllSongs() ?: emptyList()
@@ -54,6 +62,7 @@ fun LibraryScreen(songRepository: SongRepository) {
 
     LaunchedEffect(Unit) {
         fetchSongs()
+        mediaPlayerViewModel.setSongs(allSongs.value)
     }
 
     Scaffold(
@@ -107,14 +116,16 @@ fun LibraryScreen(songRepository: SongRepository) {
                     .padding(paddingValues)
             ) {
                 if (isAllSelected.value) {
+                    mediaPlayerViewModel.setSongs(allSongs.value)
                     items(allSongs.value) { song ->
+                        Log.d("setsongs", "Trying to play: ${song}")
                         SongCard(
                             type = "small",
-                            song = SongCardProps(
-                                title = song.title,
-                                artist = song.artist,
-                                imageUri = Uri.parse(song.imageUri)
-                            )
+                            song = song,
+                            modifier = Modifier.clickable {
+                                mediaPlayerViewModel.playSong(context, index = allSongs.value.indexOf(song))
+                                //onMiniplayerClick()
+                            }
                         )
                     }
                 } else {

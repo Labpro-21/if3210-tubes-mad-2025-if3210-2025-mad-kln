@@ -9,5 +9,9 @@ data class Song(
     val title: String,
     val artist: String,
     val imageUri: String,
-    val audioUri: String
+    val audioUri: String,
+    val uploaderId: Int = 0,
+    val liked: Boolean = false,
+    val uploadDate: String? = null,
+    val lastPlayedDate: String? = null
 )
