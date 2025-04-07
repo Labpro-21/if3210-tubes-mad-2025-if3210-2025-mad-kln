@@ -40,7 +40,9 @@ class PlayerViewModel : ViewModel() {
     fun playPrevious(context: Context) {
         controller.playPrevious(context)
     }
-
+    fun clearCurrent(){
+        controller.clearCurrentSong()
+    }
     override fun onCleared() {
         super.onCleared()
         controller.release()

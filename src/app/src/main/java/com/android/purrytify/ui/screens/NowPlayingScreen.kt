@@ -61,6 +61,12 @@ fun NowPlayingScreen(
         }
     }
 
+    LaunchedEffect(song) {
+        if (song == null) {
+            onClose()
+        }
+    }
+
     val darkerColor = darkenColor(dominantColor)
     val gradient = Brush.verticalGradient(
         colors = listOf(dominantColor, darkerColor)
@@ -104,7 +110,10 @@ fun NowPlayingScreen(
             song?.let {
                 SongDetailButton(
                     song = it,
-                    onDeleteSuccess = { })
+                    onDeleteSuccess = {
+                        viewModel.clearCurrent()
+                        onClose() }
+                )
             }
         }
 

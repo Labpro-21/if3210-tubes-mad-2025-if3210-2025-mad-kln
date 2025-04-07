@@ -66,7 +66,7 @@ fun MiniPlayer(
         }
     }
 
-    var backgroundColor = darkenColor(dominantColor,0.5f)
+    val backgroundColor = darkenColor(dominantColor,0.5f)
 
     AnimatedVisibility(visible = song != null, enter = fadeIn(), exit = fadeOut()) {
         song?.let {

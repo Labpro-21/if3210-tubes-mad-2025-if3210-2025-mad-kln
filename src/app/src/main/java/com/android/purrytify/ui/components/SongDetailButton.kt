@@ -43,6 +43,7 @@ fun SongDetailButton(song: Song, onDeleteSuccess: () -> Unit) {
             onDismiss = { isDetailModalVisible.value = false },
             onDeleteSuccess = {
                 isDetailModalVisible.value = false
+                onDeleteSuccess()
             }
         )
     }
