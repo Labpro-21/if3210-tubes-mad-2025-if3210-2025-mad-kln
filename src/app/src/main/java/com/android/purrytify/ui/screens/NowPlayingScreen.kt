@@ -137,6 +137,7 @@ fun NowPlayingScreen(
                 }
 
                 LikeButton(
+                    type = "heart",
                     songId = it.id,
                 )
             }

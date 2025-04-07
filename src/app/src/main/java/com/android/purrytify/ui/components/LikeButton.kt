@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun LikeButton(
+    type: String,
     songId: Int,
 ) {
     val isLiked = remember { mutableStateOf(false) }
@@ -40,12 +41,25 @@ fun LikeButton(
             }
         }
     }) {
-        val iconRes = if (isLiked.value) R.drawable.ic_favourite_active else R.drawable.ic_favourite_inactive
+
+        val iconRes: Int = when (type) {
+            "heart" -> if (isLiked.value) R.drawable.ic_favourite_active else R.drawable.ic_favourite_inactive
+            "plus" -> if (isLiked.value) R.drawable.ic_check_circle else R.drawable.ic_like
+            else -> R.drawable.ic_favourite_inactive
+        }
+        val iconSize = when {
+            type == "plus" && isLiked.value -> 24.dp
+            type == "plus" && !isLiked.value -> 18.dp
+            else -> 32.dp
+        }
+        val iconTint = if (type == "plus" && isLiked.value) Color(0xFF1DB954) else Color.White
+
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = if (isLiked.value) "Liked" else "Not Liked",
-            modifier = Modifier.size(32.dp),
-            tint = Color.White
+            modifier = Modifier.size(iconSize),
+            tint = iconTint
         )
+
     }
 }

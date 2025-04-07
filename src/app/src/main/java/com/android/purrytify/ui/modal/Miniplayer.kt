@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
+import com.android.purrytify.ui.components.LikeButton
 import extractDominantColor
 import com.android.purrytify.view_model.PlayerViewModel
 import loadBitmapFromUri
@@ -94,9 +95,10 @@ fun MiniPlayer(
                         Text(it.artist, color = Color.Gray, fontSize = 12.sp, maxLines = 1)
                     }
 
-                    IconButton(onClick = { /* TODO: Like song */ }) {
-                        Icon(painterResource(id = R.drawable.ic_like), contentDescription = "Like", tint = Color.White)
-                    }
+                    LikeButton(
+                        type = "plus",
+                        songId = it.id,
+                    )
 
                     IconButton(
                         onClick = { viewModel.togglePlayPause() },
