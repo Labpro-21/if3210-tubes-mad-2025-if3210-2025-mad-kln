@@ -1,0 +1,48 @@
+package com.android.purrytify.view_model
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import com.android.purrytify.data.local.entities.Song
+import com.android.purrytify.controller.MediaPlayerController
+import kotlinx.coroutines.flow.StateFlow
+
+
+class PlayerViewModel : ViewModel() {
+
+    private val controller = MediaPlayerController
+
+    val currentSong: StateFlow<Song?> = controller.currentSong
+    val isPlaying: StateFlow<Boolean> = controller.isPlaying
+    val progress: StateFlow<Float> = controller.progress
+    val currentTime: StateFlow<Int> = controller.currentTime
+    val totalDuration: StateFlow<Int> = controller.totalDuration
+
+    fun setSongs(songs: List<Song>) {
+        controller.setSongs(songs)
+    }
+
+    fun playSong(context: Context, index: Int) {
+        controller.playSong(context, index)
+    }
+
+    fun togglePlayPause() {
+        controller.playPause()
+    }
+
+    fun seekTo(position: Float) {
+        controller.seekTo(position)
+    }
+
+    fun playNext(context: Context) {
+        controller.playNext(context)
+    }
+
+    fun playPrevious(context: Context) {
+        controller.playPrevious(context)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        controller.release()
+    }
+}

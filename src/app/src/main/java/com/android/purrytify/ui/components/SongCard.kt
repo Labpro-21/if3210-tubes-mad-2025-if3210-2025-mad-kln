@@ -23,26 +23,21 @@ import coil.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.layout.ContentScale
-
-data class SongCardProps(
-    val title: String,
-    val artist: String,
-    val imageUri: Uri,
-)
+import com.android.purrytify.data.local.entities.Song
 
 @Composable
-fun SongCard(type: String, song: SongCardProps) {
+fun SongCard(type: String, song: Song, modifier: Modifier = Modifier) {
     when (type) {
-        "small" -> SmallSongCard(song)
-        "large" -> LargeSongCard(song)
+        "small" -> SmallSongCard(song, modifier)
+        "large" -> LargeSongCard(song, modifier)
         else -> throw IllegalArgumentException("Invalid type: $type")
     }
 }
 
 @Composable
-fun SmallSongCard(song: SongCardProps) {
+fun SmallSongCard(song: Song, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -73,9 +68,9 @@ fun SmallSongCard(song: SongCardProps) {
 }
 
 @Composable
-fun LargeSongCard(song: SongCardProps) {
+fun LargeSongCard(song: Song, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier.width(120.dp),
+        modifier = modifier.width(120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
