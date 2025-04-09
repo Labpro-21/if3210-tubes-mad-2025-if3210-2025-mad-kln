@@ -26,7 +26,6 @@ data class BottomNavItem(
 @Composable
 fun BottomNavbar(navController: NavController) {
     val items = listOf(
-        BottomNavItem("login", "Login", R.drawable.ic_home_active, R.drawable.ic_home_inactive, Color.White, Color.Gray),
         BottomNavItem("home", "Home", R.drawable.ic_home_active, R.drawable.ic_home_inactive, Color.White, Color.Gray),
         BottomNavItem("library", "Your Library", R.drawable.ic_library_active, R.drawable.ic_library_inactive, Color.White, Color.Gray),
         BottomNavItem("profile", "Profile", R.drawable.ic_profile_active, R.drawable.ic_profile_inactive, Color.White, Color.Gray),

@@ -22,10 +22,6 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.navigation.NavController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,7 +44,6 @@ fun PurrytifyApp(context: Context) {
 
     LaunchedEffect(token) {
         systemUiController.isStatusBarVisible = false
-
         if (token.isNullOrEmpty()) {
             navController.navigate("login") {
                 popUpTo(0)
@@ -62,7 +57,7 @@ fun PurrytifyApp(context: Context) {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != "splash") {
+            if (currentRoute != "splash" && currentRoute != "login") {
                 BottomNavbar(navController)
             }
         },
@@ -71,7 +66,6 @@ fun PurrytifyApp(context: Context) {
         Box(
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
-
             NavHost(
                 navController = navController,
                 startDestination = "login",

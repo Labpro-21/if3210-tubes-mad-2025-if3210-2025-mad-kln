@@ -22,10 +22,7 @@ class SongAdapter(
         private val songArtist: TextView = itemView.findViewById(R.id.songArtist)
 
         fun bind(song: Song) {
-            songImage.load(song.imageUri) {
-//                placeholder(R.drawable.ic_launcher_round)
-//                error(R.drawable.ic_launcher_round)
-            }
+            songImage.load(song.imageUri)
             songTitle.text = song.title
             songArtist.text = song.artist
 
