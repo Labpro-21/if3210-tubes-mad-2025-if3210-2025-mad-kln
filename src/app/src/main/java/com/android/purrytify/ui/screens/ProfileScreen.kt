@@ -1,5 +1,7 @@
 package com.android.purrytify.ui.screens
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -8,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,25 +26,59 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.data.local.entities.User
+import com.android.purrytify.datastore.TokenManager
 import extractDominantColor
 import getCountryNameFromCode
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import loadBitmapFromUrl
 
 
 @Composable
 fun ProfileScreen() {
+    val userRepository = RepositoryProvider.getUserRepository()
+    val songRepository = RepositoryProvider.getSongRepository()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var dominantColor by remember { mutableStateOf(Color.Black) }
+//    var user by remember { mutableStateOf(User(0,"","","","")) }
 
-    val username = "USERNAME"
-    val country = getCountryNameFromCode("COUNTRY")
-    val profileURL = "PROFILE URL"
 
-    val songCount = "SONGCOUNT"
-    val likeCount = "LIKECOUNT"
-    val listenedCount = "LISTENEDCOUNT"
+    var username by remember { mutableStateOf("USER") }
+    var country by remember { mutableStateOf("COUNTRY") }
+    var profileURL by remember { mutableStateOf("PROFILE") }
+
+    var songCount by remember { mutableIntStateOf(0) }
+    var likeCount by remember { mutableIntStateOf(0) }
+    var listenedCount by remember { mutableIntStateOf(0) }
+
+    suspend fun fetchUserId(context: Context): Int? {
+        return TokenManager.getCurrentId(context).firstOrNull()
+    }
+
+    fun fetchUser() {
+        coroutineScope.launch {
+            val id = fetchUserId(context)
+
+            val user = userRepository.getUserById(id!!)
+            username = user!!.username
+            country = getCountryNameFromCode(user.location)
+            profileURL = "http://34.101.226.132:3000/uploads/profile-picture/${user.profilePhoto}"
+
+            Log.d("DEBUG_PROFILE", "$user")
+
+            songCount = songRepository.getSongsByUploader(id).size
+            likeCount = songRepository.getLikedSongsByUploader(id).size
+            listenedCount = songRepository.getListenedSongsByUploader(id).size
+        }
+    }
+
+
 
     LaunchedEffect(profileURL) {
+        fetchUser()
         val bitmap = loadBitmapFromUrl(context, profileURL)
         bitmap?.let {
             dominantColor = extractDominantColor(it)
@@ -78,9 +116,9 @@ fun ProfileScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(number = songCount, label = "Songs")
-            StatItem(number = likeCount, label = "Liked")
-            StatItem(number = listenedCount, label = "Listened")
+            StatItem(number = songCount.toString(), label = "Songs")
+            StatItem(number = likeCount.toString(), label = "Liked")
+            StatItem(number = listenedCount.toString(), label = "Listened")
         }
     }
 }

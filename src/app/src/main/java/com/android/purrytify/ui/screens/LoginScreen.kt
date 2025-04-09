@@ -153,10 +153,11 @@ fun LoginScreen(context: Context, navController: NavController) {
                             response.body()?.let { TokenManager.saveToken(context, it.accessToken) }
                             val bearerToken = "Bearer ${response.body()?.accessToken}"
                             val profile = RetrofitClient.api.getProfile(bearerToken)
+                            TokenManager.saveId(context, profile.id)
 //                            Log.d("LOGIN_DEBUG", "Profile fetch successful: ${profile.username}")
 
                             val user = userRepository.getUserById(profile.id)
-//                            Log.d("LOGIN_DEBUG", "$user")
+                            Log.d("LOGIN_DEBUG", bearerToken)
 
 
 
@@ -173,7 +174,6 @@ fun LoginScreen(context: Context, navController: NavController) {
                                 userRepository.insertUser(userTemp)
                             } else {
                                 Log.d("LOGIN_DEBUG", "User already exist")
-
                             }
 
                             withContext(Dispatchers.Main) {

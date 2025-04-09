@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.ui.modal.MiniPlayer
 import com.android.purrytify.ui.screens.NowPlayingScreen
+import com.android.purrytify.ui.screens.ProfileScreen
 import com.android.purrytify.view_model.PlayerViewModel
 
 @Composable
@@ -93,6 +94,9 @@ fun PurrytifyApp(context: Context) {
                         viewModel = mediaPlayerViewModel,
                         onClose = { navController.popBackStack() }
                     )
+                }
+                composable("profile"){
+                    ProfileScreen()
                 }
             }
             if (currentRoute != "nowPlaying") {

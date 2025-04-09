@@ -34,6 +34,9 @@ interface SongDao {
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY uploadDate DESC LIMIT :limit")
     suspend fun getRecentSongsByUploader(uploaderId: Int, limit: Int): List<Song>
 
+    @Query("SELECT * FROM songs WHERE uploaderid = :uploaderId AND lastPlayedDate != null")
+    suspend fun getListenedSongByUploader(uploaderId: Int): List<Song>
+
     @Query("UPDATE songs SET liked = :liked WHERE id = :songId")
     suspend fun toggleLikeSong(songId: Int, liked: Boolean)
 
