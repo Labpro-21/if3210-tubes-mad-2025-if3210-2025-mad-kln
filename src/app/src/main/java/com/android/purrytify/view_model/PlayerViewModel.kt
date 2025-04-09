@@ -16,7 +16,6 @@ class PlayerViewModel : ViewModel() {
     val progress: StateFlow<Float> = controller.progress
     val currentTime: StateFlow<Int> = controller.currentTime
     val totalDuration: StateFlow<Int> = controller.totalDuration
-    val songList: StateFlow<List<Song>> = controller.songList
 
     fun updateSongInList(song: Song) {
         controller.updateSongInList(song)
@@ -27,7 +26,7 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun updateCurrentSongInfo(title: String, artist: String, imageUri: String) {
-        MediaPlayerController.updateCurrentSong(title, artist, imageUri)
+        controller.updateCurrentSong(title, artist, imageUri)
     }
 
     fun playSong(context: Context, index: Int) {
