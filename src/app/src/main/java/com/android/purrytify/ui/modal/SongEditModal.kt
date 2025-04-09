@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 fun SongEditModal(
     song: Song,
     onDismiss: (refresh: Boolean) -> Unit,
+    onEditSuccess: (String, String, String) -> Unit
 ) {
     val songRepository = RepositoryProvider.getSongRepository()
 
@@ -64,6 +65,11 @@ fun SongEditModal(
                             title = title.value
                         )
                     }
+                    onEditSuccess(
+                        title.value,
+                        artist.value,
+                        photoUri.value.toString()
+                    )
                     onDismiss(true)
                     Log.d("SongEditModal", "Song updated: $title")
                 }

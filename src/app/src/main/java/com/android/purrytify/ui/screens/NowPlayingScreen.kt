@@ -112,7 +112,11 @@ fun NowPlayingScreen(
                     song = it,
                     onDeleteSuccess = {
                         viewModel.clearCurrent()
-                        onClose() }
+                        onClose()
+                    },
+                    onEditSuccess = { title, artist, imageUri ->
+                        viewModel.updateCurrentSongInfo(title, artist, imageUri)
+                    }
                 )
             }
         }
