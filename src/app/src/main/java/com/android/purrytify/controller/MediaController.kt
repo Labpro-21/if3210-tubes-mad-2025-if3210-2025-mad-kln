@@ -16,7 +16,6 @@
         private var handler = Handler(Looper.getMainLooper())
         private const val UPDATE_INTERVAL = 500L
 
-        var songList: List<Song> = emptyList()
         var currentSongIndex = -1
 
         private val _currentSong = MutableStateFlow<Song?>(null)
@@ -33,6 +32,9 @@
 
         private val _totalDuration = MutableStateFlow(0)
         val totalDuration: StateFlow<Int> = _totalDuration
+
+        private val _songList = MutableStateFlow<List<Song>>(emptyList())
+        val songList: StateFlow<List<Song>> = _songList
 
         private var onStateChanged: (() -> Unit)? = null
 
@@ -51,7 +53,13 @@
         }
 
         fun setSongs(songs: List<Song>) {
-            songList = songs
+            _songList.value = songs
+        }
+
+        fun updateSongInList(updatedSong: Song) {
+            _songList.value = _songList.value.map {
+                if (it.id == updatedSong.id) updatedSong else it
+            }
         }
 
         fun updateCurrentSong(title: String, artist: String, imageUri: String) {
@@ -63,15 +71,13 @@
         }
 
         fun playSong(context: Context, index: Int) {
-            Log.d("SONGLIST", "SONGLIST (INSIDE playSong): ${songList}")
-            if (index !in songList.indices) return
+            if (index !in _songList.value.indices) return
 
             mediaPlayer?.release()
 
-            val song = songList[index]
+            val song = _songList.value[index]
             currentSongIndex = index
             _currentSong.value = song
-            Log.d("AudioURI", "PLAYING (INSIDE playSong): ${song.audioUri}")
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context.applicationContext, Uri.parse(song.audioUri))
                 prepare()
@@ -110,7 +116,7 @@
         }
 
         fun playNext(context: Context) {
-            if (currentSongIndex + 1 < songList.size) {
+            if (currentSongIndex + 1 < _songList.value.size) {
                 playSong(context, currentSongIndex + 1)
             }
         }

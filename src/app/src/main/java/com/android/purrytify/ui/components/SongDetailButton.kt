@@ -20,7 +20,7 @@ import com.android.purrytify.ui.modal.SongDetailModal
 fun SongDetailButton(
     song: Song,
     onDeleteSuccess: () -> Unit,
-    onEditSuccess: (String, String, String) -> Unit
+    onEditSuccess: (Song) -> Unit
 ) {
     val isDetailModalVisible = remember { mutableStateOf(false) }
     val isEditModalVisible = remember { mutableStateOf(false) }
@@ -57,7 +57,12 @@ fun SongDetailButton(
             song = song,
             onDismiss = { isEditModalVisible.value = false },
             onEditSuccess = { title, artist, imageUri ->
-                onEditSuccess(title, artist, imageUri)
+                val updatedSong = song.copy(
+                    title = title,
+                    artist = artist,
+                    imageUri = imageUri
+                )
+                onEditSuccess(updatedSong)
             }
         )
     }
