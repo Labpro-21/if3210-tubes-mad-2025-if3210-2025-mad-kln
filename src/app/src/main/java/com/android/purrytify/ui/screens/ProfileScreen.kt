@@ -54,15 +54,18 @@ fun ProfileScreen() {
     var likeCount by remember { mutableIntStateOf(0) }
     var listenedCount by remember { mutableIntStateOf(0) }
 
-    suspend fun fetchUserId(context: Context): Int? {
-        return TokenManager.getCurrentId(context).firstOrNull()
+    suspend fun fetchUserId(context: Context): Int {
+        Log.d("DEBUG_PROFILE", "Fetching user ID")
+        return TokenManager.getCurrentId(context).firstOrNull()!!
     }
 
     fun fetchUser() {
         coroutineScope.launch {
             val id = fetchUserId(context)
+            Log.d("DEBUG_PROFILE", "Fetched user ID: $id")
 
-            val user = userRepository.getUserById(id!!)
+            val user = userRepository.getUserById(id)
+            Log.d("DEBUG_PROFILE", "Fetched user: $user")
             username = user!!.username
             country = getCountryNameFromCode(user.location)
             profileURL = "http://34.101.226.132:3000/uploads/profile-picture/${user.profilePhoto}"
@@ -75,9 +78,16 @@ fun ProfileScreen() {
         }
     }
 
+    fun logout() {
+        coroutineScope.launch {
+            TokenManager.clearToken(context)
+            Log.d("DEBUG_PROFILE", "Logged out")
+        }
+    }
 
 
-    LaunchedEffect(profileURL) {
+
+    LaunchedEffect(Unit) {
         fetchUser()
         val bitmap = loadBitmapFromUrl(context, profileURL)
         bitmap?.let {
@@ -119,6 +129,12 @@ fun ProfileScreen() {
             StatItem(number = songCount.toString(), label = "Songs")
             StatItem(number = likeCount.toString(), label = "Liked")
             StatItem(number = listenedCount.toString(), label = "Listened")
+        }
+
+        Button(
+            onClick = { logout() }
+        ) {
+            Text("Logout")
         }
     }
 }

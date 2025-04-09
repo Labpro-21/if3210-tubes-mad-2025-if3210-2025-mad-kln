@@ -2,7 +2,11 @@ package com.android.purrytify.view_model
 
 import android.content.Context
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.controller.MediaPlayerController
 import kotlinx.coroutines.flow.StateFlow
@@ -64,4 +68,10 @@ class PlayerViewModel : ViewModel() {
 //    fun insertSongToList(song: Song) {
 //        controller.insertSongToList(song)
 //    }
+}
+
+@Composable
+fun getPlayerViewModel(): PlayerViewModel {
+    val activity = LocalContext.current as ComponentActivity
+    return viewModel(activity)
 }

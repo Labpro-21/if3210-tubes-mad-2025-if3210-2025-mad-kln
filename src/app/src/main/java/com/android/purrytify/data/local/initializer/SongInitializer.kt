@@ -26,7 +26,7 @@ object SongInitializer {
                 artist = "Hoshimachi Suisei",
                 drawableResId = R.drawable.photo_ghost,
                 audioResId = R.raw.audio_ghost,
-                uploaderId = 1,
+                uploaderId = 137,
                 liked = true,
                 context = context
             ),
@@ -36,7 +36,7 @@ object SongInitializer {
                 artist = "Hololive",
                 drawableResId = R.drawable.photo_sss,
                 audioResId = R.raw.audio_sss,
-                uploaderId = 1,
+                uploaderId = 137,
                 liked = true,
                 context = context
             ),
@@ -46,7 +46,7 @@ object SongInitializer {
                 artist = "Momosuzu Nene",
                 drawableResId = R.drawable.photo_michishirube,
                 audioResId = R.raw.audio_michishirube,
-                uploaderId = 1,
+                uploaderId = 137,
                  context = context
             ),
             createSong(
@@ -56,7 +56,7 @@ object SongInitializer {
                 drawableResId = R.drawable.photo_kaisouressha,
                 audioResId = R.raw.audio_kaisouressha,
                 liked = true,
-                uploaderId = 1,
+                uploaderId = 137,
                 context = context
             ),
             createSong(
@@ -65,9 +65,9 @@ object SongInitializer {
                 artist = "AZKi",
                 drawableResId = R.drawable.photo_inochi,
                 audioResId = R.raw.audio_inochi,
-                uploaderId = 1,
+                uploaderId = 138,
                 context = context
-            )
+            ),
         )
     }
 

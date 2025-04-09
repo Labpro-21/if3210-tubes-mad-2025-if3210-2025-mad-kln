@@ -17,48 +17,50 @@ import androidx.compose.ui.text.font.FontWeight
 import com.android.purrytify.data.local.entities.Song
 import kotlinx.coroutines.launch
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.adapter.SongAdapter
 import com.android.purrytify.ui.components.SongUploadButton
+import com.android.purrytify.view_model.LibraryViewModel
 import com.android.purrytify.view_model.PlayerViewModel
+import com.android.purrytify.view_model.getLibraryViewModel
+import fetchUserId
 
 @Composable
 fun LibraryScreen(
     mediaPlayerViewModel: PlayerViewModel,
+    libraryViewModel: LibraryViewModel = getLibraryViewModel()
 ) {
-    val songRepository = RepositoryProvider.getSongRepository()
-
-    val coroutineScope = rememberCoroutineScope()
-
-    val songTab = remember { mutableStateOf("all") }
-
-    val allSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
-    val likedSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
-
     val recyclerViewRef = remember { mutableStateOf<RecyclerView?>(null) }
     val songAdapterRef = remember { mutableStateOf<SongAdapter?>(null) }
 
-    val activeSongs by remember(allSongs.value, likedSongs.value, songTab.value) {
-        derivedStateOf {
-            if (songTab.value == "all") allSongs.value else likedSongs.value
-        }
-    }
+    val tab by remember { libraryViewModel::tab }
+    val activeSongs = libraryViewModel.activeSongs
 
-    fun fetchSongs() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val userId = remember { mutableStateOf(0) }
+
+    fun fetchUser() {
         coroutineScope.launch {
-            allSongs.value = songRepository.getAllSongs() ?: emptyList()
-            likedSongs.value = songRepository.getLikedSongsByUploader(1) ?: emptyList()
+            Log.d("LibraryScreen", "Fetching user ID")
+            userId.value = fetchUserId(context)
+            Log.d("LibraryScreen", "Fetched user ID: ${userId.value}")
+            libraryViewModel.fetchLibrary(userId.value)
         }
     }
 
     LaunchedEffect(Unit) {
-        fetchSongs()
+        fetchUser()
     }
 
     LaunchedEffect(activeSongs) {
@@ -75,8 +77,7 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            PageHeader({ fetchSongs() })
-
+            PageHeader({ libraryViewModel.fetchAllSongs(userId.value) })
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,17 +86,17 @@ fun LibraryScreen(
             ) {
                 StyledButton(
                     text = "All",
-                    isSelected = songTab.value == "all",
+                    isSelected = tab == "all",
                     onClick = {
-                        songTab.value = "all"
+                        libraryViewModel.switchTab("all")
                     }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 StyledButton(
                     text = "Liked",
-                    isSelected = songTab.value == "liked",
+                    isSelected = tab == "liked",
                     onClick = {
-                        songTab.value = "liked"
+                        libraryViewModel.switchTab("liked")
                     }
                 )
             }

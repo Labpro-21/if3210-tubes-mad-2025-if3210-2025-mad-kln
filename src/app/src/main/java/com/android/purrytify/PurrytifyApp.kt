@@ -30,14 +30,14 @@ import com.android.purrytify.ui.modal.MiniPlayer
 import com.android.purrytify.ui.screens.NowPlayingScreen
 import com.android.purrytify.ui.screens.ProfileScreen
 import com.android.purrytify.view_model.PlayerViewModel
+import com.android.purrytify.view_model.getPlayerViewModel
 
 @Composable
 fun PurrytifyApp(context: Context) {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
     val token by TokenManager.getToken(context).collectAsState(initial = null)
-    val mediaPlayerViewModel: PlayerViewModel = viewModel()
-
+    val mediaPlayerViewModel = getPlayerViewModel()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
     val currentSong by mediaPlayerViewModel.currentSong.collectAsState()

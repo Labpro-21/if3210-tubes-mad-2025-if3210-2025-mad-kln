@@ -3,12 +3,15 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.android.purrytify.datastore.TokenManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
@@ -62,4 +65,9 @@ fun darkenColor(color: Color, factor: Float = 0.7f): Color {
         blue = color.blue * factor,
         alpha = color.alpha
     )
+}
+
+suspend fun fetchUserId(context: Context): Int {
+    Log.d("DEBUG_PROFILE", "Fetching user ID")
+    return TokenManager.getCurrentId(context).firstOrNull()!!
 }

@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             SongInitializer.initializeSongs(songRepository, applicationContext)
-            UserInitializer.initializeUsers(userRepository)
+//            UserInitializer.initializeUsers(userRepository)
             isReady = true
         }
 
