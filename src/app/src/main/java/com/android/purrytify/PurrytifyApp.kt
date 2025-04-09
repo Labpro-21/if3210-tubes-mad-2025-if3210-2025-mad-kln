@@ -36,7 +36,7 @@ import com.android.purrytify.ui.screens.NowPlayingScreen
 import com.android.purrytify.view_model.PlayerViewModel
 
 @Composable
-fun PurrytifyApp(songRepository: SongRepository, context: Context) {
+fun PurrytifyApp(context: Context) {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
     val token by TokenManager.getToken(context).collectAsState(initial = null)
@@ -50,9 +50,9 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
         systemUiController.isStatusBarVisible = false
 
         if (token.isNullOrEmpty()) {
-//            navController.navigate("login") {
-//                popUpTo(0)
-//            }
+            navController.navigate("login") {
+                popUpTo(0)
+            }
         } else {
             navController.navigate("home") {
                 popUpTo(0)
@@ -74,11 +74,11 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
 
             NavHost(
                 navController = navController,
-                startDestination = "home",
+                startDestination = "login",
             ) {
-//                composable("login") {
-//                    LoginScreen(context, navController)
-//                }
+                composable("login") {
+                    LoginScreen(context, navController)
+                }
                 composable("home") {
                     HomeScreen(
                         mediaPlayerViewModel = mediaPlayerViewModel,
