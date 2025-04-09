@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.repositories.SongRepository
 import com.android.purrytify.ui.components.SongCardFake
 import com.android.purrytify.ui.components.SongCardFakeProps
@@ -19,10 +20,10 @@ import com.android.purrytify.view_model.PlayerViewModel
 
 @Composable
 fun HomeScreen(
-    songRepository: SongRepository,
     mediaPlayerViewModel: PlayerViewModel,
-    onMiniplayerClick: () -> Unit
 ) {
+    val songRepository = RepositoryProvider.getSongRepository()
+
     val newSongs = listOf(
         SongCardFakeProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
         SongCardFakeProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),

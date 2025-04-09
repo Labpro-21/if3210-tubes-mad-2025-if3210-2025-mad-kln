@@ -81,16 +81,12 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
                 }
                 composable("home") {
                     HomeScreen(
-                        songRepository = songRepository,
                         mediaPlayerViewModel = mediaPlayerViewModel,
-                        onMiniplayerClick = { navController.navigate("nowPlaying") }
                     )
                 }
                 composable("library") {
                     LibraryScreen(
-                        songRepository = songRepository,
                         mediaPlayerViewModel = mediaPlayerViewModel,
-                        onMiniplayerClick = { navController.navigate("nowPlaying") }
                     )
                 }
                 composable("nowPlaying") {

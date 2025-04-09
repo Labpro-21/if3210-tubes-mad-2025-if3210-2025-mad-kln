@@ -27,19 +27,19 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.modal.SongUploadModal
 import com.android.purrytify.view_model.PlayerViewModel
 
 @Composable
 fun LibraryScreen(
-    songRepository: SongRepository,
     mediaPlayerViewModel: PlayerViewModel,
-    onMiniplayerClick: () -> Unit
 ) {
+    val songRepository = RepositoryProvider.getSongRepository()
+
     var isAllSelected = remember { mutableStateOf(true) }
     var isLikedSelected = remember { mutableStateOf(false) }
     var isModalVisible = remember { mutableStateOf(false) }
-
     val likedSongs = listOf(
         SongCardFakeProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
         SongCardFakeProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),

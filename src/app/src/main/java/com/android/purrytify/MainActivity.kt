@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
 
         val database = AppDatabase.getDatabase(applicationContext)
+
         val songRepository = SongRepository(database.songDao())
         val userRepository = UserRepository(database.userDao())
 
