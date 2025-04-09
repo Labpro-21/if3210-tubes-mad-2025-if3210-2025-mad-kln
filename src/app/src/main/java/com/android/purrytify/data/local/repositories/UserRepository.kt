@@ -1,6 +1,7 @@
 package com.android.purrytify.data.local.repositories
 
 import android.util.Log
+import androidx.annotation.Nullable
 import com.android.purrytify.data.local.dao.UserDao
 import com.android.purrytify.data.local.entities.User
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +43,7 @@ class UserRepository(private val userDao: UserDao) {
         }
     }
 
-    suspend fun getUserById(userId: String): User? {
+    suspend fun getUserById(userId: Int): User? {
         return withContext(Dispatchers.IO) {
             userDao.getUserById(userId)
         }
@@ -65,4 +66,5 @@ class UserRepository(private val userDao: UserDao) {
             userDao.deleteAllUsers()
         }
     }
+
 }
