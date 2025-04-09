@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import com.android.purrytify.R
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.CustomBottomSheet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,8 +48,10 @@ import kotlinx.coroutines.launch
 fun SongUploadModal(
     isVisible: Boolean,
     onDismiss: (refresh: Boolean) -> Unit,
-    songRepository: SongRepository
 ) {
+
+    val songRepository = RepositoryProvider.getSongRepository()
+
     val title = remember { mutableStateOf("") }
     val artist = remember { mutableStateOf("") }
     val photoUri = remember { mutableStateOf<Uri?>(null) }

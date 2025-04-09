@@ -11,10 +11,8 @@ import com.android.purrytify.data.local.repositories.SongRepository
 object SongInitializer {
     suspend fun initializeSongs(songRepository: SongRepository, context: Context) {
         withContext(Dispatchers.IO) {
-            // Clear existing data
             songRepository.deleteAllSongs()
 
-            // Insert mock songs
             val mockSongs = createMockSongs(context)
             songRepository.insertSongs(mockSongs)
         }
@@ -28,6 +26,7 @@ object SongInitializer {
                 drawableResId = R.drawable.photo_ghost,
                 audioResId = R.raw.audio_ghost,
                 uploaderId = 1,
+                liked = true,
                 context = context
             ),
             createSong(
@@ -36,6 +35,7 @@ object SongInitializer {
                 drawableResId = R.drawable.photo_sss,
                 audioResId = R.raw.audio_sss,
                 uploaderId = 1,
+                liked = true,
                 context = context
             ),
             createSong(
@@ -44,7 +44,7 @@ object SongInitializer {
                 drawableResId = R.drawable.photo_michishirube,
                 audioResId = R.raw.audio_michishirube,
                 uploaderId = 1,
-                context = context
+                 context = context
             ),
             createSong(
                 title = "Kaisou Ressha",
@@ -71,6 +71,7 @@ object SongInitializer {
         drawableResId: Int,
         audioResId: Int,
         uploaderId: Int,
+        liked: Boolean = false,
         context: Context
     ): Song {
         return Song(
@@ -78,7 +79,8 @@ object SongInitializer {
             artist = artist,
             uploaderId = uploaderId,
             imageUri = Uri.parse("android.resource://${context.packageName}/$drawableResId").toString(),
-            audioUri = Uri.parse("android.resource://${context.packageName}/$audioResId").toString()
+            audioUri = Uri.parse("android.resource://${context.packageName}/$audioResId").toString(),
+            liked = liked
         )
     }
 }

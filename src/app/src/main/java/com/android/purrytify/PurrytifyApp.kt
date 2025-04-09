@@ -29,7 +29,6 @@ import androidx.navigation.NavController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.purrytify.data.local.repositories.SongRepository
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.ui.modal.MiniPlayer
 import com.android.purrytify.ui.screens.NowPlayingScreen

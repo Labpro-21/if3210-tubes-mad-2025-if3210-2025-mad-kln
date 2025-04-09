@@ -37,26 +37,27 @@ fun LibraryScreen(
 ) {
     val songRepository = RepositoryProvider.getSongRepository()
 
-    var isAllSelected = remember { mutableStateOf(true) }
-    var isLikedSelected = remember { mutableStateOf(false) }
-    var isModalVisible = remember { mutableStateOf(false) }
-    val likedSongs = listOf(
-        SongCardFakeProps("Caramel Pain", "Hoshimachi Suisei", "#808080"),
-        SongCardFakeProps("Kirei Goto", "Hoshimachi Suisei", "#808080"),
-        SongCardFakeProps("flower rhapsody", "Sakura Miko", "#808080"),
-        SongCardFakeProps("Break It Down", "Vestia Zeta", "#808080"),
-        SongCardFakeProps("Weight of the World", "Hakos Baelz", "#808080")
-    )
+    val isAllSelected = remember { mutableStateOf(true) }
+    val isLikedSelected = remember { mutableStateOf(false) }
 
-    var allSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
+    val allSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
+    val likedSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
 
     val coroutineScope = rememberCoroutineScope()
-
     val context = LocalContext.current
 
     fun fetchSongs() {
         coroutineScope.launch {
             allSongs.value = songRepository.getAllSongs() ?: emptyList()
+            likedSongs.value = songRepository.getLikedSongsByUploader(1) ?: emptyList()
+        }
+    }
+
+    fun getActiveSongs(): List<Song> {
+        return if (isAllSelected.value) {
+            allSongs.value
+        } else {
+            likedSongs.value
         }
     }
 
@@ -74,7 +75,7 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            PageHeader(onClick = { isModalVisible.value = true })
+            PageHeader({ fetchSongs() })
 
             Row(
                 modifier = Modifier
@@ -115,45 +116,25 @@ fun LibraryScreen(
                     .background(Color(0xFF121212))
                     .padding(paddingValues)
             ) {
-                if (isAllSelected.value) {
-                    mediaPlayerViewModel.setSongs(allSongs.value)
-                    items(allSongs.value) { song ->
-                        Log.d("setsongs", "Trying to play: ${song}")
-                        SongCard(
-                            type = "small",
-                            song = song,
-                            modifier = Modifier.clickable {
-                                mediaPlayerViewModel.playSong(context, index = allSongs.value.indexOf(song))
-                                //onMiniplayerClick()
-                            }
-                        )
-                    }
-                } else {
-                    items(likedSongs) { song ->
-                        SongCardFake(type = "small", song = song)
-                    }
+
+                mediaPlayerViewModel.setSongs(getActiveSongs())
+                items(getActiveSongs()) { song ->
+                    Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
+                    SongCard(
+                        type = "small",
+                        song = song,
+                        modifier = Modifier.clickable {
+                            mediaPlayerViewModel.playSong(context, index = allSongs.value.indexOf(song))
+                        }
+                    )
                 }
             }
         }
     }
-
-    SongUploadModal(
-        isVisible = isModalVisible.value,
-        onDismiss = { refresh ->
-            isModalVisible.value = false
-            if (refresh) {
-                Log.d("LibraryScreen", "Modal closed: Refreshing songs")
-                fetchSongs()
-            } else {
-                Log.d("LibraryScreen", "Modal closed: Not refreshing songs")
-            }
-        },
-        songRepository = songRepository
-    )
 }
 
 @Composable
-fun PageHeader(onClick: (() -> Unit)?) {
+fun PageHeader(func: () -> Unit) {
     Row (modifier = Modifier
         .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -166,20 +147,7 @@ fun PageHeader(onClick: (() -> Unit)?) {
             modifier = Modifier
                 .padding(start = 16.dp, top = 40.dp, bottom = 8.dp)
         )
-        Button(
-            onClick = { onClick?.invoke() },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            modifier = Modifier
-                .padding(0.dp),
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Text(
-                text = "+",
-                color = Color.White,
-                fontSize = 40.sp,
-                fontWeight = FontWeight.Light,
-            )
-        }
+        SongUploadButton(func)
     }
 }
 
@@ -208,3 +176,35 @@ fun StyledButton(
     }
 }
 
+@Composable
+fun SongUploadButton(func: () -> Unit) {
+
+    val isModalVisible = remember { mutableStateOf(false) }
+    Button(
+        onClick = { isModalVisible.value = true },
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .padding(0.dp),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Text(
+            text = "+",
+            color = Color.White,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Light,
+        )
+    }
+
+    SongUploadModal(
+        isVisible = isModalVisible.value,
+        onDismiss = { refresh ->
+            isModalVisible.value = false
+            if (refresh) {
+                Log.d("LibraryScreen", "Modal closed: Refreshing songs")
+                func()
+            } else {
+                Log.d("LibraryScreen", "Modal closed: Not refreshing songs")
+            }
+        },
+    )
+}
