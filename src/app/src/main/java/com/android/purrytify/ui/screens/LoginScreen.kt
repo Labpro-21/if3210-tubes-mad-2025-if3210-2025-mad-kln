@@ -2,6 +2,7 @@ package com.android.purrytify.ui.screens
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.Nullable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.android.purrytify.R
+import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.data.local.entities.User
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.network.LoginRequest
 import com.android.purrytify.network.LoginResponse
@@ -36,6 +39,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun LoginScreen(context: Context, navController: NavController) {
     val scope = rememberCoroutineScope()
+    val userRepository = RepositoryProvider.getUserRepository()
 
     var email by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
@@ -138,15 +142,39 @@ fun LoginScreen(context: Context, navController: NavController) {
                     errorMessage = null
 
                     scope.launch {
-                        Log.d("LOGIN_DEBUG", "Sending request with email: ${email.text}")
+//                        Log.d("LOGIN_DEBUG", "Sending request with email: ${email.text}")
                         try {
                             val response = RetrofitClient.api.login(
                                 LoginRequest(email.text.trim(), password.text)
                             )
 
-                            Log.d("LOGIN_DEBUG", "Login successful: ${response.body()?.accessToken}")
+//                            Log.d("LOGIN_DEBUG", "Login successful: ${response.body()?.accessToken}")
 
                             response.body()?.let { TokenManager.saveToken(context, it.accessToken) }
+                            val bearerToken = "Bearer ${response.body()?.accessToken}"
+                            val profile = RetrofitClient.api.getProfile(bearerToken)
+//                            Log.d("LOGIN_DEBUG", "Profile fetch successful: ${profile.username}")
+
+                            val user = userRepository.getUserById(profile.id)
+//                            Log.d("LOGIN_DEBUG", "$user")
+
+
+
+                            if (user == null){
+                                val userTemp = User (
+                                    id = profile.id,
+                                    username = profile.username,
+                                    email = profile.email,
+                                    profilePhoto = profile.profilePhoto,
+                                    location = profile.location,
+                                    createdAt = profile.createdAt,
+                                    updatedAt = profile.updatedAt
+                                )
+                                userRepository.insertUser(userTemp)
+                            } else {
+                                Log.d("LOGIN_DEBUG", "User already exist")
+
+                            }
 
                             withContext(Dispatchers.Main) {
                                 navController.navigate("home") {

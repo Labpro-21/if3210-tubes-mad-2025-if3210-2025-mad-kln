@@ -113,21 +113,4 @@ fun PurrytifyApp(context: Context) {
         }
     }
 }
-@Composable
-fun CheckAuth(navController: NavController, context: Context) {
-    var isAuthenticated by remember { mutableStateOf(false) }
-    val token by TokenManager.getToken(context).collectAsState(initial = null)
-
-    LaunchedEffect(token) {
-        isAuthenticated = token.isNullOrEmpty()
-    }
-
-    if (isAuthenticated) {
-        navController.navigate("home") {
-            popUpTo("login") { inclusive = true }
-        }
-    } else {
-        LoginScreen(context, navController)
-    }
-}
 
