@@ -114,8 +114,13 @@ fun NowPlayingScreen(
                         viewModel.clearCurrent()
                         onClose()
                     },
-                    onEditSuccess = { title, artist, imageUri ->
-                        viewModel.updateCurrentSongInfo(title, artist, imageUri)
+                    onEditSuccess = { updatedSong ->
+                        viewModel.updateCurrentSongInfo(
+                            title = updatedSong.title,
+                            artist = updatedSong.artist,
+                            imageUri = updatedSong.imageUri
+                        )
+                        viewModel.updateSongInList(updatedSong)
                     }
                 )
             }
