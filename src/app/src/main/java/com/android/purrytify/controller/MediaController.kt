@@ -54,6 +54,14 @@
             songList = songs
         }
 
+        fun updateCurrentSong(title: String, artist: String, imageUri: String) {
+            _currentSong.value = _currentSong.value?.copy(
+                title = title,
+                artist = artist,
+                imageUri = imageUri
+            )
+        }
+
         fun playSong(context: Context, index: Int) {
             Log.d("SONGLIST", "SONGLIST (INSIDE playSong): ${songList}")
             if (index !in songList.indices) return

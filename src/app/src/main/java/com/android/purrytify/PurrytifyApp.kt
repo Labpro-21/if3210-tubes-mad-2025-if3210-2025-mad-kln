@@ -50,9 +50,9 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
         systemUiController.isStatusBarVisible = false
 
         if (token.isNullOrEmpty()) {
-            navController.navigate("login") {
-                popUpTo(0)
-            }
+//            navController.navigate("login") {
+//                popUpTo(0)
+//            }
         } else {
             navController.navigate("home") {
                 popUpTo(0)
@@ -74,11 +74,11 @@ fun PurrytifyApp(songRepository: SongRepository, context: Context) {
 
             NavHost(
                 navController = navController,
-                startDestination = "login",
+                startDestination = "home",
             ) {
-                composable("login") {
-                    LoginScreen(context, navController)
-                }
+//                composable("login") {
+//                    LoginScreen(context, navController)
+//                }
                 composable("home") {
                     HomeScreen(
                         songRepository = songRepository,

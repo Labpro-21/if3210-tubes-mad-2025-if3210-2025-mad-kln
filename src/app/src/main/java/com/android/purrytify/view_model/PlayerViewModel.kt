@@ -21,6 +21,10 @@ class PlayerViewModel : ViewModel() {
         controller.setSongs(songs)
     }
 
+    fun updateCurrentSongInfo(title: String, artist: String, imageUri: String) {
+        MediaPlayerController.updateCurrentSong(title, artist, imageUri)
+    }
+
     fun playSong(context: Context, index: Int) {
         controller.playSong(context, index)
     }
