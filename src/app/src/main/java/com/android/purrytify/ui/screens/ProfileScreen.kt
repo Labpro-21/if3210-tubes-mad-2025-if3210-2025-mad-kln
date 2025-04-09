@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.User
@@ -37,7 +38,7 @@ import loadBitmapFromUrl
 
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController) {
     val userRepository = RepositoryProvider.getUserRepository()
     val songRepository = RepositoryProvider.getSongRepository()
     val context = LocalContext.current
@@ -82,6 +83,7 @@ fun ProfileScreen() {
         coroutineScope.launch {
             TokenManager.clearToken(context)
             Log.d("DEBUG_PROFILE", "Logged out")
+            navController.navigate("login")
         }
     }
 

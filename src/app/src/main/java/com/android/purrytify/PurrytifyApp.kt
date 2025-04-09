@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,11 +27,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purrytify.datastore.TokenManager
+import com.android.purrytify.network.checkToken
 import com.android.purrytify.ui.modal.MiniPlayer
 import com.android.purrytify.ui.screens.NowPlayingScreen
 import com.android.purrytify.ui.screens.ProfileScreen
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun PurrytifyApp(context: Context) {
@@ -42,8 +49,17 @@ fun PurrytifyApp(context: Context) {
     val currentRoute = currentBackStackEntry?.destination?.route
     val currentSong by mediaPlayerViewModel.currentSong.collectAsState()
 
-    LaunchedEffect(token) {
+    LaunchedEffect(Unit) {
+        delay(1000)
+        CoroutineScope(Dispatchers.Main).launch {
+            while (true) {
+                delay(  5 *60 *1000)
+                checkToken(context)
+            }
+        }
+
         systemUiController.isStatusBarVisible = false
+
         if (token.isNullOrEmpty()) {
             navController.navigate("login") {
                 popUpTo(0)
@@ -90,7 +106,7 @@ fun PurrytifyApp(context: Context) {
                     )
                 }
                 composable("profile"){
-                    ProfileScreen()
+                    ProfileScreen(navController)
                 }
             }
             if (currentRoute != "nowPlaying") {

@@ -99,7 +99,8 @@ fun LoginScreen(context: Context, navController: NavController) {
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     focusedBorderColor = Color(0xFF1DB954),
-                    unfocusedBorderColor = Color.Gray
+                    unfocusedBorderColor = Color.Gray ,
+                    cursorColor = Color.White
                 )
             )
 
@@ -123,9 +124,10 @@ fun LoginScreen(context: Context, navController: NavController) {
                     .background(Color.Black),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
+                    cursorColor = Color.White,
                     focusedBorderColor = Color(0xFF1DB954),
                     unfocusedBorderColor = Color.Gray
-                )
+                ),
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -150,7 +152,7 @@ fun LoginScreen(context: Context, navController: NavController) {
 
 //                            Log.d("LOGIN_DEBUG", "Login successful: ${response.body()?.accessToken}")
 
-                            response.body()?.let { TokenManager.saveToken(context, it.accessToken) }
+                            response.body()?.let { TokenManager.saveToken(context, it.accessToken, it.refreshToken) }
                             val bearerToken = "Bearer ${response.body()?.accessToken}"
                             val profile = RetrofitClient.api.getProfile(bearerToken)
                             TokenManager.saveId(context, profile.id)

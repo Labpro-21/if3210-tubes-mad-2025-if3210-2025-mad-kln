@@ -16,6 +16,9 @@ data class LoginResponse(
     val refreshToken: String
 )
 
+data class RefreshToken(
+    val refreshToken: String
+)
 data class ProfileResponse(
     val id: Int,
     val username: String,
@@ -26,6 +29,16 @@ data class ProfileResponse(
     val updatedAt: String
 )
 
+data class Verify(
+    val id: Int,
+    val username: String
+)
+
+data class VerifyResponse(
+    val valid: Boolean,
+    val user: Verify
+)
+
 interface ApiService {
     @POST("/api/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
@@ -34,5 +47,15 @@ interface ApiService {
     suspend fun getProfile(
         @Header("Authorization") token: String
     ): ProfileResponse
+
+    @POST("/api/refresh-token")
+    suspend fun refreshToken(
+        @Body request: RefreshToken
+    ): LoginResponse
+
+    @GET("/api/verify-token")
+    suspend fun verifyToken(
+        @Header("Authorization") token: String
+    ): VerifyResponse
 }
 
