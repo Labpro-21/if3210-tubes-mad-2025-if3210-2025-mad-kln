@@ -1,6 +1,7 @@
 package com.android.purrytify.view_model
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.controller.MediaPlayerController
@@ -56,4 +57,12 @@ class PlayerViewModel : ViewModel() {
         super.onCleared()
         controller.release()
     }
+
+//    fun deleteSongFromList(song: Song) {
+//        controller.deleteSongFromList(song)
+//    }
+//
+//    fun insertSongToList(song: Song) {
+//        controller.insertSongToList(song)
+//    }
 }

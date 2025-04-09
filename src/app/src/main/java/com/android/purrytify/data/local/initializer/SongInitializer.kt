@@ -21,6 +21,7 @@ object SongInitializer {
     private fun createMockSongs(context: Context): List<Song> {
         return listOf(
             createSong(
+                id = 1,
                 title = "Ghost",
                 artist = "Hoshimachi Suisei",
                 drawableResId = R.drawable.photo_ghost,
@@ -30,6 +31,7 @@ object SongInitializer {
                 context = context
             ),
             createSong(
+                id = 2,
                 title = "Shiny Smily Story",
                 artist = "Hololive",
                 drawableResId = R.drawable.photo_sss,
@@ -39,6 +41,7 @@ object SongInitializer {
                 context = context
             ),
             createSong(
+                id = 3,
                 title = "Michishirube",
                 artist = "Momosuzu Nene",
                 drawableResId = R.drawable.photo_michishirube,
@@ -47,14 +50,17 @@ object SongInitializer {
                  context = context
             ),
             createSong(
+                id = 4,
                 title = "Kaisou Ressha",
                 artist = "Minato Aqua",
                 drawableResId = R.drawable.photo_kaisouressha,
                 audioResId = R.raw.audio_kaisouressha,
+                liked = true,
                 uploaderId = 1,
                 context = context
             ),
             createSong(
+                id = 5,
                 title = "Inochi",
                 artist = "AZKi",
                 drawableResId = R.drawable.photo_inochi,
@@ -66,6 +72,7 @@ object SongInitializer {
     }
 
     private fun createSong(
+        id: Int = 0,
         title: String,
         artist: String,
         drawableResId: Int,
@@ -75,6 +82,7 @@ object SongInitializer {
         context: Context
     ): Song {
         return Song(
+            id = id,
             title = title,
             artist = artist,
             uploaderId = uploaderId,

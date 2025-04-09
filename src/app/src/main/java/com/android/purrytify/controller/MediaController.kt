@@ -144,4 +144,5 @@
             currentSongIndex = -1
             onStateChanged?.invoke()
         }
+
     }

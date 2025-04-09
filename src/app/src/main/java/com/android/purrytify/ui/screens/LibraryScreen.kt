@@ -26,10 +26,19 @@ import kotlinx.coroutines.launch
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.ui.adapter.SongAdapter
 import com.android.purrytify.ui.modal.SongUploadModal
 import com.android.purrytify.view_model.PlayerViewModel
+
+
 
 @Composable
 fun LibraryScreen(
@@ -37,14 +46,22 @@ fun LibraryScreen(
 ) {
     val songRepository = RepositoryProvider.getSongRepository()
 
-    val isAllSelected = remember { mutableStateOf(true) }
-    val isLikedSelected = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val songTab = remember { mutableStateOf("all") }
 
     val allSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
     val likedSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
 
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val recyclerViewRef = remember { mutableStateOf<RecyclerView?>(null) }
+    val songAdapterRef = remember { mutableStateOf<SongAdapter?>(null) }
+
+    val activeSongs by remember(allSongs.value, likedSongs.value, songTab.value) {
+        derivedStateOf {
+            if (songTab.value == "all") allSongs.value else likedSongs.value
+        }
+    }
 
     fun fetchSongs() {
         coroutineScope.launch {
@@ -53,17 +70,14 @@ fun LibraryScreen(
         }
     }
 
-    fun getActiveSongs(): List<Song> {
-        return if (isAllSelected.value) {
-            allSongs.value
-        } else {
-            likedSongs.value
-        }
-    }
-
     LaunchedEffect(Unit) {
         fetchSongs()
-        mediaPlayerViewModel.setSongs(allSongs.value)
+    }
+
+    LaunchedEffect(activeSongs) {
+        Log.d("LibraryScreen", "Active Songs Count: ${activeSongs.size}")
+        mediaPlayerViewModel.setSongs(activeSongs)
+//        songAdapterRef.value?.updateSongs(activeSongs)
     }
 
     Scaffold(
@@ -85,19 +99,17 @@ fun LibraryScreen(
             ) {
                 StyledButton(
                     text = "All",
-                    isSelected = isAllSelected.value,
+                    isSelected = songTab.value == "all",
                     onClick = {
-                        isAllSelected.value = true
-                        isLikedSelected.value = false
+                        songTab.value = "all"
                     }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 StyledButton(
                     text = "Liked",
-                    isSelected = isLikedSelected.value,
+                    isSelected = songTab.value == "liked",
                     onClick = {
-                        isLikedSelected.value = true
-                        isAllSelected.value = false
+                        songTab.value = "liked"
                     }
                 )
             }
@@ -110,25 +122,42 @@ fun LibraryScreen(
                 color = Color.Gray
             )
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF121212))
-                    .padding(paddingValues)
-            ) {
-
-                mediaPlayerViewModel.setSongs(getActiveSongs())
-                items(getActiveSongs()) { song ->
-                    Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
-                    SongCard(
-                        type = "small",
-                        song = song,
-                        modifier = Modifier.clickable {
-                            mediaPlayerViewModel.playSong(context, index = allSongs.value.indexOf(song))
-                        }
-                    )
+//            LazyColumn(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .background(Color(0xFF121212))
+//                    .padding(paddingValues)
+//            ) {
+//                items(activeSongs) { song ->
+//                    SongCard(
+//                        type = "small",
+//                        song = song,
+//                        modifier = Modifier.clickable {
+//                            mediaPlayerViewModel.playSong(context, index = activeSongs.indexOf(song))
+//                            Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
+//                        }
+//                    )
+//                }
+//            }
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { context ->
+                    RecyclerView(context).apply {
+                        layoutManager = LinearLayoutManager(context)
+                        adapter = SongAdapter(activeSongs) { song ->
+                            val index = activeSongs.indexOf(song)
+                            mediaPlayerViewModel.playSong(context, index)
+                            Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
+                        }.also { songAdapterRef.value = it }
+                        recyclerViewRef.value = this
+                        setBackgroundColor(Color(0xFF121212).toArgb())
+                    }
+                },
+                update = { recyclerView ->
+                    songAdapterRef.value?.updateSongs(activeSongs)
                 }
-            }
+            )
+
         }
     }
 }
