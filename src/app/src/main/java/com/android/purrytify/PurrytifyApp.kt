@@ -50,7 +50,7 @@ fun PurrytifyApp(context: Context) {
     val currentSong by mediaPlayerViewModel.currentSong.collectAsState()
 
     LaunchedEffect(Unit) {
-        delay(1000)
+//        delay(1000)
         CoroutineScope(Dispatchers.Main).launch {
             while (true) {
                 delay(  5 *60 *1000)

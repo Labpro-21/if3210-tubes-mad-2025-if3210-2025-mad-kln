@@ -28,6 +28,7 @@ object SongInitializer {
                 audioResId = R.raw.audio_ghost,
                 uploaderId = 137,
                 liked = true,
+                lastPlayedDate = "2025-04-11 12:00:00",
                 context = context
             ),
             createSong(
@@ -38,6 +39,7 @@ object SongInitializer {
                 audioResId = R.raw.audio_sss,
                 uploaderId = 137,
                 liked = true,
+                lastPlayedDate = "2025-04-11 09:00:00",
                 context = context
             ),
             createSong(
@@ -47,7 +49,8 @@ object SongInitializer {
                 drawableResId = R.drawable.photo_michishirube,
                 audioResId = R.raw.audio_michishirube,
                 uploaderId = 137,
-                 context = context
+                lastPlayedDate = "2025-04-11 01:00:00",
+                context = context
             ),
             createSong(
                 id = 4,
@@ -57,6 +60,7 @@ object SongInitializer {
                 audioResId = R.raw.audio_kaisouressha,
                 liked = true,
                 uploaderId = 137,
+                lastPlayedDate = "2025-04-11 09:00:00",
                 context = context
             ),
             createSong(
@@ -66,6 +70,7 @@ object SongInitializer {
                 drawableResId = R.drawable.photo_inochi,
                 audioResId = R.raw.audio_inochi,
                 uploaderId = 138,
+                lastPlayedDate = "2025-04-11 04:00:00",
                 context = context
             ),
         )
@@ -79,6 +84,7 @@ object SongInitializer {
         audioResId: Int,
         uploaderId: Int,
         liked: Boolean = false,
+        lastPlayedDate: String? = null,
         context: Context
     ): Song {
         return Song(
@@ -88,7 +94,8 @@ object SongInitializer {
             uploaderId = uploaderId,
             imageUri = Uri.parse("android.resource://${context.packageName}/$drawableResId").toString(),
             audioUri = Uri.parse("android.resource://${context.packageName}/$audioResId").toString(),
-            liked = liked
+            liked = liked,
+            lastPlayedDate = lastPlayedDate
         )
     }
 }
