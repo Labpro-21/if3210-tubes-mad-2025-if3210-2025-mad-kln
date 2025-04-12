@@ -31,8 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
-import com.android.purrytify.controller.MediaPlayerController.repeatMode
 import com.android.purrytify.controller.RepeatMode
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
@@ -52,22 +52,21 @@ fun NowPlayingScreen(
     val totalDuration by viewModel.totalDuration.collectAsState()
     val repeatMode by viewModel.repeatMode.collectAsState()
 
+    val songRepository = RepositoryProvider.getSongRepository()
+
     val context = LocalContext.current
     var dominantColor by remember { mutableStateOf(Color.Black) }
 
-    LaunchedEffect(song?.imageUri) {
-        song?.imageUri?.let { uri ->
-            val bitmap = loadBitmapFromUri(context, uri)
-            bitmap?.let {
-                dominantColor = extractDominantColor(it)
-            }
-        }
-    }
-
     LaunchedEffect(song) {
-        if (song == null) {
-            onClose()
-        }
+        song?.let {
+            songRepository.updateLastPlayedDate(it.id)
+
+            val bitmap = loadBitmapFromUri(context, it.imageUri)
+            bitmap?.let { bmp ->
+                dominantColor = extractDominantColor(bmp)
+            }
+
+        } ?: onClose()
     }
 
     val darkerColor = darkenColor(dominantColor)

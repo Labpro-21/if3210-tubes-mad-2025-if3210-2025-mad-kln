@@ -63,6 +63,7 @@ class SongRepository(private val songDao: SongDao) {
     }
 
     suspend fun updateLastPlayedDate(songId: Int, date: String = getCurrentDate()) {
+        Log.d("UPDATE DATE","SONG ID: $songId, DATE: $date")
         withContext(Dispatchers.IO) {
             songDao.updateLastPlayedDate(songId, date)
         }
