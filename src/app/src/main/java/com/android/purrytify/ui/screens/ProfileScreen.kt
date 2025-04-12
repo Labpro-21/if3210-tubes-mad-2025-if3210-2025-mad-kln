@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -134,6 +135,19 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        Button(
+            onClick = { logout() },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.DarkGray,
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(32.dp)
+        ) {
+            Text("Logout")
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -143,11 +157,6 @@ fun ProfileScreen(
             StatItem(number = listenedCount.toString(), label = "Listened")
         }
 
-        Button(
-            onClick = { logout() }
-        ) {
-            Text("Logout")
-        }
     }
 }
 
