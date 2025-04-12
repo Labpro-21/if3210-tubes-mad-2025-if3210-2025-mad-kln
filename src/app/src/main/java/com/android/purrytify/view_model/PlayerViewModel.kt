@@ -29,6 +29,10 @@ class PlayerViewModel : ViewModel() {
         controller.updateSongInList(song)
     }
 
+    fun isLast(): Boolean{
+        return controller.isLastSong()
+    }
+
     fun setSongs(songs: List<Song>) {
         controller.setSongs(songs)
     }
