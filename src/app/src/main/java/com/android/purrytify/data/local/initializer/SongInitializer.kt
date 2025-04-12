@@ -12,9 +12,15 @@ object SongInitializer {
     suspend fun initializeSongs(songRepository: SongRepository, context: Context) {
         withContext(Dispatchers.IO) {
             songRepository.deleteAllSongs()
+            val allSongs = songRepository.getAllSongs()
 
-            val mockSongs = createMockSongs(context)
-            songRepository.insertSongs(mockSongs)
+            if (allSongs.size == 0) {
+                val mockSongs = createMockSongs(context)
+                songRepository.insertSongs(mockSongs)
+            }
+//
+//            val mockSongs = createMockSongs(context)
+//            songRepository.insertSongs(mockSongs)
         }
     }
 
@@ -123,6 +129,56 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-12 07:00:00",
                 context = context
             ),
+            createSong(
+                id = 11,
+                title = "魔法",
+                artist = "Myuk",
+                drawableResId = R.drawable.photo_mahou,
+                audioResId = R.raw.audio_mahou,
+                uploaderId = 138,
+                lastPlayedDate = "2025-04-12 07:00:00",
+                context = context
+            ),
+            createSong(
+                id = 12,
+                title = "たふ_ん",
+                artist = "Yoasobi",
+                drawableResId = R.drawable.photo_tabun,
+                audioResId = R.raw.audio_tabun,
+                uploaderId = 138,
+                lastPlayedDate = "2025-04-12 07:00:00",
+                context = context
+            ),
+            createSong(
+                id = 13,
+                title = "Take Me Home",
+                artist = "Cash Cash",
+                drawableResId = R.drawable.photo_take_me_home,
+                audioResId = R.raw.audio_take_me_home,
+                uploaderId = 138,
+                lastPlayedDate = "2025-04-12 07:00:00",
+                context = context
+            ),
+            createSong(
+                id = 14,
+                title = "Never Gonna Give You Up",
+                artist = "Rick Astley",
+                drawableResId = R.drawable.photo_rick,
+                audioResId = R.raw.audio_rick,
+                uploaderId = 138,
+                lastPlayedDate = "2025-04-12 07:00:00",
+                context = context
+            ),
+            createSong(
+                id = 15,
+                title = "Old Town Road",
+                artist = "Lil Nas X",
+                drawableResId = R.drawable.photo_old_town_road,
+                audioResId = R.raw.audio_old_town_road,
+                uploaderId = 138,
+                lastPlayedDate = "2025-04-12 07:00:00",
+                context = context
+            )
         )
     }
 

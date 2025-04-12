@@ -152,10 +152,10 @@ fun HomeScreen(
                             type = "small",
                             song = song,
                             modifier = Modifier.clickable {
-                                mediaPlayerViewModel.setSongs(newSongs.value)
+                                mediaPlayerViewModel.setSongs(recentlyPlayedSongs.value)
                                 mediaPlayerViewModel.playSong(
                                     context,
-                                    index = newSongs.value.indexOf(song)
+                                    index = recentlyPlayedSongs.value.indexOf(song)
                                 )
                             }
                         )

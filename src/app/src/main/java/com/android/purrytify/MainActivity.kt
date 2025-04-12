@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { !isReady }
 
         lifecycleScope.launch {
-            SongInitializer.initializeSongs(songRepository, applicationContext)
+//            SongInitializer.initializeSongs(songRepository, applicationContext)
             isReady = true
         }
 

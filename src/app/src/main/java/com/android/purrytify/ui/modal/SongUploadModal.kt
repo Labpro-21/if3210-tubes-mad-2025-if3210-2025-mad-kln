@@ -1,6 +1,7 @@
 package com.android.purrytify.ui.modal
 
 import android.content.Context
+import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
@@ -208,14 +209,28 @@ fun PhotoUploadBox(
     uri: Uri?,
     onUpload: (Uri) -> Unit,
 ) {
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { selectedUri ->
-        selectedUri?.let { onUpload(it) }
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { selectedUri ->
+        selectedUri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: SecurityException) {
+                Log.w("PhotoUploadBox", "Unable to persist permission for URI: $it")
+            }
+            onUpload(it)
+        }
     }
 
     Box(
         modifier = Modifier
             .size(120.dp)
-            .clickable { launcher.launch("image/*") }
+            .clickable { launcher.launch(arrayOf("image/*")) }
             .background(Color(0xFF212121), RoundedCornerShape(8.dp))
             .aspectRatio(1f)
             .drawWithContent {
@@ -259,7 +274,6 @@ fun PhotoUploadBox(
                     fontSize = 14.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                Spacer(modifier = Modifier.height(0.dp))
                 Image(
                     painter = painterResource(R.drawable.ic_song_photo),
                     contentDescription = "photo_icon",
@@ -269,6 +283,7 @@ fun PhotoUploadBox(
         }
     }
 }
+
 
 @Composable
 fun AudioUploadBox(
@@ -291,28 +306,41 @@ fun AudioUploadBox(
         isPlaying = !isPlaying
     }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { selectedUri ->
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { selectedUri ->
         selectedUri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: SecurityException) {
+                Log.w("AudioUploadBox", "Unable to persist permission for URI: $it")
+            }
+
             onUpload(it)
+
             val tempSongList = listOf(
                 Song(
                     title = "temp",
                     artist = "temp",
                     imageUri = "",
-                    audioUri = selectedUri.toString(),
+                    audioUri = it.toString(),
                     uploaderId = 0
                 )
             )
             mediaPlayerViewModel.setSongs(tempSongList)
-            artist.value = getArtistFromUri(context, selectedUri)
-            title.value = getTitleFromUri(context, selectedUri)
+            artist.value = getArtistFromUri(context, it)
+            title.value = getTitleFromUri(context, it)
         }
     }
+
 
     Box(
         modifier = Modifier
             .size(120.dp)
-            .clickable { launcher.launch("audio/*") }
+            .clickable { launcher.launch(arrayOf("audio/*")) }
             .background(Color(0xFF212121), RoundedCornerShape(8.dp))
             .aspectRatio(1f)
             .drawWithContent {
