@@ -65,6 +65,7 @@ fun PurrytifyApp(context: Context) {
     var hasLoaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(token) {
+
         if (hasLoaded && token != null) {
             if (token!!.isEmpty()) {
                 navController.navigate("login") {
@@ -79,6 +80,7 @@ fun PurrytifyApp(context: Context) {
     }
 
     LaunchedEffect(Unit) {
+        checkToken(context)
         delay(100)
         if (token.isNullOrEmpty()) {
             navController.navigate("login") {

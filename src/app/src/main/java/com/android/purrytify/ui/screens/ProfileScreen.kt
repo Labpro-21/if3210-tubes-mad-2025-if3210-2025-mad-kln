@@ -31,10 +31,12 @@ import coil.compose.AsyncImage
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.User
 import com.android.purrytify.datastore.TokenManager
+import com.android.purrytify.network.RetrofitClient
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
 import extractDominantColor
 import getCountryNameFromCode
+import getToken
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import loadBitmapFromUrl
@@ -71,9 +73,11 @@ fun ProfileScreen(
             val id = fetchUserId(context)
             Log.d("DEBUG_PROFILE", "Fetched user ID: $id")
 
-            val user = userRepository.getUserById(id)
+            val bearerToken = "Bearer ${getToken(context)}"
+            val user = RetrofitClient.api.getProfile(bearerToken)
+
             Log.d("DEBUG_PROFILE", "Fetched user: $user")
-            username = user!!.username
+            username = user.username
             country = getCountryNameFromCode(user.location)
             profileURL = "http://34.101.226.132:3000/uploads/profile-picture/${user.profilePhoto}"
 

@@ -71,3 +71,7 @@ suspend fun fetchUserId(context: Context): Int {
     Log.d("DEBUG_PROFILE", "Fetching user ID")
     return TokenManager.getCurrentId(context).firstOrNull()!!
 }
+
+suspend fun getToken(context: Context): String{
+    return TokenManager.getToken(context).firstOrNull()!!
+}
