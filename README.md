@@ -87,6 +87,9 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <th>No</th>
         <th>Halaman</th>
         <th>Screenshot</th>
+         <th>No</th>
+        <th>Halaman</th>
+        <th>Screenshot</th>
     </tr>
     <tr>
         <td>1</td>
@@ -94,8 +97,6 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td style="text-align: center;">
             <img src="screenshot/login.png" alt="Screenshot Login Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-    </tr>
-    <tr>
         <td>2</td>
         <td>Home Page</td>
         <td style="text-align: center;">
@@ -108,9 +109,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td style="text-align: center;">
             <img src="screenshot/library.png" alt="Screenshot Library Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-    </tr>
-    <tr>
-        <td>4</td>
+         <td>4</td>
         <td>Track View Page</td>
         <td style="text-align: center;">
             <img src="screenshot/player.png" alt="Screenshot Music Player Page" style="width: 150px; height: auto; object-fit: contain;">
@@ -122,9 +121,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td style="text-align: center;">
             <img src="screenshot/profile.png" alt="Screenshot Profile Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-    </tr>
-    <tr>
-        <td>6</td>
+         <td>6</td>
         <td>No Internet</td>
         <td style="text-align: center;">
             <img src="screenshot/nointernet.png" alt="Screenshot No Internet Page" style="width: 150px; height: auto; object-fit: contain;">
@@ -138,7 +135,6 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         </td>
     </tr>
 </table>
-
 
 ## Pembagian Kerja
 
