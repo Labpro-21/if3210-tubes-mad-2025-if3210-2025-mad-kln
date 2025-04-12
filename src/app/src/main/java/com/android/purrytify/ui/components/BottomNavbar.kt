@@ -33,10 +33,12 @@ fun BottomNavbar(navController: NavController, modifier: Modifier) {
 
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
+    val navbarBg = if (currentRoute == "nowPlaying") Color.Transparent else  Color(0xFF121212)
+
 
     NavigationBar(
         modifier = modifier,
-        containerColor = Color.Transparent
+        containerColor = navbarBg
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
