@@ -136,6 +136,12 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
     </tr>
 </table>
 
+## Bonus yang dikerjakan
+
+1. Shuffle
+2. Repeat
+3. Pencarian
+   
 ## Pembagian Kerja
 
 <table border="1">
@@ -159,7 +165,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>2</td>
         <td>Ahmad Rafi Maliki</td>
         <td>13522137</td>
-        <td>database, Splash screen, navbar, homepage, library page, upload/edit/delete, network sensing</td>
+        <td>Database, Splash Screen, Navbar, Homepage, Library Page, Upload/Edit/Delete, Network Sensing, Search</td>
         <td>10</td>
         <td>40</td>
     </tr>
@@ -172,3 +178,5 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>20</td>
     </tr>
 </table>
+
+
