@@ -169,6 +169,6 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>13522138</td>
         <td>Login, Background Service, Profile BE</td>
         <td>5</td>
-        <td>15</td>
+        <td>20</td>
     </tr>
 </table>
