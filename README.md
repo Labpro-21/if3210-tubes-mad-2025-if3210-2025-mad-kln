@@ -156,8 +156,8 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>Maulana Muhammad Susetyo</td>
         <td>13522127</td>
         <td>Logic Media Player, Miniplayer, Track View Page, FE Profile Page, Repeat, Shuffle</td>
-        <td></td>
-        <td></td>
+        <td>8</td>
+        <td>28</td>
     </tr>
     <tr>
         <td>2</td>
