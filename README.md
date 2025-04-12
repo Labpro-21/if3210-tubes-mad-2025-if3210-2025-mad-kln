@@ -71,7 +71,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
    `kotlinx-coroutines-core`
    `kotlinx-coroutines-android` <br> <br>
 8. Coil (Pemrosesan Gambar) <br>
-   `coil-compose`
+   `coil-compose`<br> <br>
 9. Splash Screen <br>
    `core-splashscreen` <br> <br>
 10. Login dan Networking <br>
@@ -92,52 +92,53 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>1</td>
         <td>Login Page</td>
         <td style="text-align: center;">
-            <img src="screenshot/login.png" alt="Screenshot Login Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/login.png" alt="Screenshot Login Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
         <td>2</td>
         <td>Home Page</td>
         <td style="text-align: center;">
-            <img src="screenshot/home.png" alt="Screenshot Home Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/home.png" alt="Screenshot Home Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
         <td>3</td>
         <td>Library Page</td>
         <td style="text-align: center;">
-            <img src="screenshot/library.png" alt="Screenshot Library Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/library.png" alt="Screenshot Library Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
         <td>4</td>
         <td>Track View Page</td>
         <td style="text-align: center;">
-            <img src="screenshot/player.png" alt="Screenshot Music Player Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/player.png" alt="Screenshot Music Player Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
         <td>5</td>
         <td>Profile Page</td>
         <td style="text-align: center;">
-            <img src="screenshot/profile.png" alt="Screenshot Profile Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/profile.png" alt="Screenshot Profile Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
         <td>6</td>
         <td>No Internet</td>
         <td style="text-align: center;">
-            <img src="screenshot/nointernet.png" alt="Screenshot Profile Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/nointernet.png" alt="Screenshot No Internet Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
         <td>7</td>
         <td>Upload Song</td>
         <td style="text-align: center;">
-            <img src="screenshot/upload.png" alt="Screenshot Profile Page" style="max-width: 150; height: auto;">
+            <img src="screenshot/upload.png" alt="Screenshot Upload Song Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
 </table>
+
 
 ## Pembagian Kerja
 
@@ -162,9 +163,9 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>2</td>
         <td>Ahmad Rafi Maliki</td>
         <td>13522137</td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>database, Splash screen, navbar, homepage, library page, upload/edit/delete, network sensing</td>
+        <td>10</td>
+        <td>40</td>
     </tr>
     <tr>
         <td>3</td>
