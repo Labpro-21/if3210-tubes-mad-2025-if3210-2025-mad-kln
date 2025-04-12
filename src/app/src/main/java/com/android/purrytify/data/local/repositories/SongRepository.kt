@@ -70,13 +70,24 @@ class SongRepository(private val songDao: SongDao) {
     }
 
 
-    suspend fun getSongsByUploader(uploaderId: Int): List<Song> {
+    suspend fun getSongsByUploader(uploaderId: Int, query: String = ""): List<Song> {
+
+        if (query != "") {
+            return withContext(Dispatchers.IO) {
+                songDao.searchSongsByUploader(uploaderId, query)
+            }
+        }
         return withContext(Dispatchers.IO) {
             songDao.getSongsByUploader(uploaderId)
         }
     }
 
-    suspend fun getLikedSongsByUploader(uploaderId: Int): List<Song> {
+    suspend fun getLikedSongsByUploader(uploaderId: Int, query: String = ""): List<Song> {
+        if (query != "") {
+            return withContext(Dispatchers.IO) {
+                songDao.searchLikedSongsByUploader(uploaderId, query)
+            }
+        }
         return withContext(Dispatchers.IO) {
             songDao.getLikedSongsByUploader(uploaderId)
         }

@@ -18,10 +18,15 @@ import com.android.purrytify.data.local.entities.Song
 import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,6 +38,8 @@ import com.android.purrytify.view_model.LibraryViewModel
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getLibraryViewModel
 import fetchUserId
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 
 @Composable
 fun LibraryScreen(
@@ -49,13 +56,14 @@ fun LibraryScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val userId = remember { mutableStateOf(0) }
+    val searchQuery = remember { mutableStateOf("") }
 
     fun fetchUser() {
         coroutineScope.launch {
             Log.d("LibraryScreen", "Fetching user ID")
             userId.value = fetchUserId(context)
             Log.d("LibraryScreen", "Fetched user ID: ${userId.value}")
-            libraryViewModel.fetchLibrary(userId.value)
+            libraryViewModel.fetchLibrary(userId.value, searchQuery.value)
         }
     }
 
@@ -78,6 +86,12 @@ fun LibraryScreen(
                 .padding(paddingValues)
         ) {
             PageHeader({ libraryViewModel.fetchAllSongs(userId.value) })
+            SearchBox(
+                onChange = { query ->
+                    Log.d("SearchLogger", "User typed: $query")
+                    libraryViewModel.fetchLibrary(userId.value, query)
+                }
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -169,5 +183,45 @@ fun StyledButton(
             color = textColor,
             modifier =  Modifier.padding(horizontal = 24.dp),
         )
+    }
+}
+
+@OptIn(FlowPreview::class)
+@Composable
+fun SearchBox(
+    onChange: (String) -> Unit
+) {
+    var searchText by remember { mutableStateOf("") }
+    val debounceDelay = 500L
+
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp)) {
+        TextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            placeholder = { Text("Search") },
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedContainerColor = Color(0xFF212121),
+                unfocusedContainerColor = Color(0xFF212121),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = Color.White
+            ),
+            shape = RoundedCornerShape(32.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(0.dp, Color.DarkGray, RoundedCornerShape(32.dp)),
+            textStyle = TextStyle(fontSize = 14.sp),
+        )
+    }
+
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { searchText }
+            .debounce(debounceDelay)
+            .collect { query ->
+                onChange(query)
+            }
     }
 }

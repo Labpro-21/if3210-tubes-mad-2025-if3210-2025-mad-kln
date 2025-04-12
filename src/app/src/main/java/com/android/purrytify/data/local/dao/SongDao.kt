@@ -31,6 +31,13 @@ interface SongDao {
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND liked = 1")
     suspend fun getLikedSongsByUploader(uploaderId: Int): List<Song>
 
+    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND (LOWER(title) LIKE LOWER('%' || :query || '%') OR LOWER(artist) LIKE LOWER('%' || :query || '%'))")
+    suspend fun searchSongsByUploader(uploaderId: Int, query: String): List<Song>
+
+    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND liked = 1 AND (LOWER(title) LIKE LOWER('%' || :query || '%') OR LOWER(artist) LIKE LOWER('%' || :query || '%'))")
+    suspend fun searchLikedSongsByUploader(uploaderId: Int, query: String): List<Song>
+
+
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY lastPlayedDate DESC LIMIT :limit")
     suspend fun getRecentlyPlayedSongsByUploader(uploaderId: Int, limit: Int): List<Song>
 

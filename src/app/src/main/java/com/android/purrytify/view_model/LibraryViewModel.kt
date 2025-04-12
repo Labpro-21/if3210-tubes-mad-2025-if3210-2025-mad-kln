@@ -53,12 +53,13 @@ class LibraryViewModel(
         }
     }
 
-    fun fetchLibrary(userId: Int) {
+    fun fetchLibrary(userId: Int, searchQuery: String = "") {
         Log.d("LibraryViewModel", "fetchLibrary called with userId: $userId")
         viewModelScope.launch {
             delay(100)
-            allSongs = songRepository.getSongsByUploader(userId) ?: emptyList()
-            likedSongs = songRepository.getLikedSongsByUploader(userId) ?: emptyList()
+
+            allSongs = songRepository.getSongsByUploader(userId, searchQuery) ?: emptyList()
+            likedSongs = songRepository.getLikedSongsByUploader(userId, searchQuery) ?: emptyList()
             updateActiveSongs()
         }
     }
