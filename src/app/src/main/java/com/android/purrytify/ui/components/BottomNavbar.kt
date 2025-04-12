@@ -24,7 +24,7 @@ data class BottomNavItem(
 )
 
 @Composable
-fun BottomNavbar(navController: NavController) {
+fun BottomNavbar(navController: NavController, modifier: Modifier) {
     val items = listOf(
         BottomNavItem("home", "Home", R.drawable.ic_home_active, R.drawable.ic_home_inactive, Color.White, Color.Gray),
         BottomNavItem("library", "Your Library", R.drawable.ic_library_active, R.drawable.ic_library_inactive, Color.White, Color.Gray),
@@ -35,8 +35,8 @@ fun BottomNavbar(navController: NavController) {
     val currentRoute = navBackStackEntry.value?.destination?.route
 
     NavigationBar(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = Color(0xFF121212)
+        modifier = modifier,
+        containerColor = Color.Transparent
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
