@@ -43,6 +43,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.android.purrytify.ui.components.NetworkStatus
 import com.android.purrytify.network.NetworkMonitor
+import com.android.purrytify.ui.screens.NoInternetScreen
 
 
 @Composable
@@ -80,7 +81,8 @@ fun PurrytifyApp(context: Context) {
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0.dp)
+        contentWindowInsets = WindowInsets(0.dp),
+        containerColor = Color(0xFF121212)
     ) { paddingValues ->
         Box(
             modifier = Modifier.padding(paddingValues).fillMaxSize()
@@ -109,10 +111,16 @@ fun PurrytifyApp(context: Context) {
                     )
                 }
                 composable("profile"){
-                    ProfileScreen(navController)
+                    if (isConnected){
+                        ProfileScreen(navController)
+                    } else {
+                        NoInternetScreen()
+                    }
                 }
             }
-            NetworkStatus(networkMonitor)
+            if (currentRoute != "profile"){
+                NetworkStatus(networkMonitor)
+            }
             if (currentRoute != "nowPlaying") {
                 AnimatedVisibility(
                     visible = currentSong != null,
@@ -120,7 +128,7 @@ fun PurrytifyApp(context: Context) {
                     exit = slideOutVertically { it } + fadeOut(),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 72.dp)
+                        .padding(bottom = 80.dp)
                 ) {
                     MiniPlayer(
                         viewModel = mediaPlayerViewModel,

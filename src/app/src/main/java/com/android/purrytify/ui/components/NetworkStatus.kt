@@ -52,7 +52,7 @@ fun NetworkStatus(monitor: NetworkMonitor) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF121212))
+                .background(Color.Transparent)
                 .padding(horizontal = 16.dp)
                 .drawBehind {
                     val strokeWidth = 2.dp.toPx()
