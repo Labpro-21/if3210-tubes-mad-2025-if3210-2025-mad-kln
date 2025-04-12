@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import com.android.purrytify.R
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.CustomBottomSheet
+import fetchUserId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,13 +50,23 @@ fun SongUploadModal(
     isVisible: Boolean,
     onDismiss: (refresh: Boolean) -> Unit,
 ) {
-
     val songRepository = RepositoryProvider.getSongRepository()
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val title = remember { mutableStateOf("") }
     val artist = remember { mutableStateOf("") }
     val photoUri = remember { mutableStateOf<Uri?>(null) }
     val audioUri = remember { mutableStateOf<Uri?>(null) }
+
+    var userId = remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            userId.value = fetchUserId(context)
+        }
+    }
 
     CustomBottomSheet(
         isVisible = isVisible,
@@ -79,7 +90,8 @@ fun SongUploadModal(
                         title = title.value,
                         artist = artist.value,
                         imageUri = photoUri.value.toString(),
-                        audioUri = audioUri.value.toString()
+                        audioUri = audioUri.value.toString(),
+                        uploaderId = userId.value,
                     )
                     CoroutineScope(Dispatchers.IO).launch {
                         songRepository.insertSong(newSong)

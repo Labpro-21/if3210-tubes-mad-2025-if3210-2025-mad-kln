@@ -1,6 +1,6 @@
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_logo_3_white"
-    android:insetLeft="16dp"
-    android:insetRight="16dp"
-    android:insetTop="16dp"
-    android:insetBottom="16dp" />
+    android:insetLeft="32dp"
+    android:insetRight="32dp"
+    android:insetTop="32dp"
+    android:insetBottom="32dp" />

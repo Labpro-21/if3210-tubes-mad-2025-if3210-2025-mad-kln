@@ -80,11 +80,6 @@ fun PurrytifyApp(context: Context) {
     }
 
     Scaffold(
-        bottomBar = {
-            if (currentRoute != "login") {
-                BottomNavbar(navController)
-            }
-        },
         contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
         Box(
@@ -125,13 +120,22 @@ fun PurrytifyApp(context: Context) {
                     exit = slideOutVertically { it } + fadeOut(),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 4.dp)
+                        .padding(bottom = 72.dp)
                 ) {
                     MiniPlayer(
                         viewModel = mediaPlayerViewModel,
                         onOpenFullPlayer = { navController.navigate("nowPlaying") },
                     )
                 }
+            }
+
+            if (currentRoute != "login") {
+                BottomNavbar(
+                    navController = navController,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter),
+                )
             }
         }
     }
