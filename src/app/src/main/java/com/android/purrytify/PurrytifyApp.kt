@@ -81,7 +81,8 @@ fun PurrytifyApp(context: Context) {
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0.dp)
+        contentWindowInsets = WindowInsets(0.dp),
+        containerColor = Color(0xFF121212)
     ) { paddingValues ->
         Box(
             modifier = Modifier.padding(paddingValues).fillMaxSize()
