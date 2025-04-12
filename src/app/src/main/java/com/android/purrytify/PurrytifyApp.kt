@@ -8,9 +8,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
@@ -23,20 +27,22 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.graphics.Color
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.network.checkToken
 import com.android.purrytify.ui.modal.MiniPlayer
 import com.android.purrytify.ui.screens.NowPlayingScreen
 import com.android.purrytify.ui.screens.ProfileScreen
-import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.android.purrytify.ui.components.NetworkStatus
+import com.android.purrytify.network.NetworkMonitor
 
 
 @Composable
@@ -49,11 +55,13 @@ fun PurrytifyApp(context: Context) {
     val currentRoute = currentBackStackEntry?.destination?.route
     val currentSong by mediaPlayerViewModel.currentSong.collectAsState()
 
+    val networkMonitor = remember {NetworkMonitor(context) }
+    val isConnected by networkMonitor.isConnected.collectAsState()
+
     LaunchedEffect(Unit) {
-//        delay(1000)
         CoroutineScope(Dispatchers.Main).launch {
             while (true) {
-                delay(  5 *60 *1000)
+                delay(5 * 60 * 1000)
                 checkToken(context)
             }
         }
@@ -73,7 +81,7 @@ fun PurrytifyApp(context: Context) {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != "splash" && currentRoute != "login") {
+            if (currentRoute != "login") {
                 BottomNavbar(navController)
             }
         },
@@ -109,6 +117,7 @@ fun PurrytifyApp(context: Context) {
                     ProfileScreen(navController)
                 }
             }
+            NetworkStatus(networkMonitor)
             if (currentRoute != "nowPlaying") {
                 AnimatedVisibility(
                     visible = currentSong != null,
@@ -127,4 +136,3 @@ fun PurrytifyApp(context: Context) {
         }
     }
 }
-

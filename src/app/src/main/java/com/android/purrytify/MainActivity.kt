@@ -21,16 +21,13 @@ class MainActivity : ComponentActivity() {
 
         val songRepository = SongRepository(database.songDao())
         val userRepository = UserRepository(database.userDao())
-
         RepositoryProvider.init(songRepository, userRepository)
 
         var isReady = false
-
         splashScreen.setKeepOnScreenCondition { !isReady }
 
         lifecycleScope.launch {
             SongInitializer.initializeSongs(songRepository, applicationContext)
-//            UserInitializer.initializeUsers(userRepository)
             isReady = true
         }
 

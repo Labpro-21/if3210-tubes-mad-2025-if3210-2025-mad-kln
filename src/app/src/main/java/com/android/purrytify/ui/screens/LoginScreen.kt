@@ -50,7 +50,7 @@ fun LoginScreen(context: Context, navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color(0xFF121212))
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -95,9 +95,10 @@ fun LoginScreen(context: Context, navController: NavController) {
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .background(Color.Black),
+                    .background(Color(0xFF121212)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
                     focusedBorderColor = Color(0xFF1DB954),
                     unfocusedBorderColor = Color.Gray ,
                     cursorColor = Color.White
@@ -121,9 +122,10 @@ fun LoginScreen(context: Context, navController: NavController) {
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .background(Color.Black),
+                    .background(Color(0xFF121212)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
                     cursorColor = Color.White,
                     focusedBorderColor = Color(0xFF1DB954),
                     unfocusedBorderColor = Color.Gray

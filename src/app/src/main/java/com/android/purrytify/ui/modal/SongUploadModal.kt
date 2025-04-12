@@ -349,7 +349,7 @@ fun InputField(
             placeholder = { Text(label) },
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
-                unfocusedTextColor = Color.DarkGray,
+                unfocusedTextColor = Color.White,
                 focusedContainerColor = Color(0xFF212121),
                 unfocusedContainerColor = Color(0xFF212121),
                 focusedIndicatorColor = Color.Transparent,

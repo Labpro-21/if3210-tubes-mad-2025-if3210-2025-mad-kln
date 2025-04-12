@@ -34,7 +34,6 @@ fun HomeScreen(
     mediaPlayerViewModel: PlayerViewModel,
     songRepository: SongRepository = RepositoryProvider.getSongRepository()
 ) {
-
     val recentlyPlayedSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
     val newSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
 
@@ -44,17 +43,8 @@ fun HomeScreen(
     fun fetchUser() {
         coroutineScope.launch {
             val userId = fetchUserId(context)
-
             newSongs.value = songRepository.getNewSongsByUploader(userId, 5)
             recentlyPlayedSongs.value = songRepository.getRecentlyPlayedSongsByUploader(userId, 5)
-
-            for (song in recentlyPlayedSongs.value) {
-                Log.d("HomeScreen", "Recently Played Song: $song")
-            }
-
-            for (song in newSongs.value) {
-                Log.d("HomeScreen", "New Song: $song")
-            }
         }
     }
 
