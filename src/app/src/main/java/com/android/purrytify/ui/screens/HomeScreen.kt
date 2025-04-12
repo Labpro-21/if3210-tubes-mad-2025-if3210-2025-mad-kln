@@ -116,29 +116,9 @@ fun HomeScreen(
                                         })
                                 }
                             } else {
-                                items(5) { index ->
+                                items(3) { index ->
                                     SongCardFake(
                                         type = "large",
-                                        song = fallback
-                                    )
-                                }
-                            }
-                            items(newSongs.value) { song ->
-                                if (hasFetched.value) {
-                                    SongCard(
-                                        type = "small",
-                                        song = song,
-                                        modifier = Modifier.clickable {
-                                            mediaPlayerViewModel.setSongs(newSongs.value)
-                                            mediaPlayerViewModel.playSong(
-                                                context,
-                                                index = newSongs.value.indexOf(song)
-                                            )
-                                        })
-                                }
-                                else {
-                                    SongCardFake(
-                                        type = "small",
                                         song = fallback
                                     )
                                 }
@@ -165,16 +145,29 @@ fun HomeScreen(
                         )
                     }
                 }
-                items(recentlyPlayedSongs.value) { song ->
-                    SongCard(type = "small",
-                        song = song,
-                        modifier = Modifier.clickable {
-                            mediaPlayerViewModel.setSongs(recentlyPlayedSongs.value)
-                            mediaPlayerViewModel.playSong(
-                                context,
-                                index = recentlyPlayedSongs.value.indexOf(song)
-                            ) }
-                    )
+
+                if (hasFetched.value) {
+                    items(recentlyPlayedSongs.value) { song ->
+                        SongCard(
+                            type = "small",
+                            song = song,
+                            modifier = Modifier.clickable {
+                                mediaPlayerViewModel.setSongs(newSongs.value)
+                                mediaPlayerViewModel.playSong(
+                                    context,
+                                    index = newSongs.value.indexOf(song)
+                                )
+                            }
+                        )
+                    }
+                }
+                else {
+                    items(3) { index ->
+                        SongCardFake(
+                            type = "small",
+                            song = fallback
+                        )
+                    }
                 }
             }
     }
