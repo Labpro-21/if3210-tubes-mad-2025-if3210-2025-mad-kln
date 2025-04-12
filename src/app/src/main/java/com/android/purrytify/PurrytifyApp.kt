@@ -73,7 +73,7 @@ fun PurrytifyApp(context: Context) {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != "splash" && currentRoute != "login") {
+            if (currentRoute != "login") {
                 BottomNavbar(navController)
             }
         },
@@ -109,7 +109,7 @@ fun PurrytifyApp(context: Context) {
                     ProfileScreen(navController)
                 }
             }
-            if (currentRoute != "nowPlaying") {
+            if (currentRoute != "nowPlaying" && currentRoute != "login") {
                 AnimatedVisibility(
                     visible = currentSong != null,
                     enter = slideInVertically { it } + fadeIn(),
