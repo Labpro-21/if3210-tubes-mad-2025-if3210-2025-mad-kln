@@ -87,9 +87,9 @@ class SongRepository(private val songDao: SongDao) {
         }
     }
 
-    suspend fun getRecentSongsByUploader(uploaderId: Int, limit: Int): List<Song> {
+    suspend fun getRecentlyPlayedSongsByUploader(uploaderId: Int, limit: Int): List<Song> {
         return withContext(Dispatchers.IO) {
-            songDao.getRecentSongsByUploader(uploaderId, limit)
+            songDao.getRecentlyPlayedSongsByUploader(uploaderId, limit)
         }
     }
 
@@ -107,5 +107,11 @@ class SongRepository(private val songDao: SongDao) {
 
     suspend fun updateSongInfo(songId: Int, imageUri: String?, artist: String, title: String) {
         songDao.updateSongInfo(songId, imageUri, artist, title)
+    }
+
+    suspend fun getNewSongsByUploader(uploaderId: Int, limit: Int): List<Song> {
+        return withContext(Dispatchers.IO) {
+            songDao.getNewSongsByUploader(uploaderId, limit)
+        }
     }
 }
