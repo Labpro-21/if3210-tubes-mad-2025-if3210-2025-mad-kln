@@ -101,13 +101,14 @@ fun ProfileScreen(
         bitmap?.let {
             dominantColor = extractDominantColor(it)
         }
+        Log.d("DEBUG_PROFILE", "Dominant color: $dominantColor")
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(colors = listOf(dominantColor, Color.Black))
+                Brush.verticalGradient(colors = listOf(dominantColor, Color(0xFF121212)))
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
