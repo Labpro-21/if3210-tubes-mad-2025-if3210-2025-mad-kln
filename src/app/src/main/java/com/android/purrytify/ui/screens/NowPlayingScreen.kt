@@ -55,6 +55,7 @@ fun NowPlayingScreen(
 
     val songRepository = RepositoryProvider.getSongRepository()
     val isLastSong = viewModel.isLast()
+    val isShuffled by viewModel.isShuffled.collectAsState()
 
     val context = LocalContext.current
     var dominantColor by remember { mutableStateOf(Color.Black) }
@@ -149,7 +150,7 @@ fun NowPlayingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Title, Artist, Like Button
             song?.let {
@@ -172,19 +173,6 @@ fun NowPlayingScreen(
                             text = it.artist,
                             color = Color.LightGray,
                             fontSize = 16.sp
-                        )
-                    }
-
-                    IconButton(onClick = { viewModel.toggleRepeatMode() }) {
-                        val repeatIcon = when (repeatMode) {
-                            RepeatMode.NONE -> R.drawable.ic_repeat_none
-                            RepeatMode.REPEAT_ALL -> R.drawable.ic_repeat_all
-                            RepeatMode.REPEAT_ONE -> R.drawable.ic_repeat_one
-                        }
-                        Icon(
-                            painter = painterResource(id = repeatIcon),
-                            contentDescription = "Repeat Mode",
-                            tint = Color.Unspecified
                         )
                     }
 
@@ -234,19 +222,37 @@ fun NowPlayingScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = 24.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                IconButton(
+                    onClick = { viewModel.toggleRepeatMode() },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    val repeatIcon = when (repeatMode) {
+                        RepeatMode.NONE -> R.drawable.ic_repeat_none
+                        RepeatMode.REPEAT_ALL -> R.drawable.ic_repeat_all
+                        RepeatMode.REPEAT_ONE -> R.drawable.ic_repeat_one
+                    }
+                    Icon(
+                        painter = painterResource(id = repeatIcon),
+                        contentDescription = "Repeat Mode",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
                 IconButton(
                     onClick = { viewModel.playPrevious(context) },
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_previous),
                         contentDescription = "Previous",
                         tint = Color.White,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
 
@@ -265,13 +271,25 @@ fun NowPlayingScreen(
                 IconButton(
                     onClick = { viewModel.playNext(context) },
                     enabled = !(isLastSong && repeatMode == RepeatMode.NONE),
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_next),
                         contentDescription = "Next",
                         tint = if (isLastSong && repeatMode == RepeatMode.NONE) Color.Gray else Color.White,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                IconButton(
+                    onClick = { viewModel.toggleShuffle() },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (!isShuffled) R.drawable.ic_shuffle_inactive else R.drawable.ic_shuffle_active),
+                        contentDescription = "Shuffle",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }

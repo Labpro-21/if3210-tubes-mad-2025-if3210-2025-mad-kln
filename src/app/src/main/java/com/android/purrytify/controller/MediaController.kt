@@ -22,7 +22,7 @@
         private var handler = Handler(Looper.getMainLooper())
         private const val UPDATE_INTERVAL = 500L
 
-        var currentSongIndex = -1
+        private var currentSongIndex = -1
 
         private val _currentSong = MutableStateFlow<Song?>(null)
         val currentSong: StateFlow<Song?> = _currentSong
@@ -45,6 +45,12 @@
         private val _repeatMode = MutableStateFlow(RepeatMode.NONE)
         val repeatMode: StateFlow<RepeatMode> = _repeatMode
 
+        private val _isShuffleEnabled = MutableStateFlow(false)
+        val isShuffleEnabled: StateFlow<Boolean> = _isShuffleEnabled
+
+        private var shuffledIndices: List<Int> = emptyList()
+        private var shuffledIndex = 0
+
         private var onStateChanged: (() -> Unit)? = null
 
         private val updateRunnable = object : Runnable {
@@ -63,6 +69,7 @@
 
         fun setSongs(songs: List<Song>) {
             _songList.value = songs
+            reshuffle()
         }
 
         fun updateSongInList(updatedSong: Song) {
@@ -84,8 +91,16 @@
 
             mediaPlayer?.release()
 
-            val song = _songList.value[index]
-            currentSongIndex = index
+            val song: Song
+            if (_isShuffleEnabled.value) {
+                val trueIndex = shuffledIndices[shuffledIndex]
+                currentSongIndex = trueIndex
+                song = _songList.value[trueIndex]
+            } else {
+                currentSongIndex = index
+                song = _songList.value[currentSongIndex]
+            }
+
             _currentSong.value = song
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context.applicationContext, Uri.parse(song.audioUri))
@@ -95,21 +110,41 @@
                 _totalDuration.value = duration
                 setOnCompletionListener {
                     when (_repeatMode.value) {
-                        RepeatMode.REPEAT_ONE -> {
-                            playSong(context, currentSongIndex) // Replay current song
+                        RepeatMode.REPEAT_ONE -> {// Replay current song
+                            if (_isShuffleEnabled.value) {
+                                playSong(context, shuffledIndex)
+                            } else {
+                                playSong(context, currentSongIndex)
+                            }
                         }
                         RepeatMode.REPEAT_ALL -> {
-                            if (currentSongIndex + 1 >= _songList.value.size) {
-                                playSong(context, 0) // Loop to first song in list
+                            if (_isShuffleEnabled.value) {
+                                if (shuffledIndex + 1 >= shuffledIndices.size) {
+                                    playSong(context, shuffledIndices[0])
+                                } else {
+                                    playSong(context, shuffledIndices[shuffledIndex + 1])
+                                }
                             } else {
-                                playNext(context)
+                                if (currentSongIndex + 1 >= _songList.value.size) {
+                                    playSong(context, 0)
+                                } else {
+                                    playNext(context)
+                                }
                             }
                         }
                         RepeatMode.NONE -> {
-                            if (currentSongIndex + 1 < _songList.value.size) {
-                                playNext(context)
+                            if (_isShuffleEnabled.value) {
+                                if (shuffledIndex + 1 < shuffledIndices.size) {
+                                    playSong(context, shuffledIndices[shuffledIndex + 1])
+                                } else {
+                                    _isPlaying.value = false
+                                }
                             } else {
-                                _isPlaying.value = false
+                                if (currentSongIndex + 1 < _songList.value.size) {
+                                    playNext(context)
+                                } else {
+                                    _isPlaying.value = false
+                                }
                             }
                         }
                     }
@@ -146,24 +181,34 @@
             when (_repeatMode.value) {
                 RepeatMode.REPEAT_ONE -> {
                     _repeatMode.value = RepeatMode.REPEAT_ALL // Go next song, change mode to repeat all
-                    if (currentSongIndex + 1 < _songList.value.size) {
-                        playSong(context, currentSongIndex + 1)
-                    } else {
-                        playSong(context, 0)
-                    }
                 }
 
                 RepeatMode.REPEAT_ALL -> {
-                    if (currentSongIndex + 1 < _songList.value.size) {
-                        playSong(context, currentSongIndex + 1)
+                    if (_isShuffleEnabled.value) {
+                        shuffledIndex++
+                        if (shuffledIndex >= shuffledIndices.size) {
+                            shuffledIndex = 0
+                        }
+                        playSong(context, shuffledIndices[shuffledIndex])
                     } else {
-                        playSong(context, 0)
+                        if (currentSongIndex + 1 < _songList.value.size) {
+                            playSong(context, currentSongIndex + 1)
+                        } else {
+                            playSong(context, 0)
+                        }
                     }
                 }
 
                 RepeatMode.NONE -> {
-                    if (currentSongIndex + 1 < _songList.value.size) {
-                        playSong(context, currentSongIndex + 1)
+                    if (_isShuffleEnabled.value) {
+                        if (shuffledIndex + 1 < shuffledIndices.size) {
+                            shuffledIndex++
+                            playSong(context, shuffledIndices[shuffledIndex])
+                        }
+                    } else {
+                        if (currentSongIndex + 1 < _songList.value.size) {
+                            playSong(context, currentSongIndex + 1)
+                        }
                     }
                 }
             }
@@ -175,8 +220,18 @@
                     mediaPlayer?.let { player ->
                         if (player.currentPosition <= 5000) {
                             _repeatMode.value = RepeatMode.REPEAT_ALL
-                            if (currentSongIndex - 1 >= 0) {
-                                playSong(context, currentSongIndex - 1)
+                            if (_isShuffleEnabled.value) {
+                                if (shuffledIndex - 1 >= 0) {
+                                    shuffledIndex--
+                                    playSong(context, shuffledIndices[shuffledIndex])
+                                } else {
+                                    shuffledIndex = shuffledIndices.lastIndex
+                                    playSong(context, shuffledIndices[shuffledIndex])
+                                }
+                            } else {
+                                if (currentSongIndex - 1 >= 0) {
+                                    playSong(context, currentSongIndex - 1)
+                                }
                             }
                         } else {
                             playSong(context, currentSongIndex) // Replay Current Song
@@ -185,18 +240,35 @@
                 }
 
                 RepeatMode.REPEAT_ALL -> {
-                    if (currentSongIndex - 1 >= 0) {
-                        playSong(context, currentSongIndex - 1)
+                    if (_isShuffleEnabled.value) {
+                        shuffledIndex--
+                        if (shuffledIndex < 0) {
+                            shuffledIndex = shuffledIndices.lastIndex
+                        }
+                        playSong(context, shuffledIndices[shuffledIndex])
                     } else {
-                        playSong(context, _songList.value.lastIndex)
+                        if (currentSongIndex - 1 >= 0) {
+                            playSong(context, currentSongIndex - 1)
+                        } else {
+                            playSong(context, _songList.value.lastIndex)
+                        }
                     }
                 }
 
                 RepeatMode.NONE -> {
-                    if (currentSongIndex - 1 >= 0) {
-                        playSong(context, currentSongIndex - 1)
+                    if (_isShuffleEnabled.value) {
+                        if (shuffledIndex > 0) {
+                            shuffledIndex--
+                            playSong(context, shuffledIndices[shuffledIndex])
+                        } else {
+                            seekTo(0f)
+                        }
                     } else {
-                        playSong(context, 0)
+                        if (currentSongIndex - 1 >= 0) {
+                            playSong(context, currentSongIndex - 1)
+                        } else {
+                            seekTo(0f)
+                        }
                     }
                 }
             }
@@ -214,7 +286,23 @@
         }
 
         fun isLastSong(): Boolean {
-            return currentSongIndex == _songList.value.lastIndex
+            return if (_isShuffleEnabled.value) {
+                shuffledIndex == shuffledIndices.lastIndex
+            } else {
+                currentSongIndex == _songList.value.lastIndex
+            }
+        }
+
+        fun toggleShuffle() {
+            _isShuffleEnabled.value = !_isShuffleEnabled.value
+            reshuffle()
+        }
+
+        private fun reshuffle() {
+            val currentIndex = currentSongIndex
+            val remaining = _songList.value.indices.filter { it != currentIndex }.shuffled()
+            shuffledIndices = listOf(currentIndex) + remaining
+            shuffledIndex = 0
         }
 
         fun release() {
