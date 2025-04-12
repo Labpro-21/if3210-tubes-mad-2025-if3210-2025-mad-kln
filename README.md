@@ -170,8 +170,8 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>3</td>
         <td>Andi Marihot Sitorus</td>
         <td>13522138</td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>Login, Background Service, Profile BE</td>
+        <td>5</td>
+        <td>15</td>
     </tr>
 </table>
