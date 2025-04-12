@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
+import com.android.purrytify.controller.MediaPlayerController.repeatMode
+import com.android.purrytify.controller.RepeatMode
 import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
@@ -48,6 +50,7 @@ fun NowPlayingScreen(
     val progress by viewModel.progress.collectAsState()
     val currentTime by viewModel.currentTime.collectAsState()
     val totalDuration by viewModel.totalDuration.collectAsState()
+    val repeatMode by viewModel.repeatMode.collectAsState()
 
     val context = LocalContext.current
     var dominantColor by remember { mutableStateOf(Color.Black) }
@@ -168,6 +171,19 @@ fun NowPlayingScreen(
                             text = it.artist,
                             color = Color.LightGray,
                             fontSize = 16.sp
+                        )
+                    }
+
+                    IconButton(onClick = { viewModel.toggleRepeatMode() }) {
+                        val repeatIcon = when (repeatMode) {
+                            RepeatMode.NONE -> R.drawable.ic_repeat_none
+                            RepeatMode.REPEAT_ALL -> R.drawable.ic_repeat_all
+                            RepeatMode.REPEAT_ONE -> R.drawable.ic_repeat_one
+                        }
+                        Icon(
+                            painter = painterResource(id = repeatIcon),
+                            contentDescription = "Repeat Mode",
+                            tint = Color.Unspecified
                         )
                     }
 

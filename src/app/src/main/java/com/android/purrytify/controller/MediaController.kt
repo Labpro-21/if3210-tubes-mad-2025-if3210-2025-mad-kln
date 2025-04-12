@@ -10,6 +10,12 @@
     import kotlinx.coroutines.flow.MutableStateFlow
     import kotlinx.coroutines.flow.StateFlow
 
+    enum class RepeatMode {
+        NONE,
+        REPEAT_ONE,
+        REPEAT_ALL
+    }
+
     object MediaPlayerController {
 
         private var mediaPlayer: MediaPlayer? = null
@@ -35,6 +41,9 @@
 
         private val _songList = MutableStateFlow<List<Song>>(emptyList())
         val songList: StateFlow<List<Song>> = _songList
+
+        private val _repeatMode = MutableStateFlow(RepeatMode.NONE)
+        val repeatMode: StateFlow<RepeatMode> = _repeatMode
 
         private var onStateChanged: (() -> Unit)? = null
 
@@ -85,7 +94,25 @@
                 _isPlaying.value = true
                 _totalDuration.value = duration
                 setOnCompletionListener {
-                    playNext(context)
+                    when (_repeatMode.value) {
+                        RepeatMode.REPEAT_ONE -> {
+                            playSong(context, currentSongIndex) // Replay current song
+                        }
+                        RepeatMode.REPEAT_ALL -> {
+                            if (currentSongIndex + 1 >= _songList.value.size) {
+                                playSong(context, 0) // Loop to first song in list
+                            } else {
+                                playNext(context)
+                            }
+                        }
+                        RepeatMode.NONE -> {
+                            if (currentSongIndex + 1 < _songList.value.size) {
+                                playNext(context)
+                            } else {
+                                _isPlaying.value = false
+                            }
+                        }
+                    }
                 }
             }
 
@@ -116,22 +143,74 @@
         }
 
         fun playNext(context: Context) {
-            if (currentSongIndex + 1 < _songList.value.size) {
-                playSong(context, currentSongIndex + 1)
+            when (_repeatMode.value) {
+                RepeatMode.REPEAT_ONE -> {
+                    _repeatMode.value = RepeatMode.REPEAT_ALL // Go next song, change mode to repeat all
+                    if (currentSongIndex + 1 < _songList.value.size) {
+                        playSong(context, currentSongIndex + 1)
+                    } else {
+                        playSong(context, 0)
+                    }
+                }
+
+                RepeatMode.REPEAT_ALL -> {
+                    if (currentSongIndex + 1 < _songList.value.size) {
+                        playSong(context, currentSongIndex + 1)
+                    } else {
+                        playSong(context, 0)
+                    }
+                }
+
+                RepeatMode.NONE -> {
+                    if (currentSongIndex + 1 < _songList.value.size) {
+                        playSong(context, currentSongIndex + 1)
+                    }
+                }
             }
         }
 
         fun playPrevious(context: Context) {
-            if (currentSongIndex - 1 >= 0) {
-                playSong(context, currentSongIndex - 1)
+            when (_repeatMode.value) {
+                RepeatMode.REPEAT_ONE -> {
+                    mediaPlayer?.let { player ->
+                        if (player.currentPosition <= 5000) {
+                            _repeatMode.value = RepeatMode.REPEAT_ALL
+                            if (currentSongIndex - 1 >= 0) {
+                                playSong(context, currentSongIndex - 1)
+                            }
+                        } else {
+                            playSong(context, currentSongIndex) // Replay Current Song
+                        }
+                    }
+                }
+
+                RepeatMode.REPEAT_ALL -> {
+                    if (currentSongIndex - 1 >= 0) {
+                        playSong(context, currentSongIndex - 1)
+                    } else {
+                        playSong(context, _songList.value.lastIndex)
+                    }
+                }
+
+                RepeatMode.NONE -> {
+                    if (currentSongIndex - 1 >= 0) {
+                        playSong(context, currentSongIndex - 1)
+                    }
+                }
             }
         }
+
 
         fun clearCurrentSong() {
             mediaPlayer?.stop()
             mediaPlayer?.reset()
             _currentSong.value = null
         }
+
+        fun setRepeatMode(mode: RepeatMode) {
+            _repeatMode.value = mode
+        }
+
         fun release() {
             handler.removeCallbacks(updateRunnable)
             mediaPlayer?.release()
