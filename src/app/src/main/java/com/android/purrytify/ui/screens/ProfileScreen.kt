@@ -30,6 +30,8 @@ import coil.compose.AsyncImage
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.User
 import com.android.purrytify.datastore.TokenManager
+import com.android.purrytify.view_model.PlayerViewModel
+import com.android.purrytify.view_model.getPlayerViewModel
 import extractDominantColor
 import getCountryNameFromCode
 import kotlinx.coroutines.flow.firstOrNull
@@ -38,7 +40,10 @@ import loadBitmapFromUrl
 
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    mediaPlayerViewModel: PlayerViewModel = getPlayerViewModel()
+) {
     val userRepository = RepositoryProvider.getUserRepository()
     val songRepository = RepositoryProvider.getSongRepository()
     val context = LocalContext.current
@@ -83,6 +88,7 @@ fun ProfileScreen(navController: NavController) {
         coroutineScope.launch {
             TokenManager.clearToken(context)
             Log.d("DEBUG_PROFILE", "Logged out")
+            mediaPlayerViewModel.clearCurrent()
             navController.navigate("login")
         }
     }

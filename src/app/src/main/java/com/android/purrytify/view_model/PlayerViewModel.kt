@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.controller.MediaPlayerController
+import com.android.purrytify.controller.RepeatMode
 import kotlinx.coroutines.flow.StateFlow
 
 
@@ -21,6 +22,8 @@ class PlayerViewModel : ViewModel() {
     val progress: StateFlow<Float> = controller.progress
     val currentTime: StateFlow<Int> = controller.currentTime
     val totalDuration: StateFlow<Int> = controller.totalDuration
+    val repeatMode: StateFlow<RepeatMode> = MediaPlayerController.repeatMode
+
 
     fun updateSongInList(song: Song) {
         controller.updateSongInList(song)
@@ -53,9 +56,21 @@ class PlayerViewModel : ViewModel() {
     fun playPrevious(context: Context) {
         controller.playPrevious(context)
     }
+
     fun clearCurrent(){
         controller.clearCurrentSong()
     }
+
+    fun toggleRepeatMode() {
+        val current = MediaPlayerController.repeatMode.value
+        val next = when (current) {
+            RepeatMode.NONE -> RepeatMode.REPEAT_ALL
+            RepeatMode.REPEAT_ALL -> RepeatMode.REPEAT_ONE
+            RepeatMode.REPEAT_ONE -> RepeatMode.NONE
+        }
+        MediaPlayerController.setRepeatMode(next)
+    }
+
     override fun onCleared() {
         super.onCleared()
         controller.release()

@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
+import com.android.purrytify.controller.RepeatMode
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
@@ -48,23 +50,23 @@ fun NowPlayingScreen(
     val progress by viewModel.progress.collectAsState()
     val currentTime by viewModel.currentTime.collectAsState()
     val totalDuration by viewModel.totalDuration.collectAsState()
+    val repeatMode by viewModel.repeatMode.collectAsState()
+
+    val songRepository = RepositoryProvider.getSongRepository()
 
     val context = LocalContext.current
     var dominantColor by remember { mutableStateOf(Color.Black) }
 
-    LaunchedEffect(song?.imageUri) {
-        song?.imageUri?.let { uri ->
-            val bitmap = loadBitmapFromUri(context, uri)
-            bitmap?.let {
-                dominantColor = extractDominantColor(it)
-            }
-        }
-    }
-
     LaunchedEffect(song) {
-        if (song == null) {
-            onClose()
-        }
+        song?.let {
+            songRepository.updateLastPlayedDate(it.id)
+
+            val bitmap = loadBitmapFromUri(context, it.imageUri)
+            bitmap?.let { bmp ->
+                dominantColor = extractDominantColor(bmp)
+            }
+
+        } ?: onClose()
     }
 
     val darkerColor = darkenColor(dominantColor)
@@ -168,6 +170,19 @@ fun NowPlayingScreen(
                             text = it.artist,
                             color = Color.LightGray,
                             fontSize = 16.sp
+                        )
+                    }
+
+                    IconButton(onClick = { viewModel.toggleRepeatMode() }) {
+                        val repeatIcon = when (repeatMode) {
+                            RepeatMode.NONE -> R.drawable.ic_repeat_none
+                            RepeatMode.REPEAT_ALL -> R.drawable.ic_repeat_all
+                            RepeatMode.REPEAT_ONE -> R.drawable.ic_repeat_one
+                        }
+                        Icon(
+                            painter = painterResource(id = repeatIcon),
+                            contentDescription = "Repeat Mode",
+                            tint = Color.Unspecified
                         )
                     }
 

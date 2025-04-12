@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.LikeButton
 import extractDominantColor
 import com.android.purrytify.view_model.PlayerViewModel
@@ -57,12 +58,20 @@ fun MiniPlayer(
     var dominantColor by remember { mutableStateOf(Color.Black) }
     val context = LocalContext.current
 
+    val songRepository = RepositoryProvider.getSongRepository()
+
     LaunchedEffect(song?.imageUri) {
         song?.imageUri?.let { uri ->
             val bitmap = loadBitmapFromUri(context, uri)
             bitmap?.let {
                 dominantColor = extractDominantColor(it)
             }
+        }
+    }
+
+    LaunchedEffect(song?.id) {
+        song?.let {
+            songRepository.updateLastPlayedDate(it.id)
         }
     }
 
