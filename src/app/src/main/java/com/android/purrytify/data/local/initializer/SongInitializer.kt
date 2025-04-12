@@ -73,6 +73,56 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-11 04:00:00",
                 context = context
             ),
+            createSong(
+                id = 6,
+                title = "Counting Stars",
+                artist = "Nujabes",
+                drawableResId = R.drawable.photo_counting_stars,
+                audioResId = R.raw.audio_counting_stars,
+                uploaderId = 127,
+                lastPlayedDate = "2025-04-12 01:00:00",
+                context = context
+            ),
+            createSong(
+                id = 7,
+                title = "Just Forget",
+                artist = "FORCE OF NATURE",
+                drawableResId = R.drawable.photo_just_forget,
+                audioResId = R.raw.audio_just_forget,
+                uploaderId = 127,
+                lastPlayedDate = "2025-04-12 02:30:00",
+                context = context
+            ),
+            createSong(
+                id = 8,
+                title = "Shiki No Uta   ",
+                artist = "MINMI",
+                drawableResId = R.drawable.photo_shiki_no_uta,
+                audioResId = R.raw.audio_shiki_no_uta,
+                uploaderId = 127,
+                lastPlayedDate = "2025-04-12 04:00:00",
+                context = context
+            ),
+            createSong(
+                id = 9,
+                title = "Who's Theme",
+                artist = "MINMI",
+                drawableResId = R.drawable.photo_whos_theme,
+                audioResId = R.raw.audio_whos_theme,
+                uploaderId = 127,
+                lastPlayedDate = "2025-04-12 05:30:00",
+                context = context
+            ),
+            createSong(
+                id = 10,
+                title = "愛密集",
+                artist = "Yakkle",
+                drawableResId = R.drawable.photo_i_miss_you,
+                audioResId = R.raw.audio_i_miss_you,
+                uploaderId = 127,
+                lastPlayedDate = "2025-04-12 07:00:00",
+                context = context
+            ),
         )
     }
 
