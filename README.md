@@ -149,6 +149,8 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
 
 ## Pembagian Kerja
 
+[Google Docs: Detail Pembagian Kerja](https://docs.google.com/document/d/1nY7Lu_uelhO5CIBwzEW72Fe1I4ItoQklNpqjB6kYFIU/edit?usp=sharing)
+
 <table border="1">
     <tr>
         <th>No</th>
