@@ -48,5 +48,8 @@ interface SongDao {
 
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY uploadDate DESC LIMIT :limit")
     suspend fun getNewSongsByUploader(uploaderId: Int, limit: Int): List<Song>
+
+    @Query("SELECT COUNT(*) FROM songs WHERE uploaderId = :uploaderId AND lastPlayedDate != null")
+    suspend fun getListenedSongsCount(uploaderId: Int): Int
 }
 

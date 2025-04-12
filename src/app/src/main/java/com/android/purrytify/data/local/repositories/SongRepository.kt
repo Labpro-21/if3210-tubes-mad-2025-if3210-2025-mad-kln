@@ -115,4 +115,10 @@ class SongRepository(private val songDao: SongDao) {
             songDao.getNewSongsByUploader(uploaderId, limit)
         }
     }
+
+    suspend fun getListenedSongsCount(uploaderId: Int): Int {
+        return withContext(Dispatchers.IO) {
+            songDao.getListenedSongsCount(uploaderId)
+        }
+    }
 }

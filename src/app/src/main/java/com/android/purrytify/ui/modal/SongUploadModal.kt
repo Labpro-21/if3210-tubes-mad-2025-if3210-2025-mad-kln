@@ -1,5 +1,7 @@
 package com.android.purrytify.ui.modal
 
+import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.android.purrytify.data.local.repositories.SongRepository
 import com.android.purrytify.data.local.entities.Song
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
@@ -39,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import com.android.purrytify.R
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.CustomBottomSheet
+import com.android.purrytify.view_model.getPlayerViewModel
 import fetchUserId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +52,7 @@ fun SongUploadModal(
     isVisible: Boolean,
     onDismiss: (refresh: Boolean) -> Unit,
 ) {
+    val mediaPlayerViewModel = getPlayerViewModel()
     val songRepository = RepositoryProvider.getSongRepository()
 
     val context = LocalContext.current
@@ -61,6 +64,7 @@ fun SongUploadModal(
     val audioUri = remember { mutableStateOf<Uri?>(null) }
 
     var userId = remember { mutableStateOf(0) }
+    val mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -82,14 +86,18 @@ fun SongUploadModal(
                 artist.value = ""
                 photoUri.value = null
                 audioUri.value = null
+                mediaPlayerViewModel.clearCurrent()
                 onDismiss(false)
             },
             onSave = {
-                if (title.value.isNotEmpty() && artist.value.isNotEmpty() && photoUri.value != null && audioUri.value != null) {
+                if (title.value.isNotEmpty() && artist.value.isNotEmpty() && audioUri.value != null) {
+                    mediaPlayerViewModel.clearCurrent()
+                    val imgRes = R.drawable.default_music_image
+
                     val newSong = Song(
                         title = title.value,
                         artist = artist.value,
-                        imageUri = photoUri.value.toString(),
+                        imageUri = photoUri.value?.toString() ?: Uri.parse("android.resource://${context.packageName}/$imgRes").toString(),
                         audioUri = audioUri.value.toString(),
                         uploaderId = userId.value,
                     )
@@ -142,7 +150,7 @@ fun UploadSongContent(
                     .padding(bottom = 8.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            UploadMediaRow(photoUri, audioUri)
+            UploadMediaRow(photoUri, audioUri, title, artist)
             Spacer(modifier = Modifier.height(16.dp))
             InputField(title.value, { title.value = it }, "Title")
             Spacer(modifier = Modifier.height(16.dp))
@@ -154,20 +162,26 @@ fun UploadSongContent(
 }
 
 @Composable
-fun UploadMediaRow(photoUri: MutableState<Uri?>, audioUri: MutableState<Uri?>) {
+fun UploadMediaRow(
+    photoUri: MutableState<Uri?>,
+    audioUri: MutableState<Uri?>,
+    title: MutableState<String>,
+    artist: MutableState<String>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         PhotoUploadBox(uri = photoUri.value, onUpload = { photoUri.value = it })
-        AudioUploadBox(uri = audioUri.value, onUpload = { audioUri.value = it })
+        AudioUploadBox(uri = audioUri.value, onUpload = { audioUri.value = it }, title, artist)
     }
 }
 
 @Composable
 fun UploadButtons(onCancel: () -> Unit, onSave: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 32.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         StyledButton(text = "Cancel", backgroundColor = Color(0xFF535353), onClick = onCancel)
@@ -179,7 +193,10 @@ fun UploadButtons(onCancel: () -> Unit, onSave: () -> Unit) {
 fun StyledButton(text: String, backgroundColor: Color, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        modifier = Modifier.padding(16.dp).height(50.dp).width(170.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .height(50.dp)
+            .width(170.dp),
         colors = ButtonDefaults.buttonColors(containerColor = backgroundColor, contentColor = Color.White)
     ) {
         Text(text = text, fontSize = 18.sp)
@@ -205,7 +222,10 @@ fun PhotoUploadBox(
                 drawContent()
                 drawRoundRect(
                     color = Color.DarkGray,
-                    style = Stroke(width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)),
+                    style = Stroke(
+                        width = 2.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
+                    ),
                     cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
                 )
             },
@@ -254,34 +274,39 @@ fun PhotoUploadBox(
 fun AudioUploadBox(
     uri: Uri?,
     onUpload: (Uri) -> Unit,
+    title: MutableState<String>,
+    artist: MutableState<String>,
 ) {
     val context = LocalContext.current
 
     var isPlaying by remember { mutableStateOf(false) }
-    var mediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
-
-    LaunchedEffect(uri) {
-        mediaPlayer?.release()
-
-        uri?.let {
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(context, it)
-                prepareAsync()
-            }
-        }
-    }
+    val mediaPlayerViewModel = getPlayerViewModel()
 
     val playPauseLogic: () -> Unit = {
-        if (isPlaying) {
-            mediaPlayer?.pause()
+        if (!isPlaying) {
+            mediaPlayerViewModel.playSong(context, 0)
         } else {
-            mediaPlayer?.start()
+            mediaPlayerViewModel.clearCurrent()
         }
         isPlaying = !isPlaying
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { selectedUri ->
-        selectedUri?.let { onUpload(it) }
+        selectedUri?.let {
+            onUpload(it)
+            val tempSongList = listOf(
+                Song(
+                    title = "temp",
+                    artist = "temp",
+                    imageUri = "",
+                    audioUri = selectedUri.toString(),
+                    uploaderId = 0
+                )
+            )
+            mediaPlayerViewModel.setSongs(tempSongList)
+            artist.value = getArtistFromUri(context, selectedUri)
+            title.value = getTitleFromUri(context, selectedUri)
+        }
     }
 
     Box(
@@ -294,7 +319,10 @@ fun AudioUploadBox(
                 drawContent()
                 drawRoundRect(
                     color = Color.DarkGray,
-                    style = Stroke(width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)),
+                    style = Stroke(
+                        width = 2.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
+                    ),
                     cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
                 )
             },
@@ -304,14 +332,15 @@ fun AudioUploadBox(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier
+                    .padding(top=8.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = if (isPlaying) "Pause" else "Play",
                         color = Color.DarkGray,
                         fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(top = 12.dp)
                     )
                     IconButton(onClick = playPauseLogic) {
                         Icon(
@@ -321,6 +350,12 @@ fun AudioUploadBox(
                             modifier = Modifier.size(60.dp)
                         )
                     }
+                    Text(
+                        text = getSongDurationFormatted(context, uri),
+                        color = Color.DarkGray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 10.dp)
+                    )
                 }
             }
         } else {
@@ -373,6 +408,58 @@ fun InputField(
                 .fillMaxWidth()
                 .border(2.dp, Color.DarkGray, RoundedCornerShape(8.dp))
         )
+    }
+}
+
+fun formatTimeUpload(timeMs : Int): String {
+    val minutes = (timeMs / 1000) / 60
+    val seconds = (timeMs / 1000) % 60
+    return "%d:%02d".format(minutes, seconds)
+}
+
+
+fun getSongDurationFormatted(context: Context, uri: Uri): String {
+    val retriever = MediaMetadataRetriever()
+    return try {
+        retriever.setDataSource(context, uri)
+        val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+        val durationMs = durationStr?.toLongOrNull() ?: 0L
+        val minutes = (durationMs / 1000) / 60
+        val seconds = (durationMs / 1000) % 60
+        "%d:%02d".format(minutes, seconds)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "0:00"
+    } finally {
+        retriever.release()
+    }
+}
+
+fun getTitleFromUri(context: Context, uri: Uri): String {
+    val retriever = MediaMetadataRetriever()
+    return try {
+        retriever.setDataSource(context, uri)
+        val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+        title ?: "Unknown Title"
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "Unknown Title"
+    } finally {
+        retriever.release()
+    }
+}
+
+fun getArtistFromUri(context: Context, uri: Uri): String {
+    val retriever = MediaMetadataRetriever()
+    return try {
+        retriever.setDataSource(context, uri)
+        val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+        artist ?: "Unknown Artist"
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "Unknown Artist"
+    } finally {
+        retriever.release()
     }
 }
 

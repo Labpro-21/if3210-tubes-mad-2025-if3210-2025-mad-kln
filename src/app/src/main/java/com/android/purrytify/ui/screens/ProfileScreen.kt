@@ -79,9 +79,20 @@ fun ProfileScreen(
 
             Log.d("DEBUG_PROFILE", "profile url: $profileURL")
 
-            songCount = songRepository.getSongsByUploader(id).size
+            val songs = songRepository.getSongsByUploader(id)
+            songCount = songs.size
             likeCount = songRepository.getLikedSongsByUploader(id).size
-            listenedCount = songRepository.getListenedSongsByUploader(id).size
+            listenedCount = 0
+
+            Log.d("DEBUG_PROFILE", "song count: $songCount")
+            Log.d("DEBUG_PROFILE", "like count: $likeCount")
+            Log.d("DEBUG_PROFILE", "listened count: $listenedCount")
+
+            for (song in songs){
+                if (song.lastPlayedDate != null) {
+                    listenedCount++
+                } 
+            }
         }
     }
 

@@ -34,6 +34,9 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun setSongs(songs: List<Song>) {
+        for (song in songs) {
+            Log.d("PlayerViewModel", "setSongs: ${song}")
+        }
         controller.setSongs(songs)
     }
 
