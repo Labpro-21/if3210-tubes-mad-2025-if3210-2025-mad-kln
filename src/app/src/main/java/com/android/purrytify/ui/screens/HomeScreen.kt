@@ -27,6 +27,7 @@ import com.android.purrytify.ui.components.SongCardFake
 import com.android.purrytify.ui.components.SongCardFakeProps
 import com.android.purrytify.view_model.PlayerViewModel
 import fetchUserId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,11 +41,14 @@ fun HomeScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+
     fun fetchUser() {
         coroutineScope.launch {
+            delay(200)
             val userId = fetchUserId(context)
             newSongs.value = songRepository.getNewSongsByUploader(userId, 5)
             recentlyPlayedSongs.value = songRepository.getRecentlyPlayedSongsByUploader(userId, 5)
+            Log.d("HomeScreen", "Fetched new songs: ${newSongs.value}")
         }
     }
 

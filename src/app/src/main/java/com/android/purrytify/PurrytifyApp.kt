@@ -27,7 +27,9 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,6 +45,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.android.purrytify.ui.components.NetworkStatus
 import com.android.purrytify.network.NetworkMonitor
+import com.android.purrytify.ui.screens.BlankScreen
 import com.android.purrytify.ui.screens.NoInternetScreen
 
 
@@ -50,25 +53,33 @@ import com.android.purrytify.ui.screens.NoInternetScreen
 fun PurrytifyApp(context: Context) {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
-    val token by TokenManager.getToken(context).collectAsState(initial = null)
     val mediaPlayerViewModel = getPlayerViewModel()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
     val currentSong by mediaPlayerViewModel.currentSong.collectAsState()
 
-    val networkMonitor = remember {NetworkMonitor(context) }
+    val networkMonitor = remember { NetworkMonitor(context) }
     val isConnected by networkMonitor.isConnected.collectAsState()
 
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.Main).launch {
-            while (true) {
-                delay(5 * 60 * 1000)
-                checkToken(context)
+    val token by TokenManager.getToken(context).collectAsState(initial = null)
+    var hasLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(token) {
+        if (hasLoaded && token != null) {
+            if (token!!.isEmpty()) {
+                navController.navigate("login") {
+                    popUpTo(0)
+                }
+            } else {
+                navController.navigate("home") {
+                    popUpTo(0)
+                }
             }
         }
+    }
 
-        systemUiController.isStatusBarVisible = false
-
+    LaunchedEffect(Unit) {
+        delay(100)
         if (token.isNullOrEmpty()) {
             navController.navigate("login") {
                 popUpTo(0)
@@ -78,6 +89,14 @@ fun PurrytifyApp(context: Context) {
                 popUpTo(0)
             }
         }
+
+        hasLoaded = true
+
+        systemUiController.isStatusBarVisible = false
+        while (true) {
+            delay(5 * 60 * 1000)
+            checkToken(context)
+        }
     }
 
     Scaffold(
@@ -85,24 +104,29 @@ fun PurrytifyApp(context: Context) {
         containerColor = Color(0xFF121212)
     ) { paddingValues ->
         Box(
-            modifier = Modifier.padding(paddingValues).fillMaxSize()
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
         ) {
             NavHost(
                 navController = navController,
-                startDestination = "login",
+                startDestination = "blank",
             ) {
+                composable("blank") {
+                    BlankScreen()
+                }
                 composable("login") {
                     LoginScreen(context, navController)
                 }
                 composable("home") {
-                    HomeScreen(
-                        mediaPlayerViewModel = mediaPlayerViewModel,
-                    )
+                    if (!token.isNullOrEmpty()) {
+                        HomeScreen(mediaPlayerViewModel = mediaPlayerViewModel)
+                    } else {
+                        BlankScreen()
+                    }
                 }
                 composable("library") {
-                    LibraryScreen(
-                        mediaPlayerViewModel = mediaPlayerViewModel,
-                    )
+                    LibraryScreen(mediaPlayerViewModel = mediaPlayerViewModel)
                 }
                 composable("nowPlaying") {
                     NowPlayingScreen(
@@ -110,22 +134,24 @@ fun PurrytifyApp(context: Context) {
                         onClose = { navController.popBackStack() }
                     )
                 }
-                composable("profile"){
-                    if (isConnected){
+                composable("profile") {
+                    if (isConnected) {
                         ProfileScreen(navController)
                     } else {
                         NoInternetScreen()
                     }
                 }
             }
-            if (currentRoute != "profile"){
+
+            if (currentRoute != "profile") {
                 NetworkStatus(networkMonitor)
             }
-            if (currentRoute != "nowPlaying") {
+
+            if (currentRoute != "nowPlaying" && currentRoute != "login" && currentRoute != "blank") {
                 AnimatedVisibility(
                     visible = currentSong != null,
-                    enter = slideInVertically { it } + fadeIn(),
-                    exit = slideOutVertically { it } + fadeOut(),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 80.dp)
@@ -137,7 +163,7 @@ fun PurrytifyApp(context: Context) {
                 }
             }
 
-            if (currentRoute != "login") {
+            if (currentRoute != "login" && currentRoute != "blank") {
                 BottomNavbar(
                     navController = navController,
                     modifier = Modifier
@@ -148,3 +174,4 @@ fun PurrytifyApp(context: Context) {
         }
     }
 }
+
