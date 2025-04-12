@@ -93,38 +93,38 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
     </tr>
     <tr>
         <td>1</td>
+        <td>Splash</td>
+        <td style="text-align: center;">
+            <img src="screenshot/splash.png" alt="Screenshot Login Page" style="width: 150px; height: auto; object-fit: contain;">
+        </td>
+        <td>2</td>
         <td>Login Page</td>
         <td style="text-align: center;">
             <img src="screenshot/login.png" alt="Screenshot Login Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-        <td>2</td>
+    </tr>
+    <tr>
+        <td>3</td>
         <td>Home Page</td>
         <td style="text-align: center;">
             <img src="screenshot/home.png" alt="Screenshot Home Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-    </tr>
-    <tr>
-        <td>3</td>
+        <td>4</td>
         <td>Library Page</td>
         <td style="text-align: center;">
             <img src="screenshot/library.png" alt="Screenshot Library Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-         <td>4</td>
+    </tr>
+    <tr>
+        <td>5</td>
         <td>Track View Page</td>
         <td style="text-align: center;">
             <img src="screenshot/player.png" alt="Screenshot Music Player Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
-    </tr>
-    <tr>
-        <td>5</td>
+        <td>6</td>
         <td>Profile Page</td>
         <td style="text-align: center;">
             <img src="screenshot/profile.png" alt="Screenshot Profile Page" style="width: 150px; height: auto; object-fit: contain;">
-        </td>
-         <td>6</td>
-        <td>No Internet</td>
-        <td style="text-align: center;">
-            <img src="screenshot/nointernet.png" alt="Screenshot No Internet Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
     <tr>
@@ -132,6 +132,11 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>Upload Song</td>
         <td style="text-align: center;">
             <img src="screenshot/upload.png" alt="Screenshot Upload Song Page" style="width: 150px; height: auto; object-fit: contain;">
+        </td>
+        <td>8</td>
+        <td>No Internet</td>
+        <td style="text-align: center;">
+            <img src="screenshot/nointernet.png" alt="Screenshot No Internet Page" style="width: 150px; height: auto; object-fit: contain;">
         </td>
     </tr>
 </table>
@@ -141,7 +146,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
 1. Shuffle
 2. Repeat
 3. Pencarian
-   
+
 ## Pembagian Kerja
 
 <table border="1">
@@ -178,5 +183,3 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>20</td>
     </tr>
 </table>
-
-
