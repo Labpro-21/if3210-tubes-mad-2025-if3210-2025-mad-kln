@@ -12,9 +12,15 @@ object SongInitializer {
     suspend fun initializeSongs(songRepository: SongRepository, context: Context) {
         withContext(Dispatchers.IO) {
             songRepository.deleteAllSongs()
+            val allSongs = songRepository.getAllSongs()
 
-            val mockSongs = createMockSongs(context)
-            songRepository.insertSongs(mockSongs)
+            if (allSongs.size == 0) {
+                val mockSongs = createMockSongs(context)
+                songRepository.insertSongs(mockSongs)
+            }
+//
+//            val mockSongs = createMockSongs(context)
+//            songRepository.insertSongs(mockSongs)
         }
     }
 

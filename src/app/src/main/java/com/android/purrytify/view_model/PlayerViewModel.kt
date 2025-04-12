@@ -45,6 +45,7 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun playSong(context: Context, index: Int) {
+        Log.d("PlayerViewModel", "playSong: $index")
         controller.playSong(context, index)
     }
 

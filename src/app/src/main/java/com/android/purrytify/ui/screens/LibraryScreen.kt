@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.viewinterop.AndroidView
@@ -123,22 +124,30 @@ fun LibraryScreen(
                 color = Color.Gray
             )
 
-            key(activeSongs) {
-                AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { context ->
-                        RecyclerView(context).apply {
-                            layoutManager = LinearLayoutManager(context)
-                            adapter = SongAdapter(activeSongs) { song ->
-                                val index = activeSongs.indexOf(song)
-                                mediaPlayerViewModel.playSong(context, index)
-                                Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
-                            }.also { songAdapterRef.value = it }
-                            recyclerViewRef.value = this
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(490.dp)
+                    .clipToBounds()
+            ) {
+                key(activeSongs) {
+                    AndroidView(
+                        modifier = Modifier.fillMaxSize(),
+                        factory = { context ->
+                            RecyclerView(context).apply {
+                                layoutManager = LinearLayoutManager(context)
+                                adapter = SongAdapter(activeSongs) { song ->
+                                    val index = activeSongs.indexOf(song)
+                                    mediaPlayerViewModel.playSong(context, index)
+                                    Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
+                                }.also { songAdapterRef.value = it }
+                                recyclerViewRef.value = this
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
+
         }
     }
 }
