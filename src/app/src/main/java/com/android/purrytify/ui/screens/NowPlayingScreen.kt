@@ -53,6 +53,7 @@ fun NowPlayingScreen(
     val repeatMode by viewModel.repeatMode.collectAsState()
 
     val songRepository = RepositoryProvider.getSongRepository()
+    val isLastSong = viewModel.isLast()
 
     val context = LocalContext.current
     var dominantColor by remember { mutableStateOf(Color.Black) }
@@ -262,12 +263,13 @@ fun NowPlayingScreen(
 
                 IconButton(
                     onClick = { viewModel.playNext(context) },
+                    enabled = !(isLastSong && repeatMode == RepeatMode.NONE),
                     modifier = Modifier.size(64.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_next),
                         contentDescription = "Next",
-                        tint = Color.White,
+                        tint = if (isLastSong && repeatMode == RepeatMode.NONE) Color.Gray else Color.White,
                         modifier = Modifier.size(48.dp)
                     )
                 }

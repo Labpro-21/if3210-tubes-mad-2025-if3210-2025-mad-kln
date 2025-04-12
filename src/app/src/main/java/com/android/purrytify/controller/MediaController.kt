@@ -40,7 +40,7 @@
         val totalDuration: StateFlow<Int> = _totalDuration
 
         private val _songList = MutableStateFlow<List<Song>>(emptyList())
-        val songList: StateFlow<List<Song>> = _songList
+        //val songList: StateFlow<List<Song>> = _songList
 
         private val _repeatMode = MutableStateFlow(RepeatMode.NONE)
         val repeatMode: StateFlow<RepeatMode> = _repeatMode
@@ -195,6 +195,8 @@
                 RepeatMode.NONE -> {
                     if (currentSongIndex - 1 >= 0) {
                         playSong(context, currentSongIndex - 1)
+                    } else {
+                        playSong(context, 0)
                     }
                 }
             }
@@ -209,6 +211,10 @@
 
         fun setRepeatMode(mode: RepeatMode) {
             _repeatMode.value = mode
+        }
+
+        fun isLastSong(): Boolean {
+            return currentSongIndex == _songList.value.lastIndex
         }
 
         fun release() {
