@@ -84,7 +84,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
 
 <table style="width: 100%;" border="1">
     <tr>
-        <th>Nomor</th>
+        <th>No</th>
         <th>Halaman</th>
         <th>Screenshot</th>
     </tr>
