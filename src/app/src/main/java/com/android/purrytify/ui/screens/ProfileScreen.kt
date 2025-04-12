@@ -32,6 +32,7 @@ import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.User
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.network.RetrofitClient
+import com.android.purrytify.network.checkToken
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
 import extractDominantColor
@@ -70,6 +71,7 @@ fun ProfileScreen(
 
     fun fetchUser() {
         coroutineScope.launch {
+            checkToken(context)
             val id = fetchUserId(context)
             Log.d("DEBUG_PROFILE", "Fetched user ID: $id")
 
