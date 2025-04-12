@@ -47,6 +47,7 @@ import com.android.purrytify.ui.components.NetworkStatus
 import com.android.purrytify.network.NetworkMonitor
 import com.android.purrytify.ui.screens.BlankScreen
 import com.android.purrytify.ui.screens.NoInternetScreen
+import kotlinx.coroutines.coroutineScope
 
 
 @Composable

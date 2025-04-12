@@ -51,6 +51,7 @@ suspend fun refreshToken(context: Context, refreshToken: String) {
         TokenManager.saveToken(context, response.accessToken, response.refreshToken)
         Log.d("REFRESH_TOKEN", "Token refreshed successfully ✅")
     } catch (e: Exception) {
-        Log.e("REFRESH_TOKEN", "Refresh token failed : ${e.message}")
+        Log.e("REFRESH_TOKEN", "Refresh token failed : ${e.message}\nLogging out")
+        TokenManager.clearToken(context)
     }
 }
