@@ -70,7 +70,7 @@ fun NowPlayingScreen(
         } ?: onClose()
     }
 
-    val darkerColor = darkenColor(dominantColor)
+    val darkerColor = darkenColor(dominantColor, 0.1f)
     val gradient = Brush.verticalGradient(
         colors = listOf(dominantColor, darkerColor)
     )

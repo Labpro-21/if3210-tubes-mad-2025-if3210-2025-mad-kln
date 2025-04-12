@@ -54,7 +54,7 @@ fun ProfileScreen(
 
     var username by remember { mutableStateOf("USER") }
     var country by remember { mutableStateOf("COUNTRY") }
-    var profileURL by remember { mutableStateOf("PROFILE") }
+    var profileURL by remember { mutableStateOf("") }
 
     var songCount by remember { mutableIntStateOf(0) }
     var likeCount by remember { mutableIntStateOf(0) }
@@ -76,7 +76,7 @@ fun ProfileScreen(
             country = getCountryNameFromCode(user.location)
             profileURL = "http://34.101.226.132:3000/uploads/profile-picture/${user.profilePhoto}"
 
-            Log.d("DEBUG_PROFILE", "$user")
+            Log.d("DEBUG_PROFILE", "profile url: $profileURL")
 
             songCount = songRepository.getSongsByUploader(id).size
             likeCount = songRepository.getLikedSongsByUploader(id).size
@@ -97,18 +97,21 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         fetchUser()
-        val bitmap = loadBitmapFromUrl(context, profileURL)
-        bitmap?.let {
-            dominantColor = extractDominantColor(it)
+    }
+    LaunchedEffect(profileURL) {
+        if (profileURL.isNotBlank()) {
+            val bitmap = loadBitmapFromUrl(context, profileURL)
+            bitmap?.let {
+                dominantColor = extractDominantColor(it)
+            }
         }
-        Log.d("DEBUG_PROFILE", "Dominant color: $dominantColor")
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(colors = listOf(dominantColor, Color(0xFF121212)))
+                Brush.verticalGradient(colors = listOf(dominantColor, Color(0xFF121212), Color(0xFF121212)))
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
