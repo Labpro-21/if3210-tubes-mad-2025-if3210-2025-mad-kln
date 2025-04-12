@@ -11,7 +11,7 @@ import com.android.purrytify.data.local.repositories.SongRepository
 object SongInitializer {
     suspend fun initializeSongs(songRepository: SongRepository, context: Context) {
         withContext(Dispatchers.IO) {
-            songRepository.deleteAllSongs()
+//            songRepository.deleteAllSongs()
             val allSongs = songRepository.getAllSongs()
 
             if (allSongs.size == 0) {

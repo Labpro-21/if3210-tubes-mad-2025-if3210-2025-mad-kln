@@ -13,7 +13,7 @@ import com.android.purrytify.data.local.entities.Song
 
 class SongAdapter(
     private var songs: List<Song>,
-    private val onItemClick: (Song) -> Unit
+    private val onItemClick: (Song) -> Unit,
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
     inner class SongViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

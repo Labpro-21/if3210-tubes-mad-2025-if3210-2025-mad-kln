@@ -136,11 +136,15 @@ fun LibraryScreen(
                         factory = { context ->
                             RecyclerView(context).apply {
                                 layoutManager = LinearLayoutManager(context)
-                                adapter = SongAdapter(activeSongs) { song ->
-                                    val index = activeSongs.indexOf(song)
-                                    mediaPlayerViewModel.playSong(context, index)
-                                    Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
-                                }.also { songAdapterRef.value = it }
+                                adapter = SongAdapter(
+                                    activeSongs,
+                                    onItemClick = { song ->
+                                        val index = activeSongs.indexOf(song)
+                                        mediaPlayerViewModel.playSong(context, index)
+                                        Log.d("LibraryScreen", "Playing Song: ${song.title} - ${song.artist}")
+                                    },
+                                ).also { songAdapterRef.value = it }
+
                                 recyclerViewRef.value = this
                             }
                         }
