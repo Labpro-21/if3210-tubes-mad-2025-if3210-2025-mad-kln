@@ -111,7 +111,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
     </tr>
     <tr>
         <td>4</td>
-        <td>Music Player Page</td>
+        <td>Track View Page</td>
         <td style="text-align: center;">
             <img src="screenshot/player.png" alt="Screenshot Music Player Page" style="max-width: 150; height: auto;">
         </td>
@@ -154,7 +154,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>1</td>
         <td>Maulana Muhammad Susetyo</td>
         <td>13522127</td>
-        <td></td>
+        <td>Logic Media Player, Miniplayer, Track View Page, FE Profile Page, Repeat, Shuffle</td>
         <td></td>
         <td></td>
     </tr>

@@ -23,7 +23,7 @@ class PlayerViewModel : ViewModel() {
     val currentTime: StateFlow<Int> = controller.currentTime
     val totalDuration: StateFlow<Int> = controller.totalDuration
     val repeatMode: StateFlow<RepeatMode> = MediaPlayerController.repeatMode
-
+    val isShuffled: StateFlow<Boolean> = controller.isShuffleEnabled
 
     fun updateSongInList(song: Song) {
         controller.updateSongInList(song)
@@ -78,6 +78,11 @@ class PlayerViewModel : ViewModel() {
         }
         MediaPlayerController.setRepeatMode(next)
     }
+
+    fun toggleShuffle() {
+        controller.toggleShuffle()
+    }
+
 
     override fun onCleared() {
         super.onCleared()
