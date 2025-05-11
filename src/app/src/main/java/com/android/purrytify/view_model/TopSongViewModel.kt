@@ -48,6 +48,7 @@ class TopSongViewModel : ViewModel() {
 
     fun fetchTopSongsGlobal() {
         Log.d("TopSongs", "Fetching global top songs")
+
         viewModelScope.launch {
             _isLoading.value = true
             try {

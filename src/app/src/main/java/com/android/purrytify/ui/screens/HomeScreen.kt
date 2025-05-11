@@ -68,12 +68,12 @@ fun HomeScreen(
         }
     }
 
-    // Trigger fetch if not already done
     LaunchedEffect(Unit) {
-        topSongViewModel.fetchTopSongsGlobal()
+        if (topSongsGlobal.isEmpty()) {
+            topSongViewModel.fetchTopSongsGlobal()
+        }
     }
 
-    // UI can also show loading indicator
     if (isLoading) {
         CircularProgressIndicator()
     }
