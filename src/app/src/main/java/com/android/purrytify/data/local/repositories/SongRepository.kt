@@ -19,14 +19,14 @@ class SongRepository(private val songDao: SongDao) {
 
     fun insertSong(song: Song) {
         CoroutineScope(Dispatchers.IO).launch {
-            val finalSong = if (song.uploadDate == null) {
+            val finalSong = if (song.uploadDate == "") {
                 song.copy(uploadDate = getCurrentDate())
             } else {
                 song
             }
 
             songDao.insertSong(finalSong)
-            Log.d("Database", "Inserted Song: $finalSong")
+            Log.d("Database", "Inserted Song: ${finalSong.title} by ${finalSong.artist}")
         }
     }
 

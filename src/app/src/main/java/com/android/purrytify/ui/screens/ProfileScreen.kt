@@ -95,7 +95,7 @@ fun ProfileScreen(
             Log.d("DEBUG_PROFILE", "listened count: $listenedCount")
 
             for (song in songs){
-                if (song.lastPlayedDate != null) {
+                if (song.lastPlayedDate != "") {
                     listenedCount++
                 } 
             }

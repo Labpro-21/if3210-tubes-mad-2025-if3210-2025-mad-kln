@@ -38,10 +38,10 @@ interface SongDao {
     suspend fun searchLikedSongsByUploader(uploaderId: Int, query: String): List<Song>
 
 
-    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY lastPlayedDate DESC LIMIT :limit")
+    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND lastPlayedDate != '' ORDER BY lastPlayedDate DESC LIMIT :limit")
     suspend fun getRecentlyPlayedSongsByUploader(uploaderId: Int, limit: Int): List<Song>
 
-    @Query("SELECT * FROM songs WHERE uploaderid = :uploaderId AND lastPlayedDate != null")
+    @Query("SELECT * FROM songs WHERE uploaderid = :uploaderId AND lastPlayedDate != ''")
     suspend fun getListenedSongByUploader(uploaderId: Int): List<Song>
 
     @Query("UPDATE songs SET liked = :liked WHERE id = :songId")
@@ -56,7 +56,7 @@ interface SongDao {
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY uploadDate DESC LIMIT :limit")
     suspend fun getNewSongsByUploader(uploaderId: Int, limit: Int): List<Song>
 
-    @Query("SELECT COUNT(*) FROM songs WHERE uploaderId = :uploaderId AND lastPlayedDate != null")
+    @Query("SELECT COUNT(*) FROM songs WHERE uploaderId = :uploaderId AND lastPlayedDate != ''")
     suspend fun getListenedSongsCount(uploaderId: Int): Int
 }
 

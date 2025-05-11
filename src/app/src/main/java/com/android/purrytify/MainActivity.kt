@@ -6,7 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.android.purrytify.data.local.AppDatabase
 import com.android.purrytify.data.local.repositories.*
-import com.android.purrytify.data.local.initializer.*
+import com.android.purrytify.data.local.initializer.SongInitializer
+import com.android.purrytify.data.local.initializer.UserInitializer
 import androidx.lifecycle.lifecycleScope
 import com.android.purrytify.data.local.RepositoryProvider
 import kotlinx.coroutines.launch
