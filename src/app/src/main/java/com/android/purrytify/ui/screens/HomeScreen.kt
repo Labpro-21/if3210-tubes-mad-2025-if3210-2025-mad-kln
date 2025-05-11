@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,6 +27,8 @@ import com.android.purrytify.ui.components.SongCard
 import com.android.purrytify.ui.components.SongCardFake
 import com.android.purrytify.ui.components.SongCardFakeProps
 import com.android.purrytify.view_model.PlayerViewModel
+import com.android.purrytify.view_model.TopSongViewModel
+import com.android.purrytify.view_model.getTopSongViewModel
 import fetchUserId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -50,6 +53,30 @@ fun HomeScreen(
 
     )
 
+    val topSongViewModel: TopSongViewModel = getTopSongViewModel()
+
+    val topSongsGlobal by topSongViewModel.topSongsGlobal
+    val isLoading by topSongViewModel.isLoading
+
+    LaunchedEffect(topSongsGlobal) {
+        if (topSongsGlobal.isNotEmpty()) {
+            Log.d("HomeScreen", "Length ${topSongsGlobal.size}")
+            for (song in topSongsGlobal) {
+                Log.d("HomeScreen", "Title: ${song.title}, Artist: ${song.artist}")
+            }
+            recentlyPlayedSongs.value = topSongsGlobal
+        }
+    }
+
+    // Trigger fetch if not already done
+    LaunchedEffect(Unit) {
+        topSongViewModel.fetchTopSongsGlobal()
+    }
+
+    // UI can also show loading indicator
+    if (isLoading) {
+        CircularProgressIndicator()
+    }
 
     fun fetchUser() {
         coroutineScope.launch {
@@ -62,7 +89,6 @@ fun HomeScreen(
             hasFetched.value = true
         }
     }
-
     LaunchedEffect(Unit) {
         fetchUser()
     }
@@ -169,6 +195,49 @@ fun HomeScreen(
                         )
                     }
                 }
+
+
+                item {
+                    Text(
+                        "Top Songs Global",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    if (topSongsGlobal.isEmpty() && hasFetched.value) {
+                        Text(
+                            "No top songs available",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                        )
+                    }
+                }
+
+                if (hasFetched.value) {
+                    items(topSongsGlobal) { song ->
+                        SongCard(
+                            type = "small",
+                            song = song,
+                            modifier = Modifier.clickable {
+                                mediaPlayerViewModel.setSongs(topSongsGlobal)
+                                mediaPlayerViewModel.playSong(
+                                    context,
+                                    index = topSongsGlobal.indexOf(song)
+                                )
+                            }
+                        )
+                    }
+                } else {
+                    items(3) { index ->
+                        SongCardFake(
+                            type = "small",
+                            song = fallback
+                        )
+                    }
+                }
+
             }
     }
 }

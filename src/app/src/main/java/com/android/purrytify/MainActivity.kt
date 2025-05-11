@@ -1,16 +1,20 @@
 package com.android.purrytify
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.android.purrytify.data.local.AppDatabase
 import com.android.purrytify.data.local.repositories.*
 import com.android.purrytify.data.local.initializer.SongInitializer
-import com.android.purrytify.data.local.initializer.UserInitializer
 import androidx.lifecycle.lifecycleScope
 import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.network.OnlineSongResponse
+import com.android.purrytify.network.RetrofitClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
