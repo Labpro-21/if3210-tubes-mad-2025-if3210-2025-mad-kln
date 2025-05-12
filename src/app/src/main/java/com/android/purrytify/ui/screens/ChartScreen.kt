@@ -1,55 +1,64 @@
 package com.android.purrytify.ui.screens
 
+import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
-import com.android.purrytify.controller.RepeatMode
-import com.android.purrytify.data.local.RepositoryProvider
-import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongCard
-import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.ChartViewModel
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getChartViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
-import darkenColor
-import extractDominantColor
-import loadBitmapFromUri
+import downloadSong
+import fetchUserId
+import kotlinx.coroutines.launch
+
+@SuppressLint("DefaultLocale")
+@Composable
+fun DownloadProgress(downloadProgress: State<Float>) {
+    Box(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.7f))
+            .wrapContentSize(Alignment.Center)
+            .padding(horizontal = 32.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = "Downloading ${String.format("%.0f", downloadProgress.value * 100)}%",
+            color = Color.LightGray,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Light,
+            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+        LinearProgressIndicator(
+            progress = { downloadProgress.value },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp),
+            color = Color.LightGray,
+            trackColor = Color.Gray.copy(alpha = 0.5f),
+        )
+    }
+}
 
 fun colorGradientFromString(color: String): List<Color> {
     return when (color.lowercase()) {
@@ -78,8 +87,10 @@ fun ChartScreen(
     chartViewModel: ChartViewModel = getChartViewModel(),
     mediaPlayerViewModel: PlayerViewModel = getPlayerViewModel(),
 ) {
-    val context = LocalContext.current
     val gradientColors = colorGradientFromString(chartViewModel.color.value)
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val outerGradient = Brush.verticalGradient(
         colorStops = arrayOf(
@@ -93,6 +104,22 @@ fun ChartScreen(
     val scrimColor = if (flagDim) Color.Black.copy(alpha = 0.3f) else Color.Transparent
 
     val songs by chartViewModel.chartSongs
+
+    val userId = remember { mutableIntStateOf(0) }
+    val downloadProgress = remember { mutableStateOf(0f) }
+    val isDownloading = remember { mutableStateOf(false) }
+
+    fun fetchUser() {
+        scope.launch {
+            Log.d("LibraryScreen", "Fetching user ID")
+            userId.intValue = fetchUserId(context)
+            Log.d("LibraryScreen", "Fetched user ID: ${userId.intValue}")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        fetchUser()
+    }
 
     Box(
         modifier = Modifier
@@ -182,6 +209,8 @@ fun ChartScreen(
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
+
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -192,6 +221,16 @@ fun ChartScreen(
                 ) {
                     IconButton(onClick = {
                         Log.d("ActionButtons", "Download button clicked")
+                        scope.launch {
+                            var downloadedCount = 0
+                            isDownloading.value = true
+                            songs.forEach { song ->
+                                downloadSong(context, song, userId.intValue)
+                                downloadedCount++
+                                downloadProgress.value = downloadedCount.toFloat() / songs.size.toFloat()
+                            }
+                            isDownloading.value = false
+                        }
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_download),
@@ -202,7 +241,7 @@ fun ChartScreen(
                     }
 
                     IconButton(onClick = {
-                            Log.d("ActionButtons", "Play button clicked")
+                        Log.d("ActionButtons", "Play button clicked")
                         mediaPlayerViewModel.setSongs(songs)
                         mediaPlayerViewModel.playSong(context, 0)
                     }) {
@@ -213,6 +252,9 @@ fun ChartScreen(
                             modifier = Modifier.size(40.dp)
                         )
                     }
+                }
+                if (downloadProgress.value < 1f && isDownloading.value) {
+                    DownloadProgress(downloadProgress)
                 }
 
                 LazyColumn(
@@ -246,9 +288,6 @@ fun ChartScreen(
                     textAlign = TextAlign.Center
                 )
             }
-
         }
     }
 }
-
-
