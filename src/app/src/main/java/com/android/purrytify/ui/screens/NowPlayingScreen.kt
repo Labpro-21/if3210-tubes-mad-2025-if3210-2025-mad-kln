@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
@@ -52,7 +54,9 @@ fun NowPlayingScreen(
     val currentTime by viewModel.currentTime.collectAsState()
     val totalDuration by viewModel.totalDuration.collectAsState()
     val repeatMode by viewModel.repeatMode.collectAsState()
+    val outputs by viewModel.availableOutputs.collectAsState()
 
+    var expanded by remember { mutableStateOf(false) }
     val songRepository = RepositoryProvider.getSongRepository()
     val isLastSong = viewModel.isLast()
     val isShuffled by viewModel.isShuffled.collectAsState()
@@ -174,6 +178,29 @@ fun NowPlayingScreen(
                             color = Color.LightGray,
                             fontSize = 16.sp
                         )
+                    }
+
+                    IconButton(
+                        onClick = { expanded = true},
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_audio_output),
+                            contentDescription = "Audio Output",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        outputs.forEach { device ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    viewModel.setAudioOutput(device)
+                                    expanded = false
+                                },
+                                text = {Text(device.productName?.toString() ?: device.type.toString())})
+                        }
                     }
 
                     LikeButton(
