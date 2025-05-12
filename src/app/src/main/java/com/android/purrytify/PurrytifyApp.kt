@@ -82,6 +82,8 @@ fun PurrytifyApp(context: Context) {
     }
 
     LaunchedEffect(Unit) {
+        mediaPlayerViewModel.initialize(context)
+
         checkToken(context)
         delay(100)
         if (token.isNullOrEmpty()) {
@@ -95,7 +97,6 @@ fun PurrytifyApp(context: Context) {
         }
 
         hasLoaded = true
-
         systemUiController.isStatusBarVisible = false
         while (true) {
             delay(5 * 60 * 1000)

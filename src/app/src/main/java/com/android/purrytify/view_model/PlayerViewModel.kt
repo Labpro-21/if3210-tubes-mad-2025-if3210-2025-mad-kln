@@ -1,6 +1,7 @@
 package com.android.purrytify.view_model
 
 import android.content.Context
+import android.media.AudioDeviceInfo
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -22,8 +23,13 @@ class PlayerViewModel : ViewModel() {
     val progress: StateFlow<Float> = controller.progress
     val currentTime: StateFlow<Int> = controller.currentTime
     val totalDuration: StateFlow<Int> = controller.totalDuration
-    val repeatMode: StateFlow<RepeatMode> = MediaPlayerController.repeatMode
+    val repeatMode: StateFlow<RepeatMode> = controller.repeatMode
     val isShuffled: StateFlow<Boolean> = controller.isShuffleEnabled
+    val availableOutputs: StateFlow<List<AudioDeviceInfo>> = controller.availableOutputs
+
+    fun initialize(context: Context) {
+        controller.initialize(context)
+    }
 
     fun updateSongInList(song: Song) {
         controller.updateSongInList(song)
@@ -83,6 +89,9 @@ class PlayerViewModel : ViewModel() {
         controller.toggleShuffle()
     }
 
+    fun setAudioOutput(deviceInfo: AudioDeviceInfo) {
+        controller.setAudioOutput(deviceInfo)
+    }
 
     override fun onCleared() {
         super.onCleared()
