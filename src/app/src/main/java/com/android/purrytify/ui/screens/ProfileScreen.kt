@@ -76,6 +76,7 @@ fun ProfileScreen(
             Log.d("DEBUG_PROFILE", "Fetched user ID: $id")
 
             val bearerToken = "Bearer ${getToken(context)}"
+            Log.d("DEBUG_PROFILE", "Bearer Token: $bearerToken")
             val user = RetrofitClient.api.getProfile(bearerToken)
 
             Log.d("DEBUG_PROFILE", "Fetched user: $user")

@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -127,7 +128,7 @@ fun ChartScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Box(
                 modifier = Modifier
@@ -167,27 +168,85 @@ fun ChartScreen(
                 modifier = Modifier
                     .padding(top = 24.dp, bottom = 12.dp, start= 16.dp, end = 16.dp)
                     .fillMaxWidth(),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.Center
             )
 
-            LazyColumn(
-                modifier = Modifier.height(240.dp).fillMaxWidth(),
-                contentPadding = PaddingValues(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(songs) { song ->
-                    SongCard(
-                        type = "small",
-                        song = song,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                mediaPlayerViewModel.setSongs(songs)
-                                mediaPlayerViewModel.playSong(context, songs.indexOf(song))
-                            }
-                    )
+            if (songs.isNotEmpty()) {
+                Text(
+                    text = chartViewModel.totalDuration.value,
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(bottom = 0.dp, start= 16.dp, end = 16.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                        .height(40.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = {
+                        Log.d("ActionButtons", "Download button clicked")
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_download),
+                            contentDescription = "Download",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    IconButton(onClick = {
+                            Log.d("ActionButtons", "Play button clicked")
+                        mediaPlayerViewModel.setSongs(songs)
+                        mediaPlayerViewModel.playSong(context, 0)
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_play),
+                            contentDescription = "Play",
+                            tint = Color(0xFF1DB95B),
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .height(240.dp)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(bottom = 80.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(songs) { song ->
+                        SongCard(
+                            type = "small",
+                            song = song,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    mediaPlayerViewModel.setSongs(songs)
+                                    mediaPlayerViewModel.playSong(context, songs.indexOf(song))
+                                }
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "Songs are not available for this chart.",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    textAlign = TextAlign.Center
+                )
             }
+
         }
     }
 }
