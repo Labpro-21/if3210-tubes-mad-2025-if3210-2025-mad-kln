@@ -61,12 +61,28 @@ object MediaPlayerController {
     private var audioManager: AudioManager? = null
     private var deviceCallbackRegistered = false
     private val connectedDevices = mutableListOf<AudioDeviceInfo>()
+    private var selectedOutput: AudioDeviceInfo? = null
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            mediaPlayer?.let {
+                if (it.isPlaying) {
+                    _progress.value = it.currentPosition.toFloat() / it.duration
+                    _currentTime.value = it.currentPosition
+                    _totalDuration.value = it.duration
+                    onStateChanged?.invoke()
+                }
+            }
+            handler.postDelayed(this, UPDATE_INTERVAL)
+        }
+    }
+
+    private lateinit var deviceCallback: AudioDeviceCallback
 
     fun initialize(context: Context) {
         if (deviceCallbackRegistered) return
 
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val callback = object : AudioDeviceCallback() {
+        deviceCallback = object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
                 for (device in addedDevices) {
                     if (device.isValidOutputDevice()) {
@@ -85,7 +101,7 @@ object MediaPlayerController {
             }
         }
 
-        audioManager?.registerAudioDeviceCallback(callback, Handler(Looper.getMainLooper()))
+        audioManager?.registerAudioDeviceCallback(deviceCallback, Handler(Looper.getMainLooper()))
         deviceCallbackRegistered = true
 
         // Initial population
@@ -94,20 +110,6 @@ object MediaPlayerController {
         connectedDevices.clear()
         connectedDevices.addAll(initial)
         updateAndSwitch()
-    }
-
-    private val updateRunnable = object : Runnable {
-        override fun run() {
-            mediaPlayer?.let {
-                if (it.isPlaying) {
-                    _progress.value = it.currentPosition.toFloat() / it.duration
-                    _currentTime.value = it.currentPosition
-                    _totalDuration.value = it.duration
-                    onStateChanged?.invoke()
-                }
-            }
-            handler.postDelayed(this, UPDATE_INTERVAL)
-        }
     }
 
     fun setSongs(songs: List<Song>) {
@@ -147,6 +149,7 @@ object MediaPlayerController {
         _currentSong.value = song
         mediaPlayer = MediaPlayer().apply {
             setDataSource(context.applicationContext, Uri.parse(song.audioUri))
+            selectedOutput?.let { preferredDevice = it }
             prepare()
             start()
             _isPlaying.value = true
@@ -349,12 +352,17 @@ object MediaPlayerController {
 
     fun setAudioOutput(deviceInfo: AudioDeviceInfo) {
         mediaPlayer?.preferredDevice = deviceInfo
+        selectedOutput = deviceInfo
     }
 
     private fun updateAndSwitch() {
         _availableOutputs.value = connectedDevices.toList()
-        val best = connectedDevices.firstOrNull()
-        mediaPlayer?.preferredDevice = best
+
+        if (selectedOutput == null || !connectedDevices.any { it.id == selectedOutput?.id }) {
+            selectedOutput = connectedDevices.firstOrNull()
+        }
+
+        mediaPlayer?.preferredDevice = selectedOutput
     }
 
     private fun AudioDeviceInfo.isValidOutputDevice(): Boolean {
@@ -368,7 +376,7 @@ object MediaPlayerController {
 
     fun release() {
         if (deviceCallbackRegistered) {
-            audioManager?.unregisterAudioDeviceCallback(object : AudioDeviceCallback() {})
+            audioManager?.unregisterAudioDeviceCallback(deviceCallback)
             deviceCallbackRegistered = false
         }
         handler.removeCallbacks(updateRunnable)
