@@ -59,23 +59,41 @@ object MediaPlayerController {
 
     private var onStateChanged: (() -> Unit)? = null
     private var audioManager: AudioManager? = null
-    private val audioDeviceCallback = object : AudioDeviceCallback() {
-        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
-            updateAudioOutputs()
-        }
-
-        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
-            updateAudioOutputs()
-        }
-    }
+    private var deviceCallbackRegistered = false
+    private val connectedDevices = mutableListOf<AudioDeviceInfo>()
 
     fun initialize(context: Context) {
+        if (deviceCallbackRegistered) return
+
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        updateAudioOutputs()
-        audioManager?.registerAudioDeviceCallback(audioDeviceCallback, Handler(Looper.getMainLooper()))
-        if (mediaPlayer == null) {
-            mediaPlayer = MediaPlayer()
+        val callback = object : AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
+                for (device in addedDevices) {
+                    if (device.isValidOutputDevice()) {
+                        connectedDevices.removeAll { it.id == device.id }
+                        connectedDevices.add(0, device) // Most recent first
+                    }
+                }
+                updateAndSwitch()
+            }
+
+            override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
+                for (device in removedDevices) {
+                    connectedDevices.removeAll { it.id == device.id }
+                }
+                updateAndSwitch()
+            }
         }
+
+        audioManager?.registerAudioDeviceCallback(callback, Handler(Looper.getMainLooper()))
+        deviceCallbackRegistered = true
+
+        // Initial population
+        val initial = audioManager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            ?.filter { it.isValidOutputDevice() } ?: emptyList()
+        connectedDevices.clear()
+        connectedDevices.addAll(initial)
+        updateAndSwitch()
     }
 
     private val updateRunnable = object : Runnable {
@@ -329,23 +347,30 @@ object MediaPlayerController {
         shuffledIndex = 0
     }
 
-    private fun updateAudioOutputs() {
-        _availableOutputs.value = audioManager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.filter {
-            it.type in listOf(
-                AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
-                AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-                AudioDeviceInfo.TYPE_WIRED_HEADSET,
-                AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
-            )
-        } ?: emptyList()
-    }
-
     fun setAudioOutput(deviceInfo: AudioDeviceInfo) {
         mediaPlayer?.preferredDevice = deviceInfo
     }
 
+    private fun updateAndSwitch() {
+        _availableOutputs.value = connectedDevices.toList()
+        val best = connectedDevices.firstOrNull()
+        mediaPlayer?.preferredDevice = best
+    }
+
+    private fun AudioDeviceInfo.isValidOutputDevice(): Boolean {
+        return type in listOf(
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        )
+    }
+
     fun release() {
-        audioManager?.unregisterAudioDeviceCallback(audioDeviceCallback)
+        if (deviceCallbackRegistered) {
+            audioManager?.unregisterAudioDeviceCallback(object : AudioDeviceCallback() {})
+            deviceCallbackRegistered = false
+        }
         handler.removeCallbacks(updateRunnable)
         mediaPlayer?.release()
         mediaPlayer = null
