@@ -1,0 +1,195 @@
+package com.android.purrytify.ui.screens
+
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
+import com.android.purrytify.R
+import com.android.purrytify.controller.RepeatMode
+import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.ui.components.LikeButton
+import com.android.purrytify.ui.components.SongCard
+import com.android.purrytify.ui.components.SongDetailButton
+import com.android.purrytify.view_model.ChartViewModel
+import com.android.purrytify.view_model.PlayerViewModel
+import com.android.purrytify.view_model.getChartViewModel
+import com.android.purrytify.view_model.getPlayerViewModel
+import darkenColor
+import extractDominantColor
+import loadBitmapFromUri
+
+fun colorGradientFromString(color: String): List<Color> {
+    return when (color.lowercase()) {
+        "red" -> listOf(
+            Color(0xFFE87A7A),
+            Color(0xFFD80832)
+        )
+        "blue" -> listOf(
+            Color(0xCB47C1AA),
+            Color(0xFF0C2E6E)
+        )
+        "green" -> listOf(
+            Color(0xFF69F0AE),
+            Color(0xFF0B9843)
+        )
+        else -> listOf(
+            Color(0xFF78909C),
+            Color(0xFF455A64)
+        )
+    }
+}
+
+@Composable
+fun ChartScreen(
+    onClose: () -> Unit,
+    chartViewModel: ChartViewModel = getChartViewModel(),
+    mediaPlayerViewModel: PlayerViewModel = getPlayerViewModel(),
+) {
+    val context = LocalContext.current
+    val gradientColors = colorGradientFromString(chartViewModel.color.value)
+
+    val outerGradient = Brush.verticalGradient(
+        colorStops = arrayOf(
+            0.0f to gradientColors[0],
+            0.25f to gradientColors[1],
+            0.55f to Color.Black,
+        )
+    )
+
+    val flagDim = gradientColors[0].luminance() > 0.5f
+    val scrimColor = if (flagDim) Color.Black.copy(alpha = 0.3f) else Color.Transparent
+
+    val songs by chartViewModel.chartSongs
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(outerGradient)
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(scrimColor)
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 0.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_caret),
+                        contentDescription = "Minimize",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(width = 250.dp, height = 250.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        brush = Brush.verticalGradient(gradientColors)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = chartViewModel.title.value,
+                        color = Color.White,
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .width(140.dp)
+                            .padding(vertical = 20.dp),
+                        color = Color.White.copy(alpha = 0.5f),
+                        thickness = 1.dp
+                    )
+                    Text(
+                        text = chartViewModel.subtitle.value,
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 24.sp
+                    )
+                }
+            }
+
+            Text(
+                text = chartViewModel.description.value,
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .padding(top = 24.dp, bottom = 12.dp, start= 16.dp, end = 16.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
+
+            LazyColumn(
+                modifier = Modifier.height(240.dp).fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(songs) { song ->
+                    SongCard(
+                        type = "small",
+                        song = song,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                mediaPlayerViewModel.setSongs(songs)
+                                mediaPlayerViewModel.playSong(context, songs.indexOf(song))
+                            }
+                    )
+                }
+            }
+        }
+    }
+}
+
+

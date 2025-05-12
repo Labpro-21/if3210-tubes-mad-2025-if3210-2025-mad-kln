@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import com.android.purrytify.ui.components.NetworkStatus
 import com.android.purrytify.network.NetworkMonitor
 import com.android.purrytify.ui.screens.BlankScreen
+import com.android.purrytify.ui.screens.ChartScreen
 import com.android.purrytify.ui.screens.NoInternetScreen
 import kotlinx.coroutines.coroutineScope
 
@@ -123,7 +124,7 @@ fun PurrytifyApp(context: Context) {
                 }
                 composable("home") {
                     if (!token.isNullOrEmpty()) {
-                        HomeScreen(mediaPlayerViewModel = mediaPlayerViewModel)
+                        HomeScreen(mediaPlayerViewModel = mediaPlayerViewModel, navController = navController)
                     } else {
                         BlankScreen()
                     }
@@ -136,6 +137,15 @@ fun PurrytifyApp(context: Context) {
                         viewModel = mediaPlayerViewModel,
                         onClose = { navController.popBackStack() }
                     )
+                }
+                composable("chart") {
+                    if (isConnected) {
+                        ChartScreen(
+                            onClose = { navController.popBackStack() }
+                        )
+                    } else {
+                        NoInternetScreen()
+                    }
                 }
                 composable("profile") {
                     if (isConnected) {

@@ -41,7 +41,7 @@ fun BottomNavbar(navController: NavController, modifier: Modifier) {
         containerColor = navbarBg
     ) {
         items.forEach { item ->
-            val isSelected = currentRoute == item.route
+            val isSelected = currentRoute == item.route || (currentRoute == "chart" && item.route == "home")
             val textColor = if (isSelected) item.activeColor else item.inactiveColor
 
             NavigationBarItem(

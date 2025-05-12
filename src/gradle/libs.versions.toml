@@ -23,6 +23,7 @@ paletteKtx = "1.0.0"
 lifecycleViewmodelAndroid = "2.8.7"
 recyclerview = "1.4.0"
 cardview = "1.0.0"
+roomRuntimeAndroid = "2.7.1"
 
 [libraries]
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
@@ -62,6 +63,7 @@ androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", versi
 androidx-lifecycle-viewmodel-android = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-android", version.ref = "lifecycleViewmodelAndroid" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
