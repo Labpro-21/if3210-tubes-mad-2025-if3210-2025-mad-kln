@@ -1,11 +1,18 @@
 package com.android.purrytify.network
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
+import java.io.File
 
 data class LoginRequest(
     val email: String,
@@ -80,5 +87,29 @@ interface ApiService {
         @Path("country") country: String
     ): List<OnlineSongResponse>
 
+    @Multipart
+    @PATCH("api/profile")
+    suspend fun editProfile(
+        @Header ("Authorization") token: String,
+        @Part location: MultipartBody.Part?,
+        @Part profilePhoto: MultipartBody.Part?
+    )
+
 }
+fun prepareMultipart(
+    location: String?,
+    profileImageFile: File?
+): Pair<MultipartBody.Part?, MultipartBody.Part?> {
+    val locationPart = location?.let {
+        MultipartBody.Part.createFormData("location", it)
+    }
+
+    val imagePart = profileImageFile?.let {
+        val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+        MultipartBody.Part.createFormData("profilePhoto", it.name, requestFile)
+    }
+
+    return locationPart to imagePart
+}
+
 
