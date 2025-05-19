@@ -1,6 +1,7 @@
 package com.android.purrytify.controller
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -9,9 +10,15 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.core.content.ContextCompat
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
+import com.android.purrytify.service.MusicService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 enum class RepeatMode {
     NONE,
@@ -57,6 +64,9 @@ object MediaPlayerController {
     private var shuffledIndices: List<Int> = emptyList()
     private var shuffledIndex = 0
 
+    private var currentSessionTimePlayed = 0f
+
+    val songRepository = RepositoryProvider.getSongRepository()
     private var onStateChanged: (() -> Unit)? = null
     private var audioManager: AudioManager? = null
     private var deviceCallbackRegistered = false
@@ -64,15 +74,28 @@ object MediaPlayerController {
     private var selectedOutput: AudioDeviceInfo? = null
     private val updateRunnable = object : Runnable {
         override fun run() {
-            mediaPlayer?.let {
-                if (it.isPlaying) {
-                    _progress.value = it.currentPosition.toFloat() / it.duration
-                    _currentTime.value = it.currentPosition
-                    _totalDuration.value = it.duration
+            mediaPlayer?.let { player ->
+                if (player.isPlaying) {
+                    _progress.value = player.currentPosition.toFloat() / player.duration
+                    _currentTime.value = player.currentPosition
+                    _totalDuration.value = player.duration
+                    currentSessionTimePlayed += UPDATE_INTERVAL / 1000f
+                    Log.d("TEST IN UPDATE RUNNABLE", "SessionTimePlayed: $currentSessionTimePlayed")
+                    if (currentSessionTimePlayed >= 10) {
+                        _currentSong.value?.let { song ->
+                            val timeToAdd = currentSessionTimePlayed.toInt()
+                            currentSessionTimePlayed = 0f
+                            CoroutineScope(Dispatchers.IO).launch {
+                                songRepository.addSecondsPlayed(song.id, timeToAdd)
+                            }
+                        }
+                    }
+
                     onStateChanged?.invoke()
+                    
+                    handler.postDelayed(this, UPDATE_INTERVAL)
                 }
-            }
-            handler.postDelayed(this, UPDATE_INTERVAL)
+            } ?: return
         }
     }
 
@@ -87,7 +110,7 @@ object MediaPlayerController {
                 for (device in addedDevices) {
                     if (device.isValidOutputDevice()) {
                         connectedDevices.removeAll { it.id == device.id }
-                        connectedDevices.add(0, device) // Most recent first
+                        connectedDevices.add(0, device)
                     }
                 }
                 updateAndSwitch()
@@ -104,7 +127,6 @@ object MediaPlayerController {
         audioManager?.registerAudioDeviceCallback(deviceCallback, Handler(Looper.getMainLooper()))
         deviceCallbackRegistered = true
 
-        // Initial population
         val initial = audioManager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
             ?.filter { it.isValidOutputDevice() } ?: emptyList()
         connectedDevices.clear()
@@ -147,6 +169,11 @@ object MediaPlayerController {
         }
 
         _currentSong.value = song
+        CoroutineScope(Dispatchers.IO).launch {
+            songRepository.addSecondsPlayed(song.id, currentSessionTimePlayed.toInt())
+            currentSessionTimePlayed = 0f
+            songRepository.updateLastPlayedDate(song)
+        }
         mediaPlayer = MediaPlayer().apply {
             setDataSource(context.applicationContext, Uri.parse(song.audioUri))
             selectedOutput?.let { preferredDevice = it }
@@ -154,7 +181,18 @@ object MediaPlayerController {
             start()
             _isPlaying.value = true
             _totalDuration.value = duration
+
             setOnCompletionListener {
+                if (currentSessionTimePlayed > 0) {
+                    Log.d("TEST IN ON COMPLETION LISTENER", "SessionTimePlayed: $currentSessionTimePlayed")
+                    _currentSong.value?.let { song ->
+                        val timeToAdd = currentSessionTimePlayed.toInt()
+                        currentSessionTimePlayed = 0f
+                        CoroutineScope(Dispatchers.IO).launch {
+                            songRepository.addSecondsPlayed(song.id, timeToAdd)
+                        }
+                    }
+                }
                 when (_repeatMode.value) {
                     RepeatMode.REPEAT_ONE -> {// Replay current song
                         if (_isShuffleEnabled.value) {
@@ -196,7 +234,11 @@ object MediaPlayerController {
                 }
             }
         }
+        val serviceIntent = Intent(context, MusicService::class.java)
+        ContextCompat.startForegroundService(context, serviceIntent)
 
+        MusicService.instance?.updateNotification()
+        handler.removeCallbacks(updateRunnable)
         handler.post(updateRunnable)
         onStateChanged?.invoke()
     }
@@ -321,6 +363,15 @@ object MediaPlayerController {
     }
 
     fun clearCurrentSong() {
+        _currentSong.value?.let { song ->
+            if (currentSessionTimePlayed > 0) {
+                val timeToAdd = currentSessionTimePlayed.toInt()
+                currentSessionTimePlayed = 0f
+                CoroutineScope(Dispatchers.IO).launch {
+                    songRepository.addSecondsPlayed(song.id, timeToAdd)
+                }
+            }
+        }
         mediaPlayer?.stop()
         mediaPlayer?.reset()
         _currentSong.value = null
@@ -375,11 +426,20 @@ object MediaPlayerController {
     }
 
     fun release() {
+        handler.removeCallbacks(updateRunnable)
+        _currentSong.value?.let { song ->
+            if (currentSessionTimePlayed > 0) {
+                val timeToAdd = currentSessionTimePlayed.toInt()
+                currentSessionTimePlayed = 0f
+                CoroutineScope(Dispatchers.IO).launch {
+                    songRepository.addSecondsPlayed(song.id, timeToAdd)
+                }
+            }
+        }
         if (deviceCallbackRegistered) {
             audioManager?.unregisterAudioDeviceCallback(deviceCallback)
             deviceCallbackRegistered = false
         }
-        handler.removeCallbacks(updateRunnable)
         mediaPlayer?.release()
         mediaPlayer = null
         audioManager = null

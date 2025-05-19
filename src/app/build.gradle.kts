@@ -115,5 +115,5 @@ dependencies {
     implementation ("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
 
-
+    implementation("androidx.media:media:1.6.0")
 }

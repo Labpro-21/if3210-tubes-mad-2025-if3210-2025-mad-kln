@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
-import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.ui.components.LikeButton
 import extractDominantColor
 import com.android.purrytify.view_model.PlayerViewModel
@@ -58,7 +57,6 @@ fun MiniPlayer(
     var dominantColor by remember { mutableStateOf(Color.Black) }
     val context = LocalContext.current
 
-    val songRepository = RepositoryProvider.getSongRepository()
 
     LaunchedEffect(song?.imageUri) {
         song?.imageUri?.let { uri ->
@@ -66,12 +64,6 @@ fun MiniPlayer(
             bitmap?.let {
                 dominantColor = extractDominantColor(it)
             }
-        }
-    }
-
-    LaunchedEffect(song?.id) {
-        song?.let {
-            songRepository.updateLastPlayedDate(it.id)
         }
     }
 
@@ -114,8 +106,8 @@ fun MiniPlayer(
                     )
 
                     IconButton(
-                        onClick = { viewModel.togglePlayPause() },
-                        modifier = Modifier.size(32.dp)
+                        onClick = { viewModel.togglePlayPause(context) },
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             painterResource(id = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),

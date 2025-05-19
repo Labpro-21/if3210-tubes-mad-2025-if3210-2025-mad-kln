@@ -1,5 +1,6 @@
 package com.android.purrytify
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -17,6 +18,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+    private var latestIntent: Intent? = null
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        latestIntent = intent
+        Log.d("intent","test")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -32,12 +41,17 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { !isReady }
 
         lifecycleScope.launch {
-            SongInitializer.initializeSongs(songRepository, applicationContext)
-            isReady = true
+            try {
+                SongInitializer.initializeSongs(songRepository, applicationContext)
+                isReady = true
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error initializing songs: ${e.message}", e)
+                isReady = true
+            }
         }
 
         setContent {
-            PurrytifyApp(this@MainActivity)
+            PurrytifyApp(this@MainActivity, latestIntent ?: intent)
         }
     }
 }

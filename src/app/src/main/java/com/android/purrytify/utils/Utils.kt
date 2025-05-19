@@ -16,22 +16,22 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 // Utils func here
-fun loadBitmapFromUri(context: Context, uriString: String): Bitmap? {
-    return try {
-        val uri = Uri.parse(uriString)
-        val inputStream = context.contentResolver.openInputStream(uri)
-        BitmapFactory.decodeStream(inputStream)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
+    fun loadBitmapFromUri(context: Context, uriString: String): Bitmap? {
+        return try {
+            val uri = Uri.parse(uriString)
+            val inputStream = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
-}
-
-fun extractDominantColor(bitmap: Bitmap): Color {
-    val palette = Palette.from(bitmap).generate()
-    val dominantSwatch = palette.dominantSwatch
-    return if (dominantSwatch != null) Color(dominantSwatch.rgb) else Color.Black
-}
+    
+    fun extractDominantColor(bitmap: Bitmap): Color {
+        val palette = Palette.from(bitmap).generate()
+        val dominantSwatch = palette.dominantSwatch
+        return if (dominantSwatch != null) Color(dominantSwatch.rgb) else Color.Black
+    }
 
 suspend fun loadBitmapFromUrl(context: Context, url: String): Bitmap? {
     return withContext(Dispatchers.IO) {

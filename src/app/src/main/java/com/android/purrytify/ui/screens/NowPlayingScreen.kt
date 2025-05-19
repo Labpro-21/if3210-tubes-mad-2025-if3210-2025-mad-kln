@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
 import com.android.purrytify.controller.RepeatMode
-import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.service.MusicService
 import com.android.purrytify.ui.components.LikeButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
@@ -57,7 +57,6 @@ fun NowPlayingScreen(
     val outputs by viewModel.availableOutputs.collectAsState()
 
     var expanded by remember { mutableStateOf(false) }
-    val songRepository = RepositoryProvider.getSongRepository()
     val isLastSong = viewModel.isLast()
     val isShuffled by viewModel.isShuffled.collectAsState()
 
@@ -66,8 +65,6 @@ fun NowPlayingScreen(
 
     LaunchedEffect(song) {
         song?.let {
-            songRepository.updateLastPlayedDate(it.id)
-
             val bitmap = loadBitmapFromUri(context, it.imageUri)
             bitmap?.let { bmp ->
                 dominantColor = extractDominantColor(bmp)
@@ -121,6 +118,7 @@ fun NowPlayingScreen(
                     song = it,
                     onDeleteSuccess = {
                         viewModel.clearCurrent()
+                        MusicService.instance?.clearNotification()
                         onClose()
                     },
                     onEditSuccess = { updatedSong ->
@@ -130,6 +128,7 @@ fun NowPlayingScreen(
                             imageUri = updatedSong.imageUri
                         )
                         viewModel.updateSongInList(updatedSong)
+                        MusicService.instance?.updateNotification()
                     }
                 )
             }
@@ -284,7 +283,7 @@ fun NowPlayingScreen(
                 }
 
                 IconButton(
-                    onClick = { viewModel.togglePlayPause() },
+                    onClick = { viewModel.togglePlayPause(context) },
                     modifier = Modifier.size(80.dp)
                 ) {
                     Icon(
