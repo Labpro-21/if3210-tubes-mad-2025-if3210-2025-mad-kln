@@ -87,6 +87,11 @@ interface ApiService {
         @Path("country") country: String
     ): List<OnlineSongResponse>
 
+    @GET("/api/songs/{song_id}")
+    suspend fun getSongById(
+        @Path("song_id") songId: Int
+    ): OnlineSongResponse
+
     @Multipart
     @PATCH("api/profile")
     suspend fun editProfile(

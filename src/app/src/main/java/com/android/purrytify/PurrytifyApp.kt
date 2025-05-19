@@ -1,55 +1,27 @@
 package com.android.purrytify
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
-import android.content.Context
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.*
-import com.android.purrytify.ui.components.BottomNavbar
-import com.android.purrytify.ui.screens.HomeScreen
-import com.android.purrytify.ui.screens.LibraryScreen
-import com.android.purrytify.ui.screens.LoginScreen
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.*
 import com.android.purrytify.datastore.TokenManager
-import com.android.purrytify.network.checkToken
-import com.android.purrytify.ui.modal.MiniPlayer
-import com.android.purrytify.ui.screens.NowPlayingScreen
-import com.android.purrytify.ui.screens.ProfileScreen
-import com.android.purrytify.view_model.getPlayerViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import com.android.purrytify.ui.components.NetworkStatus
 import com.android.purrytify.network.NetworkMonitor
-import com.android.purrytify.ui.screens.BlankScreen
-import com.android.purrytify.ui.screens.ChartScreen
-import com.android.purrytify.ui.screens.NoInternetScreen
-import kotlinx.coroutines.coroutineScope
-
+import com.android.purrytify.network.checkToken
+import com.android.purrytify.ui.components.BottomNavbar
+import com.android.purrytify.ui.components.NetworkStatus
+import com.android.purrytify.ui.modal.MiniPlayer
+import com.android.purrytify.ui.screens.*
+import com.android.purrytify.view_model.getPlayerViewModel
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.delay
 
 @Composable
 fun PurrytifyApp(context: Context) {
@@ -66,8 +38,23 @@ fun PurrytifyApp(context: Context) {
     val token by TokenManager.getToken(context).collectAsState(initial = null)
     var hasLoaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(token) {
+    val deepLinkedSong by SharedSongState.deepLinkedSong.collectAsState()
 
+    LaunchedEffect(deepLinkedSong) {
+        deepLinkedSong?.let { song ->
+            val songList = listOf(song)
+            mediaPlayerViewModel.setSongs(songList)
+            mediaPlayerViewModel.playSong(context, 0)
+
+            delay(1000)
+            navController.navigate("nowPlaying") {
+                popUpTo("home") { inclusive = true }
+            }
+            SharedSongState.clear()
+        }
+    }
+
+    LaunchedEffect(token) {
         if (hasLoaded && token != null) {
             if (token!!.isEmpty()) {
                 navController.navigate("login") {
@@ -141,9 +128,7 @@ fun PurrytifyApp(context: Context) {
                 }
                 composable("chart") {
                     if (isConnected) {
-                        ChartScreen(
-                            onClose = { navController.popBackStack() }
-                        )
+                        ChartScreen(onClose = { navController.popBackStack() })
                     } else {
                         NoInternetScreen()
                     }
@@ -188,4 +173,3 @@ fun PurrytifyApp(context: Context) {
         }
     }
 }
-

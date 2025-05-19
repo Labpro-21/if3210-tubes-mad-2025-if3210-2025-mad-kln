@@ -1,10 +1,12 @@
 package com.android.purrytify.ui.screens
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -203,6 +205,8 @@ fun NowPlayingScreen(
                         }
                     }
 
+                    ShareLinkButton(songId = it.id)
+
                     LikeButton(
                         type = "heart",
                         songId = it.id,
@@ -331,3 +335,29 @@ fun formatTime(timeMs: Int): String {
     return "%d:%02d".format(minutes, seconds)
 }
 
+@Composable
+fun ShareLinkButton(songId: Int) {
+    val context = LocalContext.current
+    val shareLink = "https://purrytify-be.vercel.app/play?songId=$songId"
+
+    IconButton(
+        onClick = {
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, shareLink)
+                type = "text/plain"
+            }
+
+            val shareIntent = Intent.createChooser(sendIntent, "Share song link")
+            context.startActivity(shareIntent)
+        },
+        modifier = Modifier.size(40.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_share),
+            contentDescription = "Share",
+            tint = Color.Unspecified,
+            modifier = Modifier.size(32.dp)
+        )
+    }
+}
