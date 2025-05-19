@@ -128,7 +128,11 @@ fun NowPlayingScreen(
                             imageUri = updatedSong.imageUri
                         )
                         viewModel.updateSongInList(updatedSong)
-                        MusicService.instance?.updateNotification()
+                        MusicService.instance?.updateSongInfo(
+                            updatedSong.title,
+                            updatedSong.artist,
+                            updatedSong.imageUri
+                        )
                     }
                 )
             }

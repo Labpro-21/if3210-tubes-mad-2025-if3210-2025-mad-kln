@@ -107,13 +107,31 @@ object MediaPlayerController {
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         deviceCallback = object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
+                var shouldAutoSwitch = false
+                var newHeadphoneOrBluetooth: AudioDeviceInfo? = null
+                
                 for (device in addedDevices) {
                     if (device.isValidOutputDevice()) {
                         connectedDevices.removeAll { it.id == device.id }
                         connectedDevices.add(0, device)
+                        
+                        if (device.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                            device.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                            device.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES) {
+                            shouldAutoSwitch = true
+                            newHeadphoneOrBluetooth = device
+                        }
                     }
                 }
-                updateAndSwitch()
+                
+                updateAvailableOutputs()
+                
+                if (shouldAutoSwitch && newHeadphoneOrBluetooth != null) {
+                    setAudioOutput(newHeadphoneOrBluetooth)
+
+                } else {
+                    mediaPlayer?.preferredDevice = selectedOutput
+                }
             }
 
             override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
@@ -402,18 +420,24 @@ object MediaPlayerController {
     }
 
     fun setAudioOutput(deviceInfo: AudioDeviceInfo) {
-        mediaPlayer?.preferredDevice = deviceInfo
-        selectedOutput = deviceInfo
+        if (deviceInfo != selectedOutput) {
+            mediaPlayer?.preferredDevice = deviceInfo
+            selectedOutput = deviceInfo
+        }
     }
 
     private fun updateAndSwitch() {
-        _availableOutputs.value = connectedDevices.toList()
+        updateAvailableOutputs()
 
         if (selectedOutput == null || !connectedDevices.any { it.id == selectedOutput?.id }) {
             selectedOutput = connectedDevices.firstOrNull()
         }
 
         mediaPlayer?.preferredDevice = selectedOutput
+    }
+    
+    private fun updateAvailableOutputs() {
+        _availableOutputs.value = connectedDevices.toList()
     }
 
     private fun AudioDeviceInfo.isValidOutputDevice(): Boolean {

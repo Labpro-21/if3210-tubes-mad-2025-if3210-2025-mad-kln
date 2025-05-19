@@ -1,5 +1,6 @@
 package com.android.purrytify.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,9 @@ import androidx.navigation.NavController
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.data.local.repositories.SongRepository
+import getToken
+import com.android.purrytify.network.RetrofitClient
+import com.android.purrytify.network.checkToken
 import com.android.purrytify.ui.components.ChartCard
 import com.android.purrytify.ui.components.SongCard
 import com.android.purrytify.view_model.ChartViewModel
@@ -45,28 +49,6 @@ fun HomeScreen(
     val recentlyPlayedSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
     val hasFetched = remember { mutableStateOf(false) }
 
-//    val topSongViewModel: TopSongViewModel = getTopSongViewModel()
-//    val topSongsGlobal by topSongViewModel.topSongsGlobal
-////    val topSongsUS by topSongViewModel.topSongsUS
-
-//    LaunchedEffect(Unit) {
-//        if (topSongsGlobal.isEmpty()) topSongViewModel.fetchTopSongsGlobal()
-////        if (topSongsUS.isEmpty()) topSongViewModel.fetchTopSongsUS()
-//    }
-//
-//    LaunchedEffect(topSongsGlobal) {
-//        if (topSongsGlobal.isNotEmpty()) {
-//            Log.d("HomeScreen", "Fetched top songs: ${topSongsGlobal.size}")
-//            recentlyPlayedSongs.value = topSongsGlobal
-//        }
-//    }
-//
-////    LaunchedEffect(topSongsUS) {
-////        if (topSongsUS.isNotEmpty()) {
-////            Log.d("HomeScreen", "Fetched top songs US: ${topSongsUS.size}")
-////        }
-////    }
-
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             delay(200)
@@ -75,6 +57,21 @@ fun HomeScreen(
             recentlyPlayedSongs.value = songRepository.getRecentlyPlayedSongsByUploader(userId, 5)
             hasFetched.value = true
         }
+    }
+
+    val userLocation = remember { mutableStateOf("") }
+
+    fun fetchUser() {
+        coroutineScope.launch {
+            checkToken(context)
+            val bearerToken = "Bearer ${getToken(context)}"
+            Log.d("Bearer Token", bearerToken)
+            val user = RetrofitClient.api.getProfile(bearerToken)
+            userLocation.value = user.location
+        }
+    }
+    LaunchedEffect (Unit){
+        fetchUser()
     }
 
     Scaffold(
@@ -104,27 +101,32 @@ fun HomeScreen(
                             description ="Your daily update of the most played tracks right now - Global",
                             onClick = {
                                 chartViewModel.setChartType("global")
-                                navController.navigate("chart") }
+                                navController.navigate("chart")
+                            }
                         )
                     }
                     item {
                         ChartCard(
                             color = "red",
                             title = "Top 10",
-                            subtitle = "US",
-                            description ="Your daily update of the most played tracks right now - US",
+                            subtitle = userLocation.value,
+                            description = "Your daily update of the most played tracks right now - ${userLocation.value}",
                             onClick = {
-                                chartViewModel.setChartType("country", "US")
-                                navController.navigate("chart") }
+                                chartViewModel.setChartType("country", userLocation.value)
+                                navController.navigate("chart")
+                            }
                         )
                     }
                     item {
                         ChartCard(
                             color = "green",
-                            title = "Top 10",
-                            subtitle = "For you",
+                            title = "For You",
+                            subtitle = "Personalized",
                             description = "Your personalized chart based on your listening habits",
-                            onClick = { navController.navigate("chart") }
+                            onClick = {
+                                chartViewModel.setChartType("foryou")
+                                navController.navigate("chart")
+                            }
                         )
                     }
                 }

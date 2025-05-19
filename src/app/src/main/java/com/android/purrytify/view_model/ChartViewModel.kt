@@ -11,6 +11,7 @@ import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.network.OnlineSongResponse
 import com.android.purrytify.network.RetrofitClient
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 fun durationToSeconds(duration: String): Int {
     val parts = duration.split(":")
@@ -18,6 +19,22 @@ fun durationToSeconds(duration: String): Int {
     val minutes = parts[0].toIntOrNull() ?: 0
     val seconds = parts[1].toIntOrNull() ?: 0
     return minutes * 60 + seconds
+}
+
+fun secondsToDuration(seconds: Int): String {
+    if (seconds < 0) {
+        return "00:00"
+    }
+
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val remainingSeconds = seconds % 60
+
+    return if (hours > 0) {
+        String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, remainingSeconds)
+    } else {
+        String.format(Locale.ROOT, "%02d:%02d", minutes, remainingSeconds)
+    }
 }
 
 fun OnlineSongResponse.toSong(): Song {
@@ -47,11 +64,13 @@ class ChartViewModel : ViewModel() {
     private var _subtitle = mutableStateOf("")
     private var _description = mutableStateOf("")
     private var _color = mutableStateOf("")
+    private var _totalDuration = mutableStateOf("")
 
     val title: State<String> get() = _title
     val subtitle: State<String> get() = _subtitle
     val description: State<String> get() = _description
     val color: State<String> get() = _color
+    val totalDuration: State<String> get() = _totalDuration
 
     private fun loadChart(chartType: String, country: String = "") {
         Log.d("ChartViewModel", "Fetching chart for type: $chartType, country: $country")
@@ -65,6 +84,10 @@ class ChartViewModel : ViewModel() {
                     else -> emptyList()
                 }
                 _chartSongs.value = chartSongsResponse.map { it.toSong() }
+
+                _totalDuration.value = secondsToDuration(
+                    _chartSongs.value.sumOf { it.duration }
+                )
             } catch (e: Exception) {
                 Log.e("ChartViewModel", "Error fetching chart songs", e)
             } finally {

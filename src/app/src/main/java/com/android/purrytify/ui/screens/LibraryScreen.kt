@@ -114,6 +114,14 @@ fun LibraryScreen(
                         libraryViewModel.switchTab("liked")
                     }
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                StyledButton(
+                    text = "Downloaded",
+                    isSelected = tab == "downloaded",
+                    onClick = {
+                        libraryViewModel.switchTab("downloaded")
+                    }
+                )
             }
 
             HorizontalDivider(

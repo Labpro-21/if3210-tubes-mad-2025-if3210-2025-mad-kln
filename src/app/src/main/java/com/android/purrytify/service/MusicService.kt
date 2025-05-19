@@ -369,6 +369,34 @@ class MusicService : Service() {
         notificationManager.cancel(NOTIFICATION_ID)
         lastSongId = null
     }
+    
+    fun updateSongInfo(title: String, artist: String, imageUri: String) {
+        // Force metadata update by resetting lastSongId
+        lastSongId = null
+        
+        val song = MediaPlayerController.currentSong.value ?: return
+        
+        // Update media session metadata
+        val metadataBuilder = MediaMetadataCompat.Builder().apply {
+            putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+            putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+            putLong(MediaMetadataCompat.METADATA_KEY_DURATION, MediaPlayerController.totalDuration.value.toLong())
+            
+            try {
+                val artwork = loadBitmapFromUri(this@MusicService, imageUri)
+                if (artwork != null) {
+                    putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+                }
+            } catch (e: Exception) {
+                Log.e("MusicService", "Error loading artwork: ${e.message}")
+            }
+        }
+        
+        mediaSession.setMetadata(metadataBuilder.build())
+        
+        // Force notification update
+        updateNotification(true)
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 

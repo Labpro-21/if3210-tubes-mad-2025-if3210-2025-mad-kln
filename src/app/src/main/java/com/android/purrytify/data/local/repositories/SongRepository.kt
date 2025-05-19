@@ -141,33 +141,39 @@ class SongRepository(private val songDao: SongDao) {
             songDao.getListenedSongsCount(uploaderId)
         }
     }
-    
+
+    suspend fun getDownloadedSongsByUploader(uploaderId: Int, query: String = ""): List<Song> {
+        return withContext(Dispatchers.IO) {
+            songDao.searchDownloadedSongsByUploader(uploaderId, query)
+        }
+    }
+
     suspend fun addSecondsPlayed(songId: Int, seconds: Int) {
         Log.d("DEBUG IN ADDSECONDSPLAYED","JUMLAH DETIK: $seconds")
         withContext(Dispatchers.IO) {
             songDao.addSecondsPlayed(songId, seconds)
         }
     }
-    
+
     suspend fun getMostListenedSongs(uploaderId: Int, limit: Int): List<Song> {
         return withContext(Dispatchers.IO) {
             songDao.getMostListenedSongsByUploader(uploaderId, limit)
         }
     }
-    
+
     suspend fun getTopArtistsByListeningTime(uploaderId: Int, limit: Int): Map<String, Int> {
         return withContext(Dispatchers.IO) {
             val artistStats = songDao.getTopArtistsByListeningTime(uploaderId, limit)
             artistStats.associate { it.artist to it.totalSeconds }
         }
     }
-    
+
     suspend fun getTotalListeningTime(uploaderId: Int): Int {
         return withContext(Dispatchers.IO) {
             songDao.getTotalListeningTime(uploaderId)
         }
     }
-    
+
     suspend fun getMaxStreak(uploaderId: Int): Int {
         return withContext(Dispatchers.IO) {
             songDao.getMaxStreakByUploader(uploaderId)
@@ -179,12 +185,12 @@ class SongRepository(private val songDao: SongDao) {
             songDao.getdayStreakListByUploader(uploaderId, limit)
         }
     }
-    
+
     fun formatListeningTime(seconds: Int): String {
         val hours = seconds / 3600
         val minutes = (seconds % 3600) / 60
         val remainingSeconds = seconds % 60
-        
+
         return when {
             hours > 0 -> "$hours h $minutes m"
             minutes > 0 -> "$minutes m $remainingSeconds s"

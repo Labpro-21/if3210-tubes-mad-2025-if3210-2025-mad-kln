@@ -24,8 +24,8 @@ class LibraryViewModel(
 ) : ViewModel() {
 
     private var allSongs by mutableStateOf<List<Song>>(emptyList())
-
     private var likedSongs by mutableStateOf<List<Song>>(emptyList())
+    private var downloadedSongs by mutableStateOf<List<Song>>(emptyList())
 
     var tab by mutableStateOf("all")
         private set
@@ -60,6 +60,7 @@ class LibraryViewModel(
 
             allSongs = songRepository.getSongsByUploader(userId, searchQuery) ?: emptyList()
             likedSongs = songRepository.getLikedSongsByUploader(userId, searchQuery) ?: emptyList()
+            downloadedSongs = songRepository.getDownloadedSongsByUploader(userId, searchQuery) ?: emptyList()
             updateActiveSongs()
         }
     }
@@ -70,7 +71,13 @@ class LibraryViewModel(
     }
 
     private fun updateActiveSongs() {
-        activeSongs = if (tab == "all") allSongs else likedSongs
+        if (tab == "downloaded") {
+            activeSongs = downloadedSongs
+        } else if (tab == "liked") {
+            activeSongs = likedSongs
+        } else {
+            activeSongs = allSongs
+        }
     }
 }
 
