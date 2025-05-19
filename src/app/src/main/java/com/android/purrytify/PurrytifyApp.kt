@@ -4,9 +4,34 @@ import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import android.content.Intent
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.*
+import com.android.purrytify.ui.components.BottomNavbar
+import com.android.purrytify.ui.screens.HomeScreen
+import com.android.purrytify.ui.screens.LibraryScreen
+import com.android.purrytify.ui.screens.LoginScreen
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,7 +49,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
 
 @Composable
-fun PurrytifyApp(context: Context) {
+fun PurrytifyApp(context: Context, intent: Intent) {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
     val mediaPlayerViewModel = getPlayerViewModel()
@@ -39,6 +64,7 @@ fun PurrytifyApp(context: Context) {
     var hasLoaded by remember { mutableStateOf(false) }
 
     val deepLinkedSong by SharedSongState.deepLinkedSong.collectAsState()
+    var lastMainRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(deepLinkedSong) {
         deepLinkedSong?.let { song ->
@@ -68,6 +94,16 @@ fun PurrytifyApp(context: Context) {
         }
     }
 
+    LaunchedEffect(currentRoute) {
+        Log.d("CURRENT ROUTE",currentRoute ?: "NULL")
+        if (!currentRoute.isNullOrEmpty() &&
+            currentRoute != "nowPlaying" &&
+            currentRoute != "blank" &&
+            currentRoute != "login") {
+            lastMainRoute = currentRoute
+        }
+    }
+
     LaunchedEffect(Unit) {
         mediaPlayerViewModel.initialize(context)
 
@@ -78,13 +114,27 @@ fun PurrytifyApp(context: Context) {
                 popUpTo(0)
             }
         } else {
-            navController.navigate("home") {
-                popUpTo(0)
+            if (intent.getBooleanExtra("open_now_playing", false)) {
+                Log.d("LAST ROUTE",lastMainRoute ?: "NULL")
+                val routeToRestore = lastMainRoute ?: "home"
+                navController.navigate(routeToRestore) {
+                    popUpTo(0)
+                    launchSingleTop = true
+                }
+                navController.navigate("nowPlaying") {
+                    launchSingleTop = true
+                }
+            } else {
+                navController.navigate("home") {
+                    popUpTo(0)
+                }
             }
         }
 
         hasLoaded = true
         systemUiController.isStatusBarVisible = false
+
+
         while (true) {
             delay(5 * 60 * 1000)
             checkToken(context)

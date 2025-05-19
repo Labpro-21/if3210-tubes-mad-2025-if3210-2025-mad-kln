@@ -8,4 +8,12 @@
     <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_inset</item>
     <item name="postSplashScreenTheme">@style/Theme.Purrytify</item>
     </style>
+
+    <style name="Theme.Purrytify.Transparent" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">false</item>
+    </style>
 </resources>

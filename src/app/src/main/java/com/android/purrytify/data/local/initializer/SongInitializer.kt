@@ -87,6 +87,8 @@ object SongInitializer {
                 audioResId = R.raw.audio_counting_stars,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 01:00:00",
+                dayStreak = 2,
+                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -97,6 +99,8 @@ object SongInitializer {
                 audioResId = R.raw.audio_just_forget,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 02:30:00",
+                dayStreak = 2,
+                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -107,6 +111,8 @@ object SongInitializer {
                 audioResId = R.raw.audio_shiki_no_uta,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 04:00:00",
+                dayStreak = 2,
+                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -117,6 +123,8 @@ object SongInitializer {
                 audioResId = R.raw.audio_whos_theme,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 05:30:00",
+                dayStreak = 2,
+                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -126,7 +134,9 @@ object SongInitializer {
                 imageResId = R.drawable.photo_i_miss_you,
                 audioResId = R.raw.audio_i_miss_you,
                 uploaderId = 127,
-                lastPlayedDate = "2025-04-12 07:00:00",
+                lastPlayedDate = "2025-05-18 12:00:00",
+                dayStreak = 3,
+                maxStreak = 3,
                 context = context
             ),
             createSong(
@@ -193,6 +203,8 @@ object SongInitializer {
         country: String = "",
         liked: Boolean = false,
         lastPlayedDate: String = "",
+        dayStreak: Int = 0,
+        maxStreak: Int = 0,
         context: Context
     ): Song {
         return Song(
@@ -203,7 +215,9 @@ object SongInitializer {
             imageUri = Uri.parse("android.resource://${context.packageName}/$imageResId").toString(),
             audioUri = Uri.parse("android.resource://${context.packageName}/$audioResId").toString(),
             liked = liked,
-            lastPlayedDate = lastPlayedDate
+            lastPlayedDate = lastPlayedDate,
+            dayStreak = dayStreak,
+            maxStreak = maxStreak
         )
     }
 }

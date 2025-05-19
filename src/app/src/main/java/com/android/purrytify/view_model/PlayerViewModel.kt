@@ -1,16 +1,19 @@
 package com.android.purrytify.view_model
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioDeviceInfo
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.controller.MediaPlayerController
+import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.controller.RepeatMode
+import com.android.purrytify.service.MusicService
 import kotlinx.coroutines.flow.StateFlow
 
 
@@ -41,7 +44,7 @@ class PlayerViewModel : ViewModel() {
 
     fun setSongs(songs: List<Song>) {
         for (song in songs) {
-            Log.d("PlayerViewModel", "setSongs: ${song}")
+            Log.d("PlayerViewModel", "setSongs: $song")
         }
         controller.setSongs(songs)
     }
@@ -53,10 +56,17 @@ class PlayerViewModel : ViewModel() {
     fun playSong(context: Context, index: Int) {
         Log.d("PlayerViewModel", "playSong: $index")
         controller.playSong(context, index)
+        val serviceIntent = Intent(context, MusicService::class.java)
+        ContextCompat.startForegroundService(context, serviceIntent)
     }
 
-    fun togglePlayPause() {
+    fun togglePlayPause(context: Context) {
         controller.playPause()
+        if (isPlaying.value){
+            val serviceIntent = Intent(context, MusicService::class.java)
+            ContextCompat.startForegroundService(context, serviceIntent)
+            MusicService.instance?.updateNotification()
+        }
     }
 
     fun seekTo(position: Float) {
@@ -98,17 +108,10 @@ class PlayerViewModel : ViewModel() {
         controller.release()
     }
 
-//    fun deleteSongFromList(song: Song) {
-//        controller.deleteSongFromList(song)
-//    }
-//
-//    fun insertSongToList(song: Song) {
-//        controller.insertSongToList(song)
-//    }
 }
 
 @Composable
 fun getPlayerViewModel(): PlayerViewModel {
-    val activity = LocalContext.current as ComponentActivity
-    return viewModel(activity)
+    val context = LocalContext.current as ComponentActivity
+    return viewModel(context)
 }

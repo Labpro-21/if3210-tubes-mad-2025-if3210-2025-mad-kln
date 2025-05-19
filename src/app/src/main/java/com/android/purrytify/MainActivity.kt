@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private var latestIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,19 +38,25 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { !isReady }
 
         lifecycleScope.launch {
-            SongInitializer.initializeSongs(songRepository, applicationContext)
-            isReady = true
+            try {
+                SongInitializer.initializeSongs(songRepository, applicationContext)
+                isReady = true
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error initializing songs: ${e.message}", e)
+                isReady = true
+            }
         }
 
         handleIntent(intent)
 
         setContent {
-            PurrytifyApp(this@MainActivity)
+            PurrytifyApp(this@MainActivity, latestIntent ?: intent)
         }
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        latestIntent = intent
         intent?.let {
             handleIntent(it)
         }

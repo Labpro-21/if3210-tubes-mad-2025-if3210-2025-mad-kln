@@ -299,7 +299,7 @@ fun AudioUploadBox(
 
     val playPauseLogic: () -> Unit = {
         if (!isPlaying) {
-            mediaPlayerViewModel.playSong(context, 0)
+            mediaPlayerViewModel.playSong(context,0)
         } else {
             mediaPlayerViewModel.clearCurrent()
         }

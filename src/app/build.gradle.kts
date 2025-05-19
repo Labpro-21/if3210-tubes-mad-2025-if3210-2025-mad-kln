@@ -72,8 +72,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
 
-
-
     // Room Database
     val room_version = "2.6.1"
 
@@ -126,4 +124,5 @@ dependencies {
     implementation ("com.google.android.gms:play-services-location:21.0.1")
 
 
+    implementation("androidx.media:media:1.6.0")
 }
