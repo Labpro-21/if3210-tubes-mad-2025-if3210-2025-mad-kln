@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.network.OnlineSongResponse
 import com.android.purrytify.network.RetrofitClient
@@ -52,6 +53,8 @@ fun OnlineSongResponse.toSong(): Song {
 
 class ChartViewModel : ViewModel() {
 
+    private var _userId = mutableStateOf(0)
+
     private var _chartSongs = mutableStateOf<List<Song>>(emptyList())
     val chartSongs: State<List<Song>> get() = _chartSongs
 
@@ -72,18 +75,23 @@ class ChartViewModel : ViewModel() {
     val color: State<String> get() = _color
     val totalDuration: State<String> get() = _totalDuration
 
+    fun setUserId(userId: Int) {
+        _userId.value = userId
+    }
+
     private fun loadChart(chartType: String, country: String = "") {
         Log.d("ChartViewModel", "Fetching chart for type: $chartType, country: $country")
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val chartSongsResponse = when (chartType) {
-                    "global" -> RetrofitClient.api.getTopSongsGlobal()
-                    "country" -> RetrofitClient.api.getTopSongsCountry(country)
-                //  "foryou" -> // nanti ye
+                    "global" -> RetrofitClient.api.getTopSongsGlobal().map { it.toSong() }
+                    "country" -> RetrofitClient.api.getTopSongsCountry(country).map { it.toSong() }
+                    "foryou" -> getForYouSongs(country, _userId.value)
                     else -> emptyList()
                 }
-                _chartSongs.value = chartSongsResponse.map { it.toSong() }
+
+                _chartSongs.value = chartSongsResponse.sortedBy { it.rank }
 
                 _totalDuration.value = secondsToDuration(
                     _chartSongs.value.sumOf { it.duration }
@@ -132,4 +140,51 @@ class ChartViewModel : ViewModel() {
 fun getChartViewModel(): ChartViewModel {
     val activity = LocalContext.current as ComponentActivity
     return viewModel(activity)
+}
+
+suspend fun getForYouSongs(country: String, userId: Int): List<Song> {
+    Log.d("ChartViewModel_ForYou", "Fetching 'For You' songs for country: $country")
+
+    val globalList = RetrofitClient.api.getTopSongsGlobal().shuffled()
+    val countryList = RetrofitClient.api.getTopSongsCountry(country).shuffled()
+
+    val songRepository = RepositoryProvider.getSongRepository()
+    val recentlyPlayed = songRepository.getRecentlyPlayedSongsByUploader(userId, 5) ?: emptyList()
+    val liked = songRepository.getLikedSongsByUploader(userId) ?: emptyList()
+
+    val seenTitles = mutableSetOf<String>()
+    val result = mutableListOf<Song>()
+
+    var recentlyAdded = 0
+    for (song in recentlyPlayed) {
+        if (seenTitles.add(song.title)) {
+            result.add(song)
+            recentlyAdded++
+            if (recentlyAdded >= 3) break
+        }
+    }
+
+    var likedAdded = 0
+    for (song in liked) {
+        if (seenTitles.add(song.title)) {
+            result.add(song)
+            likedAdded++
+            if (likedAdded >= 2) break
+        }
+    }
+
+    val combinedChartList = (globalList + countryList).shuffled()
+    for (song in combinedChartList) {
+        if (seenTitles.add(song.title)) {
+            result.add(song.toSong())
+            if (result.size >= 10) break
+        }
+    }
+
+    result.forEachIndexed { index, song ->
+        song.rank = index + 1
+    }
+
+    Log.d("ChartViewModel_ForYou", "Final 'For You' songs: ${result.size} items")
+    return result
 }

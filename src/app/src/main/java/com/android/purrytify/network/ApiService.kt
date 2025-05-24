@@ -55,7 +55,7 @@ data class OnlineSongResponse(
     val url: String,
     val duration: String,
     val country: String,
-    val rank: Int,
+    var rank: Int,
     val createdAt: String,
     val updatedAt: String,
 )

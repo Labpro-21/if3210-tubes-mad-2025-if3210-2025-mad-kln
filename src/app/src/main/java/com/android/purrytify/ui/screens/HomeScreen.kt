@@ -56,6 +56,7 @@ fun HomeScreen(
             newSongs.value = songRepository.getNewSongsByUploader(userId, 5)
             recentlyPlayedSongs.value = songRepository.getRecentlyPlayedSongsByUploader(userId, 5)
             hasFetched.value = true
+            chartViewModel.setUserId(userId)
         }
     }
 
@@ -125,7 +126,7 @@ fun HomeScreen(
                             subtitle = "Personalized",
                             description = "Your personalized chart based on your listening habits",
                             onClick = {
-                                chartViewModel.setChartType("foryou")
+                                chartViewModel.setChartType("foryou", userLocation.value)
                                 navController.navigate("chart")
                             }
                         )

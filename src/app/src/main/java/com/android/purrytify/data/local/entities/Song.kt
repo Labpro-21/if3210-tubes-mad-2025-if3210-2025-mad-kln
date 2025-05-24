@@ -23,5 +23,5 @@ data class Song(
     val isDownloaded: Boolean = false,
 
     // khusus lagu online
-    val rank: Int = 0,
+    var rank: Int = 0,
 )
