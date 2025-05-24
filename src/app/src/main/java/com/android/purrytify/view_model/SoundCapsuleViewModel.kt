@@ -48,7 +48,7 @@ class SoundCapsuleViewModel(
     var topSongData by mutableStateOf<List<TopSongInfo>>(emptyList())
         private set
 
-    var songCount by mutableStateOf(0)
+    var songCount by mutableIntStateOf(0)
         private set
 
     // Max Streak
@@ -77,9 +77,12 @@ class SoundCapsuleViewModel(
 
             val (artistCountVal, topArtistDataVal) = getTopArtistData(songs, 5)
 
-            if (artistCountVal > 0) {
+            if (artistCountVal > 0 && topArtistDataVal.isNotEmpty()) {
                 topArtistName = topArtistDataVal[0].artist
                 topArtistImageUri = topArtistDataVal[0].imageUri
+            } else {
+                topArtistName = ""
+                topArtistImageUri = ""
             }
 
             topArtistData = topArtistDataVal
@@ -91,9 +94,12 @@ class SoundCapsuleViewModel(
 
             val (songCountVal, songDataVal) = getTopSongData(songs, 5)
 
-            if (songCountVal > 0) {
+            if (songCountVal > 0 && songDataVal.isNotEmpty()) {
                 topSongTitle = songDataVal[0].title
                 topSongImageUri = songDataVal[0].imageUri
+            } else {
+                topSongTitle = ""
+                topSongImageUri = ""
             }
 
             songCount = songCountVal
@@ -148,42 +154,43 @@ fun getTopArtistData(songs: List<Song>, limit: Int): Pair<Int, List<TopArtistInf
     val sortedArtists = artistListeningStats.entries.sortedByDescending { it.value }
 
     val topArtists = sortedArtists.take(limit).mapIndexed { index, entry ->
-        val artistName = entry.key
-        val totalTime = entry.value
-
-        val representativeSong = songs.firstOrNull { it.artist == artistName }
+        val representativeSong = songs.firstOrNull { it.artist == entry.key }
         val imageUri = representativeSong?.imageUri ?: ""
 
         TopArtistInfo(
             rank = index + 1,
-            artist = artistName,
+            artist = entry.key,
             imageUri = imageUri
         )
     }
 
-    return Pair(topArtists.size, topArtists)
+    return Pair(artistListeningStats.size, topArtists)
 }
 
 data class TopSongInfo(
     val rank: Int,
     val title: String,
+    val artist: String,
     val imageUri: String,
-    val secondsPlayed: Int
+    val playCount: Int
 )
 
 fun getTopSongData(songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> {
-    val sortedSongs = songs.sortedByDescending { it.secondsPlayed }
+    val playedSongs = songs.filter { it.secondsPlayed > 0 }
+    
+    val sortedSongs = playedSongs.sortedByDescending { it.secondsPlayed }
 
     val topSongs = sortedSongs.take(limit).mapIndexed { index, song ->
         TopSongInfo(
             rank = index + 1,
             title = song.title,
+            artist = song.artist,
             imageUri = song.imageUri ?: "",
-            secondsPlayed = song.secondsPlayed
+            playCount = 0
         )
     }
 
-    return Pair(topSongs.size, topSongs)
+    return Pair(playedSongs.distinctBy { it.id }.size, topSongs)
 }
 
 data class MaxStreakInfo(

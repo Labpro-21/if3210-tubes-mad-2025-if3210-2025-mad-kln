@@ -379,15 +379,15 @@ fun ProfileScreen(
         if (showTopArtistModal) {
             TopArtistDetailModal(
                 onDismiss = { showTopArtistModal = false },
-                title = soundCapsuleViewModel.topArtistName,
-                imageUri = soundCapsuleViewModel.topArtistImageUri
+                topArtists = soundCapsuleViewModel.topArtistData,
+                artistCount = soundCapsuleViewModel.artistCount
             )
         }
         if (showTopSongModal) {
             TopSongDetailModal(
                 onDismiss = { showTopSongModal = false },
-                title = soundCapsuleViewModel.topSongTitle,
-                imageUri = soundCapsuleViewModel.topSongImageUri
+                topSongs = soundCapsuleViewModel.topSongData,
+                songCount = soundCapsuleViewModel.songCount
             )
         }
         
