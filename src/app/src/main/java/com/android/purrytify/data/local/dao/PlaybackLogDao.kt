@@ -10,8 +10,8 @@ interface PlaybackLogDao {
     @Insert
     suspend fun insert(log: PlaybackLog)
 
-    @Query("SELECT * FROM playback_logs WHERE yearMonth = :yearMonth ORDER BY timestamp DESC")
-    suspend fun getLogsByYearMonth(yearMonth: String): List<PlaybackLog>
+    @Query("SELECT * FROM playback_logs WHERE yearMonth = :yearMonth AND userId = :userId ORDER BY timestamp DESC")
+    suspend fun getLogsByYearMonth(yearMonth: String, userId: Int): List<PlaybackLog>
 
     @Query("SELECT * FROM playback_logs WHERE songId = :songId ORDER BY timestamp DESC")
     suspend fun getLogsBySongId(songId: String): List<PlaybackLog>

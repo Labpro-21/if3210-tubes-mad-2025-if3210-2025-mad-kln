@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "playback_logs")
 data class PlaybackLog(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: Int = 0,
     val songId: String,
     val artistId: String,
     val artistName: String,

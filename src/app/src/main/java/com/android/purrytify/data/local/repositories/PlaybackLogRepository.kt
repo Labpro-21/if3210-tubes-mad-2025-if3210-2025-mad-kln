@@ -12,12 +12,13 @@ import java.util.Calendar
 import java.util.Locale
 
 class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
-    private val MIN_PLAYBACK_DURATION_MS = 5000L // 5 seconds minimum
-    private val BATCH_UPDATE_INTERVAL_MS = 60000L // 1 minute
+    private val MIN_PLAYBACK_DURATION_MS = 1000L
+    private val BATCH_UPDATE_INTERVAL_MS = 10000L
     private var pendingLogs = mutableListOf<PlaybackLog>()
     private var lastBatchUpdateTime = System.currentTimeMillis()
 
-    fun logPlayback(songId: String, artistId: String, artistName: String, songTitle: String, listenedMs: Long) {
+    fun logPlayback(userId: Int, songId: String, artistId: String, artistName: String, songTitle: String, listenedMs: Long) {
+
         if (listenedMs < MIN_PLAYBACK_DURATION_MS) {
             return
         }
@@ -27,6 +28,7 @@ class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
         val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
 
         val log = PlaybackLog(
+            userId = userId,
             songId = songId,
             artistId = artistId,
             artistName = artistName,
@@ -42,6 +44,8 @@ class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastBatchUpdateTime >= BATCH_UPDATE_INTERVAL_MS) {
             flushLogs()
+        } else {
+            Log.d("PlaybackLogRepository", "Pending log added for $songTitle, will flush later")
         }
     }
 
@@ -52,6 +56,7 @@ class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
             try {
                 pendingLogs.forEach { log ->
                     playbackLogDao.insert(log)
+                    Log.d("PlaybackLogRepository", "Logged ${log.durationMs}ms for ${log.songTitle}")
                 }
                 pendingLogs.clear()
                 lastBatchUpdateTime = System.currentTimeMillis()
@@ -61,9 +66,9 @@ class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
         }
     }
 
-    suspend fun getLogsByYearMonth(yearMonth: String): List<PlaybackLog> {
+    suspend fun getLogsByYearMonth(yearMonth: String, userId: Int): List<PlaybackLog> {
         return withContext(Dispatchers.IO) {
-            playbackLogDao.getLogsByYearMonth(yearMonth)
+            playbackLogDao.getLogsByYearMonth(yearMonth, userId)
         }
     }
 

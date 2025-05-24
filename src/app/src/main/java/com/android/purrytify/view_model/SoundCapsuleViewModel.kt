@@ -74,7 +74,11 @@ class SoundCapsuleViewModel(
             songs = songRepository.getSongsByUploader(userId) ?: emptyList()
 
             val currentYearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
-            val logs = playbackLogRepository.getLogsByYearMonth(currentYearMonth)
+            val logs = playbackLogRepository.getLogsByYearMonth(currentYearMonth, userId)
+
+            for (log in logs) {
+                Log.d("SoundCapsuleViewModel", "Log: ${GsonBuilder().setPrettyPrinting().create().toJson(log)}")
+            }
             
             timeListened = getTimeListened(logs)
             Log.d("SoundCapsuleViewModel", "Total Duration Played: $timeListened")

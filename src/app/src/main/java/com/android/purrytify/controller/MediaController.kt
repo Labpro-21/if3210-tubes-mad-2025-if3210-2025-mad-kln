@@ -95,9 +95,16 @@ object MediaPlayerController {
     }
 
     private fun flushPlaybackLog(force: Boolean) {
+
+        if (currentSong.value == null) {
+            return
+        }
+
         val songToLog = _currentSong.value
+        Log.d("MediaPlayerController", "Flushing playback log for ${songToLog?.title} with ${pendingPlaybackMs}ms")
         if (songToLog != null && (pendingPlaybackMs >= MIN_LOG_MS || (force && pendingPlaybackMs > 0))) {
             playbackLogRepository.logPlayback(
+                userId = songToLog.uploaderId,
                 songId = songToLog.id.toString(),
                 artistId = songToLog.uploaderId.toString(),
                 artistName = songToLog.artist,
@@ -197,7 +204,9 @@ object MediaPlayerController {
             song = _songList.value[currentSongIndex]
         }
 
+        flushPlaybackLog(force = true)
         _currentSong.value = song
+
         pendingPlaybackMs = 0L
         lastBatchLogTime = System.currentTimeMillis()
 
@@ -210,12 +219,8 @@ object MediaPlayerController {
             _totalDuration.value = duration
 
             setOnCompletionListener {
-                flushPlaybackLog(force = true)
-                pendingPlaybackMs = 0L
-                lastBatchLogTime = System.currentTimeMillis()
-
                 when (_repeatMode.value) {
-                    RepeatMode.REPEAT_ONE -> {// Replay current song
+                    RepeatMode.REPEAT_ONE -> {
                         if (_isShuffleEnabled.value) {
                             playSong(context, shuffledIndex)
                         } else {
