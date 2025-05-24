@@ -14,7 +14,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.android.purrytify.R
 
-data class BottomNavItem(
+public data class BottomNavItem(
     val route: String,
     val label: String,
     val activeIcon: Int,
