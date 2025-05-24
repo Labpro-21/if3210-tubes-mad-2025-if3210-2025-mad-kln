@@ -4,5 +4,5 @@ import androidx.room.ColumnInfo
 
 data class ArtistListeningStats(
     @ColumnInfo(name = "artist") val artist: String,
-    @ColumnInfo(name = "totalSeconds") val totalSeconds: Int
-) 
+    @ColumnInfo(name = "totalSeconds") val totalSeconds: Int,
+)

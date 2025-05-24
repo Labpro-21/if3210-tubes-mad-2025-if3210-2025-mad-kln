@@ -35,7 +35,11 @@ object SongInitializer {
                 uploaderId = 137,
                 liked = true,
                 lastPlayedDate = "2025-04-11 12:00:00",
-                context = context
+                context = context,
+                duration = 240,
+                secondsPlayed = 120,
+                dayStreak = 4,
+                maxStreak = 10,
             ),
             createSong(
                 id = 2,
@@ -46,7 +50,11 @@ object SongInitializer {
                 uploaderId = 137,
                 liked = true,
                 lastPlayedDate = "2025-04-11 09:00:00",
-                context = context
+                context = context,
+                duration = 70,
+                secondsPlayed = 920,
+                dayStreak = 2,
+                maxStreak = 3,
             ),
             createSong(
                 id = 3,
@@ -56,7 +64,9 @@ object SongInitializer {
                 audioResId = R.raw.audio_michishirube,
                 uploaderId = 137,
                 lastPlayedDate = "2025-04-11 01:00:00",
-                context = context
+                context = context,
+                duration = 60,
+                secondsPlayed = 20,
             ),
             createSong(
                 id = 4,
@@ -67,7 +77,9 @@ object SongInitializer {
                 liked = true,
                 uploaderId = 137,
                 lastPlayedDate = "2025-04-11 09:00:00",
-                context = context
+                context = context,
+                duration = 140,
+                secondsPlayed = 150,
             ),
             createSong(
                 id = 5,
@@ -77,7 +89,9 @@ object SongInitializer {
                 audioResId = R.raw.audio_inochi,
                 uploaderId = 137,
                 lastPlayedDate = "2025-04-11 04:00:00",
-                context = context
+                context = context,
+                duration = 150,
+                secondsPlayed = 50,
             ),
             createSong(
                 id = 6,
@@ -203,6 +217,7 @@ object SongInitializer {
         country: String = "",
         liked: Boolean = false,
         lastPlayedDate: String = "",
+        secondsPlayed: Int = 0,
         dayStreak: Int = 0,
         maxStreak: Int = 0,
         context: Context
@@ -217,7 +232,9 @@ object SongInitializer {
             liked = liked,
             lastPlayedDate = lastPlayedDate,
             dayStreak = dayStreak,
-            maxStreak = maxStreak
+            maxStreak = maxStreak,
+            secondsPlayed = secondsPlayed,
+            duration = duration,
         )
     }
 }

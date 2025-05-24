@@ -16,10 +16,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
@@ -58,8 +63,16 @@ import com.android.purrytify.network.RetrofitClient.api
 import com.android.purrytify.network.checkToken
 import com.android.purrytify.network.prepareMultipart
 import com.android.purrytify.ui.components.MapPickerActivity
+import com.android.purrytify.ui.components.TopArtistCard
+import com.android.purrytify.ui.components.TopArtistDetailModal
+import com.android.purrytify.ui.components.TopSongCard
+import com.android.purrytify.ui.components.TopSongDetailModal
+import com.android.purrytify.ui.components.TimeListenedCard
+import com.android.purrytify.ui.components.TimeListenedDetailModal
 import com.android.purrytify.view_model.PlayerViewModel
+import com.android.purrytify.view_model.SoundCapsuleViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
+import com.android.purrytify.view_model.getSoundCapsuleViewModel
 import com.google.android.gms.location.LocationServices
 import extractDominantColor
 import getCountryNameFromCode
@@ -75,16 +88,16 @@ import java.util.Locale
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    mediaPlayerViewModel: PlayerViewModel = getPlayerViewModel()
+    mediaPlayerViewModel: PlayerViewModel = getPlayerViewModel(),
+    soundCapsuleViewModel: SoundCapsuleViewModel = getSoundCapsuleViewModel(),
 ) {
     val userRepository = RepositoryProvider.getUserRepository()
     val songRepository = RepositoryProvider.getSongRepository()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var dominantColor by remember { mutableStateOf(Color.Black) }
-//    var user by remember { mutableStateOf(User(0,"","","","")) }
 
-
+    // Profile state
     var editProfile by remember { mutableStateOf(false) }
     var editLocation by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("USER") }
@@ -92,13 +105,17 @@ fun ProfileScreen(
     var locationCode by remember { mutableStateOf("") }
     var profileURL by remember { mutableStateOf("") }
     var photoProfileFile by remember { mutableStateOf<File?>(null) }
+    var uploadPhoto by remember { mutableStateOf(false) }
 
-
+    // Stats state
     var songCount by remember { mutableIntStateOf(0) }
     var likeCount by remember { mutableIntStateOf(0) }
     var listenedCount by remember { mutableIntStateOf(0) }
-
-    var uploadPhoto by remember { mutableStateOf(false) }
+    
+    // Modal states
+    var showTimeListenedModal by remember { mutableStateOf(false) }
+    var showTopArtistModal by remember { mutableStateOf(false) }
+    var showTopSongModal by remember { mutableStateOf(false) }
 
     suspend fun fetchUserId(context: Context): Int {
         Log.d("DEBUG_PROFILE", "Fetching user ID")
@@ -135,7 +152,7 @@ fun ProfileScreen(
         }
     }
 
-    val launcher = rememberLauncherForActivityResult(
+    val mapLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -173,6 +190,7 @@ fun ProfileScreen(
         coroutineScope.launch {
             checkToken(context)
             val id = fetchUserId(context)
+            soundCapsuleViewModel.fetchSongs(id)
             Log.d("DEBUG_PROFILE", "Fetched user ID: $id")
 
             val bearerToken = "Bearer ${getToken(context)}"
@@ -203,8 +221,6 @@ fun ProfileScreen(
         }
     }
 
-
-
     fun logout(){
         coroutineScope.launch {
             TokenManager.clearToken(context)
@@ -214,11 +230,10 @@ fun ProfileScreen(
         }
     }
 
-
-
     LaunchedEffect(Unit) {
         fetchUser()
     }
+    
     LaunchedEffect(profileURL) {
         if (profileURL.isNotBlank()) {
             val bitmap = loadBitmapFromUrl(context, profileURL)
@@ -228,22 +243,182 @@ fun ProfileScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        dominantColor,
-                        Color(0xFF121212),
-                        Color(0xFF121212)
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Main profile content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            dominantColor,
+                            Color(0xFF121212),
+                            Color(0xFF121212)
+                        )
                     )
                 )
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(48.dp))
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+    
+            // Profile picture
+            ProfilePicture(
+                profileURL = profileURL,
+                editProfile = editProfile,
+                onEditClick = { uploadPhoto = true }
+            )
+    
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // User info
+            Text(username, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            Text(country, color = Color.LightGray, fontSize = 14.sp)
+    
+            // Edit location button
+            if(editProfile) {
+                IconButton(
+                    onClick = { editLocation = true },
+                    modifier = Modifier
+                        .offset(x = 50.dp, y = (-15).dp)
+                        .size(15.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_edit),
+                        contentDescription = "Edit Location",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+    
+            // Profile action buttons
+            Spacer(modifier = Modifier.height(16.dp))
+            ProfileActionButtons(
+                editProfile = editProfile,
+                onEditClick = { editProfile = true },
+                onSaveClick = {
+                    editProfile(context, locationCode, photoProfileFile)
+                    editProfile = false
+                    fetchUser()
+                    photoProfileFile = null
+                    locationCode = ""
+                },
+                onCancelClick = {
+                    editProfile = false
+                    fetchUser()
+                },
+                onLogoutClick = { logout() }
+            )
+    
+            Spacer(modifier = Modifier.height(32.dp))
+    
+            // Stats row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatItem(number = songCount.toString(), label = "Songs")
+                StatItem(number = likeCount.toString(), label = "Liked")
+                StatItem(number = listenedCount.toString(), label = "Listened")
+            }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Sound Capsule Section
+            Text(
+                text = "Your Sound Capsule",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp).align(Alignment.Start)
+            )
+    
+            // Time listened card
+            TimeListenedCard(
+                timeListened = soundCapsuleViewModel.timeListened,
+                onClick = { showTimeListenedModal = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Top Artist and Top Song Row
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                TopArtistCard(
+                    title = soundCapsuleViewModel.topArtistName,
+                    imageUri = soundCapsuleViewModel.topArtistImageUri,
+                    onClick = { showTopArtistModal = true }
+                )
+                TopSongCard(
+                    title = soundCapsuleViewModel.topSongTitle,
+                    imageUri = soundCapsuleViewModel.topSongImageUri,
+                    onClick = { showTopSongModal = true }
+                )
+            }
+            Spacer(modifier = Modifier.height(80.dp))
+        }
+        
+        if (showTimeListenedModal) {
+            TimeListenedDetailModal(onDismiss = { showTimeListenedModal = false })
+        }
+        if (showTopArtistModal) {
+            TopArtistDetailModal(
+                onDismiss = { showTopArtistModal = false },
+                title = soundCapsuleViewModel.topArtistName,
+                imageUri = soundCapsuleViewModel.topArtistImageUri
+            )
+        }
+        if (showTopSongModal) {
+            TopSongDetailModal(
+                onDismiss = { showTopSongModal = false },
+                title = soundCapsuleViewModel.topSongTitle,
+                imageUri = soundCapsuleViewModel.topSongImageUri
+            )
+        }
+        
+        // Dialogs
+        if (uploadPhoto) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    context as Activity,
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    1000
+                )
+            }
+            FileUploadDialog(
+                onDismiss = { uploadPhoto = false },
+                onImageSelected = { path -> profileURL = path },
+                onFileSelected = { file ->
+                    photoProfileFile = file
+                }
+            )
+        }
+    
+        if (editLocation) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            LocationDialog(
+                onDismiss = { editLocation = false },
+                onUseCurrentLocation = { useCurrentLocation() },
+                onPickFromMap = { 
+                    val intent = Intent(context, MapPickerActivity::class.java)
+                    mapLauncher.launch(intent) 
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun ProfilePicture(
+    profileURL: String,
+    editProfile: Boolean,
+    onEditClick: () -> Unit
+) {
+    Box {
         AsyncImage(
             model = profileURL,
             contentDescription = "Profile Picture",
@@ -252,11 +427,10 @@ fun ProfileScreen(
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )
-
-        //Edit Profile Picture
+        
         if (editProfile) {
             IconButton(
-                onClick = { uploadPhoto = true },
+                onClick = onEditClick,
                 modifier = Modifier
                     .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
                     .offset(x = 50.dp, y = (-20).dp)
@@ -272,74 +446,26 @@ fun ProfileScreen(
                 )
             }
         }
-        if (uploadPhoto) {
-            Log.d("EDIT PROFILE", "File awal: $photoProfileFile")
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    context as Activity,
-                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    1000
-                )
-            }
-            FileUploadDialog(
-                onDismiss = { uploadPhoto = false },
-                onImageSelected = {path -> profileURL = path},
-                onFileSelected = { file ->
-                    photoProfileFile = file
-                }
-            )
+    }
+}
 
-        }
-        if(photoProfileFile != null ) {
-            Log.d("EDIT PROFILE", "Upload success")
-            Log.d("EDIT PROFILE", profileURL)
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(username, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(country, color = Color.LightGray, fontSize = 14.sp)
-
-
-        //Edit location
-        if(editProfile) {
-            IconButton(
-                onClick = {editLocation = true},
-                modifier = Modifier
-                    .offset(x = 50.dp, y = (-15).dp)
-                    .size(15.dp)
-
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_edit),
-                    contentDescription = "Edit Location",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
-        if (editLocation) {
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            LocationDialog(
-                onDismiss = { editLocation = false },
-                onUseCurrentLocation = { useCurrentLocation() },
-                onPickFromMap = { val intent = Intent(context, MapPickerActivity::class.java)
-                    launcher.launch(intent) }
-            )
-        }
-
-        //Edit Profile
-        Spacer(modifier = Modifier.height(16.dp))
+@Composable
+fun ProfileActionButtons(
+    editProfile: Boolean,
+    onEditClick: () -> Unit,
+    onSaveClick: () -> Unit,
+    onCancelClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!editProfile) {
                 Button(
-                    onClick = { editProfile = true },
+                    onClick = onEditClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
@@ -349,16 +475,10 @@ fun ProfileScreen(
                     Text("Edit Profile")
                 }
             }
-
-            // Save or Cancel Edit Profile
+    
             if(editProfile) {
                 Button(
-                    onClick = {
-                        editProfile(context, locationCode, photoProfileFile)
-                        editProfile = false
-                        fetchUser()
-                        photoProfileFile = null
-                        locationCode = ""},
+                    onClick = onSaveClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF1DB954),
                         contentColor = Color.White
@@ -368,9 +488,7 @@ fun ProfileScreen(
                     Text("Save")
                 }
                 Button(
-                    onClick = {
-                        editProfile = false
-                        fetchUser() },
+                    onClick = onCancelClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
@@ -381,8 +499,9 @@ fun ProfileScreen(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = { logout() },
+            onClick = onLogoutClick,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.DarkGray,
                 contentColor = Color.White
@@ -391,22 +510,8 @@ fun ProfileScreen(
         ) {
             Text("Logout")
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            StatItem(number = songCount.toString(), label = "Songs")
-            StatItem(number = likeCount.toString(), label = "Liked")
-            StatItem(number = listenedCount.toString(), label = "Listened")
-        }
-
     }
 }
-
-
 
 @Composable
 fun StatItem(number: String, label: String) {

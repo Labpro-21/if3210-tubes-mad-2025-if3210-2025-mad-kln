@@ -125,4 +125,6 @@ dependencies {
 
 
     implementation("androidx.media:media:1.6.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
 }
