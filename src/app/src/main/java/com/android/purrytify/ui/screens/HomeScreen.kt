@@ -82,7 +82,8 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF121212))
-                .padding(paddingValues)
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 72.dp)
         ) {
             item {
                 SongSectionHeader("Charts")
@@ -157,16 +158,32 @@ fun HomeScreen(
             item {
                 SongSectionHeader("Recently Played")
             }
-            items(recentlyPlayedSongs.value) { song ->
-                SongCard(
-                    type = "small",
-                    song = song,
-                    modifier = Modifier.clickable {
-                        mediaPlayerViewModel.setSongs(recentlyPlayedSongs.value)
-                        mediaPlayerViewModel.playSong(context, recentlyPlayedSongs.value.indexOf(song))
+            item {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(recentlyPlayedSongs.value) { song ->
+                        SongCard(
+                            type = "small",
+                            song = song,
+                            modifier = Modifier
+                                .padding(vertical = 4.dp)
+                                .fillMaxWidth()
+                                .clickable {
+                                    mediaPlayerViewModel.setSongs(recentlyPlayedSongs.value)
+                                    mediaPlayerViewModel.playSong(context, recentlyPlayedSongs.value.indexOf(song))
+                                }
+                        )
                     }
-                )
+                    item {
+                        Spacer(modifier = Modifier.height(80.dp))
+                    }
+                }
             }
+
         }
     }
 }
