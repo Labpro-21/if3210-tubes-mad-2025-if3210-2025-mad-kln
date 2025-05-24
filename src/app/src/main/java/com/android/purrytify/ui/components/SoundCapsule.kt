@@ -9,14 +9,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -164,14 +170,16 @@ fun TopArtistCard(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(bottom = 10.dp)
             )
             Image(
-                painter = rememberAsyncImagePainter(model = imageUri),
+                painter = rememberAsyncImagePainter(model = imageUri.ifEmpty { null }),
                 contentDescription = title,
                 modifier = Modifier
                     .size(80.dp)
-                    .clip(CircleShape),
+                    .clip(CircleShape)
+                    .background(Color.Gray),
                 contentScale = ContentScale.Crop
             )
         }
@@ -273,14 +281,16 @@ fun TopSongCard(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(bottom = 10.dp)
             )
             Image(
-                painter = rememberAsyncImagePainter(model = imageUri),
+                painter = rememberAsyncImagePainter(model = imageUri.ifEmpty { null }),
                 contentDescription = title,
                 modifier = Modifier
                     .size(80.dp)
-                    .clip(CircleShape),
+                    .clip(CircleShape)
+                    .background(Color.Gray),
                 contentScale = ContentScale.Crop
             )
         }
@@ -335,3 +345,84 @@ fun TopSongDetailModal(onDismiss: () -> Unit, title: String, imageUri: String) {
         }
     }
 }
+
+@Composable
+fun MaxStreakCard(
+    songTitle: String,
+    artistName: String,
+    streakCount: Int,
+    imageUri: String,
+    dateRange: String,
+){
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF212121)),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(model = imageUri.ifEmpty { null }),
+                contentDescription = "$songTitle by $artistName",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text(
+                    text = "You had a $streakCount-day streak",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        append("You played ")
+                        withStyle(style = SpanStyle(color = Color(0xFF9EC4CC))) {
+                            append(songTitle)
+                        }
+                        append(" by ")
+                        withStyle(style = SpanStyle(color = Color(0xFF9EC4CC))) {
+                            append(artistName)
+                        }
+                        append(" day after day. You were on fire")
+                    },
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = dateRange,
+                        color = Color.Gray,
+                        fontSize = 12.sp
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = "Share Streak",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+

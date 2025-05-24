@@ -51,6 +51,18 @@ class SoundCapsuleViewModel(
     var songCount by mutableStateOf(0)
         private set
 
+    // Max Streak
+    var maxStreakSongTitle by mutableStateOf("")
+        private set
+    var maxStreakArtistName by mutableStateOf("")
+        private set
+    var maxStreakCount by mutableIntStateOf(0)
+        private set
+    var maxStreakImageUri by mutableStateOf("")
+        private set
+    var maxStreakDateRange by mutableStateOf("N/A")
+        private set
+
     fun fetchSongs(userId: Int) {
         viewModelScope.launch {
             songs = songRepository.getSongsByUploader(userId) ?: emptyList()
@@ -86,6 +98,15 @@ class SoundCapsuleViewModel(
 
             songCount = songCountVal
             topSongData = songDataVal
+
+            val maxStreakInfo = getMaxStreakInfo(songs)
+
+            maxStreakCount = maxStreakInfo.streakCount
+            maxStreakSongTitle = maxStreakInfo.title
+            maxStreakArtistName = maxStreakInfo.artist
+            maxStreakImageUri = maxStreakInfo.imageUri
+            maxStreakDateRange = maxStreakInfo.date
+
         }
     }
 }
@@ -163,4 +184,32 @@ fun getTopSongData(songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> 
     }
 
     return Pair(topSongs.size, topSongs)
+}
+
+data class MaxStreakInfo(
+    val streakCount: Int,
+    val title: String,
+    val artist: String,
+    val imageUri: String,
+    val date: String,
+)
+
+fun getMaxStreakInfo(songs: List<Song>): MaxStreakInfo {
+
+    val songWithTopStreak = songs.maxByOrNull { it.maxStreak }
+        ?: return MaxStreakInfo(
+            streakCount = 0,
+            title = "No Songs",
+            artist = "N/A",
+            imageUri = "",
+            date = "N/A"
+        )
+
+    return MaxStreakInfo(
+        streakCount = songWithTopStreak.maxStreak,
+        title = songWithTopStreak.title,
+        artist = songWithTopStreak.artist,
+        imageUri = songWithTopStreak.imageUri ?: "",
+        date = songWithTopStreak.lastPlayedDate ?: "N/A"
+    )
 }
