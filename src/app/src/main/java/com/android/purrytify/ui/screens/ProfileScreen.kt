@@ -69,6 +69,7 @@ import com.android.purrytify.ui.components.TopSongCard
 import com.android.purrytify.ui.components.TopSongDetailModal
 import com.android.purrytify.ui.components.TimeListenedCard
 import com.android.purrytify.ui.components.TimeListenedDetailModal
+import com.android.purrytify.ui.components.MaxStreakCard
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.SoundCapsuleViewModel
 import com.android.purrytify.view_model.getPlayerViewModel
@@ -358,7 +359,18 @@ fun ProfileScreen(
                     onClick = { showTopSongModal = true }
                 )
             }
-            Spacer(modifier = Modifier.height(80.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            MaxStreakCard(
+                songTitle = soundCapsuleViewModel.maxStreakSongTitle,
+                artistName = soundCapsuleViewModel.maxStreakArtistName,
+                streakCount = soundCapsuleViewModel.maxStreakCount,
+                imageUri = soundCapsuleViewModel.maxStreakImageUri,
+                dateRange = soundCapsuleViewModel.maxStreakDateRange,
+            )
+
+            Spacer(modifier = Modifier.height(160.dp))
         }
         
         if (showTimeListenedModal) {
@@ -367,15 +379,15 @@ fun ProfileScreen(
         if (showTopArtistModal) {
             TopArtistDetailModal(
                 onDismiss = { showTopArtistModal = false },
-                title = soundCapsuleViewModel.topArtistName,
-                imageUri = soundCapsuleViewModel.topArtistImageUri
+                topArtists = soundCapsuleViewModel.topArtistData,
+                artistCount = soundCapsuleViewModel.artistCount
             )
         }
         if (showTopSongModal) {
             TopSongDetailModal(
                 onDismiss = { showTopSongModal = false },
-                title = soundCapsuleViewModel.topSongTitle,
-                imageUri = soundCapsuleViewModel.topSongImageUri
+                topSongs = soundCapsuleViewModel.topSongData,
+                songCount = soundCapsuleViewModel.songCount
             )
         }
         
@@ -409,6 +421,8 @@ fun ProfileScreen(
                 }
             )
         }
+
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 
