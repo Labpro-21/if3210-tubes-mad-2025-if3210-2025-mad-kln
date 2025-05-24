@@ -40,7 +40,6 @@ class SoundCapsuleViewModel(
     var currentMonthYearForModal by mutableStateOf("")
         private set
 
-
     var topArtistName by mutableStateOf("")
         private set
     var topArtistImageUri by mutableStateOf("")
@@ -70,17 +69,75 @@ class SoundCapsuleViewModel(
     var maxStreakDateRange by mutableStateOf("N/A")
         private set
 
+    private val calendar = Calendar.getInstance()
+    var currentMonthDisplay by mutableStateOf("")
+        private set
+    var hasNextMonth by mutableStateOf(false)
+        private set
+    var hasPreviousMonth by mutableStateOf(false)
+        private set
+
+    init {
+        updateCurrentMonthDisplay()
+    }
+
+    private fun updateCurrentMonthDisplay() {
+        val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+        currentMonthDisplay = monthFormat.format(calendar.time)
+        currentMonthYearForModal = currentMonthDisplay
+        
+        val now = Calendar.getInstance()
+        hasNextMonth = !(calendar.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                calendar.get(Calendar.MONTH) == now.get(Calendar.MONTH))
+
+        viewModelScope.launch {
+            val userId = songs.firstOrNull()?.uploaderId ?: 0
+            val oldestYearMonth = playbackLogRepository.getOldestLogYearMonth(userId)
+            
+            if (oldestYearMonth != null) {
+                val oldestDate = SimpleDateFormat("yyyy-MM", Locale.getDefault()).parse(oldestYearMonth)
+                val currentDate = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(calendar.time)
+                val currentCalendar = Calendar.getInstance().apply {
+                    time = SimpleDateFormat("yyyy-MM", Locale.getDefault()).parse(currentDate)!!
+                }
+                
+                hasPreviousMonth = oldestDate?.before(currentCalendar.time) ?: false
+                
+            } else {
+                hasPreviousMonth = false
+            }
+        }
+    }
+
+    fun navigateToPreviousMonth() {
+        if (!hasPreviousMonth) return
+        calendar.add(Calendar.MONTH, -1)
+        updateCurrentMonthDisplay()
+        fetchSongs(userId = songs.firstOrNull()?.uploaderId ?: 0)
+    }
+
+    fun navigateToNextMonth() {
+        val now = Calendar.getInstance()
+        if (calendar.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+            calendar.get(Calendar.MONTH) == now.get(Calendar.MONTH)) {
+            return
+        }
+        calendar.add(Calendar.MONTH, 1)
+        updateCurrentMonthDisplay()
+        fetchSongs(userId = songs.firstOrNull()?.uploaderId ?: 0)
+    }
+
     fun fetchSongs(userId: Int) {
         viewModelScope.launch {
-            songs = songRepository.getSongsByUploader(userId) ?: emptyList()
+            if (songs.isEmpty()) {
+                songs = songRepository.getSongsByUploader(userId) ?: emptyList()
+            }
 
-            val currentYearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
-            currentMonthYearForModal = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
-
+            val currentYearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(calendar.time)
             val logs = playbackLogRepository.getLogsByYearMonth(currentYearMonth, userId)
-
+            
             timeListened = getTimeListenedForCard(logs)
-            Log.d("SoundCapsuleViewModel", "Total Duration Played (Card): $timeListened")
+            Log.d("SoundCapsuleViewModel", "Total Duration Played: $timeListened")
 
             processPlaybackLogsForMonthDetail(logs)
 
@@ -94,7 +151,6 @@ class SoundCapsuleViewModel(
             }
             topArtistData = topArtistDataVal
             artistCount = artistCountVal
-
 
             val (songCountVal, songDataVal) = getTopSongData(logs, songs, 5)
             if (songDataVal.isNotEmpty()) {
@@ -211,7 +267,6 @@ data class TopSongInfo(
 
 fun getTopSongData(logs: List<PlaybackLog>, songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> {
     val songStats = logs.groupBy { it.songId }.mapValues { entry ->
-        val songId = entry.key
         val songLogs = entry.value
         val totalDurationMs = songLogs.sumOf { it.durationMs }
         val playCount = songLogs.size
@@ -308,7 +363,7 @@ fun calculateMaxStreak(logs: List<PlaybackLog>, songs: List<Song>): MaxStreakInf
         }
     }
 
-    if (bestSongIdForStreak != null && overallMaxStreak > 0 && streakStartDate != null && streakEndDate != null) {
+    if (bestSongIdForStreak != null && streakStartDate != null && streakEndDate != null) {
         val representativeLog = logs.firstOrNull { it.songId == bestSongIdForStreak }
         val songDetails = songs.firstOrNull { it.id.toString() == bestSongIdForStreak }
 

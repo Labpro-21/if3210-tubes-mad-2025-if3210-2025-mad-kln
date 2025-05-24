@@ -358,13 +358,10 @@ fun TopArtistCard(
 @Composable
 fun TopArtistDetailModal(
     onDismiss: () -> Unit, 
+    currentMonthYear: String,
     topArtists: List<TopArtistInfo>, 
     artistCount: Int
 ) {
-    val currentMonthYear = remember {
-        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -498,13 +495,10 @@ fun TopSongCard(
 @Composable
 fun TopSongDetailModal(
     onDismiss: () -> Unit,
+    currentMonthYear: String,
     topSongs: List<TopSongInfo>,
     songCount: Int
 ) {
-    val currentMonthYear = remember {
-        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()

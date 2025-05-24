@@ -329,13 +329,55 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Sound Capsule Section
-            Text(
-                text = "Your Sound Capsule",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp).align(Alignment.Start)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Your Sound Capsule",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = { soundCapsuleViewModel.navigateToPreviousMonth() },
+                        modifier = Modifier.size(32.dp),
+                        enabled = soundCapsuleViewModel.hasPreviousMonth
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronLeft,
+                            contentDescription = "Previous Month",
+                            tint = if (soundCapsuleViewModel.hasPreviousMonth) Color.White else Color.Gray
+                        )
+                    }
+                    
+                    Text(
+                        text = soundCapsuleViewModel.currentMonthDisplay,
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                    
+                    IconButton(
+                        onClick = { soundCapsuleViewModel.navigateToNextMonth() },
+                        modifier = Modifier.size(32.dp),
+                        enabled = soundCapsuleViewModel.hasNextMonth
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Next Month",
+                            tint = if (soundCapsuleViewModel.hasNextMonth) Color.White else Color.Gray
+                        )
+                    }
+                }
+            }
     
             // Time listened card
             TimeListenedCard(
@@ -378,7 +420,7 @@ fun ProfileScreen(
         if (showTimeListenedModal) {
             TimeListenedDetailModal(
                 onDismiss = { showTimeListenedModal = false },
-                currentMonthYear = soundCapsuleViewModel.currentMonthYearForModal,
+                currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
                 totalMinutes = soundCapsuleViewModel.totalMinutesInMonth,
                 dailyAverageMinutes = soundCapsuleViewModel.dailyAverageMinutesInMonth,
                 dailyPlayback = soundCapsuleViewModel.dailyPlaybackData
@@ -387,6 +429,7 @@ fun ProfileScreen(
         if (showTopArtistModal) {
             TopArtistDetailModal(
                 onDismiss = { showTopArtistModal = false },
+                currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
                 topArtists = soundCapsuleViewModel.topArtistData,
                 artistCount = soundCapsuleViewModel.artistCount
             )
@@ -394,6 +437,7 @@ fun ProfileScreen(
         if (showTopSongModal) {
             TopSongDetailModal(
                 onDismiss = { showTopSongModal = false },
+                currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
                 topSongs = soundCapsuleViewModel.topSongData,
                 songCount = soundCapsuleViewModel.songCount
             )

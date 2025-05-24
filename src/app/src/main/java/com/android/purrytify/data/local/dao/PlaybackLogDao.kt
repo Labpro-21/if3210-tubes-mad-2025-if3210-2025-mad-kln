@@ -27,4 +27,7 @@ interface PlaybackLogDao {
 
     @Query("SELECT SUM(durationMs) FROM playback_logs WHERE artistId = :artistId")
     suspend fun getTotalDurationByArtistId(artistId: String): Long
+
+    @Query("SELECT yearMonth FROM playback_logs WHERE userId = :userId ORDER BY yearMonth ASC LIMIT 1")
+    suspend fun getOldestLogYearMonth(userId: Int): String?
 } 

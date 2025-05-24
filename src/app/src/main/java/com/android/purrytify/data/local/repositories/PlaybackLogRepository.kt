@@ -101,4 +101,10 @@ class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
             playbackLogDao.getTotalDurationByArtistId(artistId)
         }
     }
+
+    suspend fun getOldestLogYearMonth(userId: Int): String? {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getOldestLogYearMonth(userId)
+        }
+    }
 } 
