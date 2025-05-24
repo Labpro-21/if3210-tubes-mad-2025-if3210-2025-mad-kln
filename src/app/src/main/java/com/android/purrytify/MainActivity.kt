@@ -12,6 +12,7 @@ import com.android.purrytify.data.local.AppDatabase
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.data.local.initializer.SongInitializer
+import com.android.purrytify.data.local.repositories.PlaybackLogRepository
 import com.android.purrytify.data.local.repositories.SongRepository
 import com.android.purrytify.data.local.repositories.UserRepository
 import com.android.purrytify.network.OnlineSongResponse
@@ -32,7 +33,8 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         val songRepository = SongRepository(database.songDao())
         val userRepository = UserRepository(database.userDao())
-        RepositoryProvider.init(songRepository, userRepository)
+        val playbackLogRepository = PlaybackLogRepository(database.playbackLogDao())
+        RepositoryProvider.init(songRepository, userRepository, playbackLogRepository)
 
         var isReady = false
         splashScreen.setKeepOnScreenCondition { !isReady }

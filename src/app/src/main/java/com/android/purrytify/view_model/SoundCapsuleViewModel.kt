@@ -8,13 +8,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.data.local.entities.PlaybackLog
 import com.android.purrytify.data.local.entities.Song
+import com.android.purrytify.data.local.repositories.PlaybackLogRepository
 import com.android.purrytify.data.local.repositories.SongRepository
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SoundCapsuleViewModel(
     private val songRepository: SongRepository = RepositoryProvider.getSongRepository(),
+    private val playbackLogRepository: PlaybackLogRepository = RepositoryProvider.getPlaybackLogRepository()
 ) : ViewModel() {
 
     // Songs
@@ -55,15 +60,13 @@ class SoundCapsuleViewModel(
         viewModelScope.launch {
             songs = songRepository.getSongsByUploader(userId) ?: emptyList()
 
-//            val gson = GsonBuilder().setPrettyPrinting().create()
-//            songs.forEach { song ->
-//                Log.d("SoundCapsuleViewModel", gson.toJson(song))
-//            }
-
-            timeListened = getTimeListened(songs)
+            val currentYearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+            val logs = playbackLogRepository.getLogsByYearMonth(currentYearMonth)
+            
+            timeListened = getTimeListened(logs)
             Log.d("SoundCapsuleViewModel", "Total Duration Played: $timeListened")
 
-            val (artistCountVal, topArtistDataVal) = getTopArtistData(songs, 5)
+            val (artistCountVal, topArtistDataVal) = getTopArtistData(logs, songs,5)
 
             if (artistCountVal > 0) {
                 topArtistName = topArtistDataVal[0].artist
@@ -73,11 +76,7 @@ class SoundCapsuleViewModel(
             topArtistData = topArtistDataVal
             artistCount = artistCountVal
 
-//            topArtistData.forEach{
-//                artist -> Log.d("SoundCapsuleViewModel", "Top Artist: ${artist.artist}, Image URI: ${artist.imageUri}")
-//            }
-
-            val (songCountVal, songDataVal) = getTopSongData(songs, 5)
+            val (songCountVal, songDataVal) = getTopSongData(logs, songs,5)
 
             if (songCountVal > 0) {
                 topSongTitle = songDataVal[0].title
@@ -96,14 +95,14 @@ fun getSoundCapsuleViewModel(): SoundCapsuleViewModel {
     return viewModel(activity)
 }
 
-fun getTimeListened(songs: List<Song>): String {
-    val totalDuration = songs.sumOf { it.secondsPlayed }
+fun getTimeListened(logs: List<PlaybackLog>): String {
+    val totalDuration = logs.sumOf { it.durationMs } / 1000 // Convert to seconds
     val minutes = totalDuration / 60
     val seconds = totalDuration % 60
 
     return when {
-        totalDuration == 0 -> "0 Minutes"
-        minutes == 0 -> "$seconds Seconds"
+        totalDuration == 0L -> "0 Minutes"
+        minutes == 0L -> "$seconds Seconds"
         else -> "$minutes Minutes"
     }
 }
@@ -114,14 +113,14 @@ data class TopArtistInfo(
     val imageUri: String
 )
 
-fun getTopArtistData(songs: List<Song>, limit: Int): Pair<Int, List<TopArtistInfo>> {
-    val artistListeningStats = mutableMapOf<String, Int>()
+fun getTopArtistData(logs: List<PlaybackLog>, songs: List<Song>, limit: Int): Pair<Int, List<TopArtistInfo>> {
+    val artistListeningStats = mutableMapOf<String, Long>()
 
-    songs.forEach { song ->
-        val artist = song.artist
-        val secondsPlayed = song.secondsPlayed
+    logs.forEach { log ->
+        val artist = log.artistName
+        val durationMs = log.durationMs
 
-        artistListeningStats[artist] = artistListeningStats.getOrDefault(artist, 0) + secondsPlayed
+        artistListeningStats[artist] = artistListeningStats.getOrDefault(artist, 0) + durationMs
     }
 
     val sortedArtists = artistListeningStats.entries.sortedByDescending { it.value }
@@ -130,8 +129,10 @@ fun getTopArtistData(songs: List<Song>, limit: Int): Pair<Int, List<TopArtistInf
         val artistName = entry.key
         val totalTime = entry.value
 
-        val representativeSong = songs.firstOrNull { it.artist == artistName }
-        val imageUri = representativeSong?.imageUri ?: ""
+        val representativeLog = logs.firstOrNull { it.artistName == artistName }
+        val imageUri = representativeLog?.let { log ->
+            songs.firstOrNull { it.artist == log.artistName }?.imageUri
+        } ?: ""
 
         TopArtistInfo(
             rank = index + 1,
@@ -147,18 +148,35 @@ data class TopSongInfo(
     val rank: Int,
     val title: String,
     val imageUri: String,
-    val secondsPlayed: Int
+    val durationMs: Long
 )
 
-fun getTopSongData(songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> {
-    val sortedSongs = songs.sortedByDescending { it.secondsPlayed }
+fun getTopSongData(logs: List<PlaybackLog>, songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> {
+    val songListeningStats = mutableMapOf<String, Long>()
 
-    val topSongs = sortedSongs.take(limit).mapIndexed { index, song ->
+    logs.forEach { log ->
+        val songId = log.songId
+        val durationMs = log.durationMs
+
+        songListeningStats[songId] = songListeningStats.getOrDefault(songId, 0) + durationMs
+    }
+
+    val sortedSongs = songListeningStats.entries.sortedByDescending { it.value }
+
+    val topSongs = sortedSongs.take(limit).mapIndexed { index, entry ->
+        val songId = entry.key
+        val totalTime = entry.value
+
+        val representativeLog = logs.firstOrNull { it.songId == songId }
+        val imageUri = representativeLog?.let { log ->
+            songs.firstOrNull { it.id.toString() == log.songId }?.imageUri
+        } ?: ""
+
         TopSongInfo(
             rank = index + 1,
-            title = song.title,
-            imageUri = song.imageUri ?: "",
-            secondsPlayed = song.secondsPlayed
+            title = representativeLog?.songTitle ?: "",
+            imageUri = imageUri,
+            durationMs = totalTime
         )
     }
 

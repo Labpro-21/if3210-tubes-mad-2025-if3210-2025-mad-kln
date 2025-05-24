@@ -3,7 +3,6 @@ package com.android.purrytify.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.android.purrytify.data.local.entities.ArtistListeningStats
 import com.android.purrytify.data.local.entities.Song
 
 @Dao
@@ -23,8 +22,8 @@ interface SongDao {
     @Query("DELETE FROM songs")
     suspend fun deleteAllSongs()
 
-    @Query("UPDATE songs SET lastPlayedDate = :date, dayStreak = :dayStreak, maxStreak = :maxStreak WHERE id = :songId")
-    suspend fun updateLastPlayedDate(songId: Int, date: String, dayStreak: Int, maxStreak: Int)
+    @Query("UPDATE songs SET lastPlayedDate = :date WHERE id = :songId")
+    suspend fun updateLastPlayedDate(songId: Int, date: String)
 
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId")
     suspend fun getSongsByUploader(uploaderId: Int): List<Song>
@@ -37,7 +36,6 @@ interface SongDao {
 
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND liked = 1 AND (LOWER(title) LIKE LOWER('%' || :query || '%') OR LOWER(artist) LIKE LOWER('%' || :query || '%'))")
     suspend fun searchLikedSongsByUploader(uploaderId: Int, query: String): List<Song>
-
 
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND lastPlayedDate != '' ORDER BY lastPlayedDate DESC LIMIT :limit")
     suspend fun getRecentlyPlayedSongsByUploader(uploaderId: Int, limit: Int): List<Song>
@@ -65,24 +63,5 @@ interface SongDao {
 
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND isDownloaded = 1 AND (LOWER(title) LIKE LOWER('%' || :query || '%') OR LOWER(artist) LIKE LOWER('%' || :query || '%'))")
     suspend fun searchDownloadedSongsByUploader(uploaderId: Int, query: String): List<Song>
-
-
-    @Query("UPDATE songs SET secondsPlayed = secondsPlayed + :seconds WHERE id = :songId")
-    suspend fun addSecondsPlayed(songId: Int, seconds: Int)
-
-    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY secondsPlayed DESC LIMIT :limit")
-    suspend fun getMostListenedSongsByUploader(uploaderId: Int, limit: Int): List<Song>
-
-    @Query("SELECT artist, SUM(secondsPlayed) as totalSeconds FROM songs WHERE uploaderId = :uploaderId GROUP BY artist ORDER BY totalSeconds DESC LIMIT :limit")
-    suspend fun getTopArtistsByListeningTime(uploaderId: Int, limit: Int): List<ArtistListeningStats>
-
-    @Query("SELECT SUM(secondsPlayed) FROM songs WHERE uploaderId = :uploaderId")
-    suspend fun getTotalListeningTime(uploaderId: Int): Int
-
-    @Query("SELECT MAX(maxStreak) FROM songs WHERE uploaderId = :uploaderId")
-    suspend fun getMaxStreakByUploader(uploaderId: Int): Int
-
-    @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId ORDER BY dayStreak DESC LIMIT :limit")
-    suspend fun getdayStreakListByUploader(uploaderId: Int, limit: Int): List<Song>
 }
 

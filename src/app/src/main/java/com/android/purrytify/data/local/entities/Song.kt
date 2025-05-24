@@ -21,9 +21,6 @@ data class Song(
     val uploadDate: String = "",      // ini tadinya null gw ubah jadi ""
     val lastPlayedDate: String = "",  // ini tadinya null gw ubah jadi ""
     val isDownloaded: Boolean = false,
-    val secondsPlayed: Int = 0,
-    val dayStreak: Int = 0,
-    val maxStreak: Int = 0,
 
     // khusus lagu online
     val rank: Int = 0,

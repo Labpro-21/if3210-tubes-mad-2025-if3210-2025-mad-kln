@@ -14,11 +14,8 @@ import androidx.core.content.ContextCompat
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.service.MusicService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 enum class RepeatMode {
     NONE,
@@ -64,14 +61,18 @@ object MediaPlayerController {
     private var shuffledIndices: List<Int> = emptyList()
     private var shuffledIndex = 0
 
-    private var currentSessionTimePlayed = 0f
+    private var pendingPlaybackMs: Long = 0L
+    private var lastBatchLogTime: Long = System.currentTimeMillis()
+    private const val MIN_LOG_MS: Long = 5000L
+    private const val BATCH_LOG_MS: Long = 60000L
 
-    val songRepository = RepositoryProvider.getSongRepository()
+    private val playbackLogRepository= RepositoryProvider.getPlaybackLogRepository()
     private var onStateChanged: (() -> Unit)? = null
     private var audioManager: AudioManager? = null
     private var deviceCallbackRegistered = false
     private val connectedDevices = mutableListOf<AudioDeviceInfo>()
     private var selectedOutput: AudioDeviceInfo? = null
+
     private val updateRunnable = object : Runnable {
         override fun run() {
             mediaPlayer?.let { player ->
@@ -80,25 +81,34 @@ object MediaPlayerController {
                 _totalDuration.value = player.duration
                 
                 if (player.isPlaying) {
-                    currentSessionTimePlayed += UPDATE_INTERVAL / 1000f
-                    Log.d("TEST IN UPDATE RUNNABLE", "SessionTimePlayed: $currentSessionTimePlayed")
-                    if (currentSessionTimePlayed >= 10) {
-                        _currentSong.value?.let { song ->
-                            val timeToAdd = currentSessionTimePlayed.toInt()
-                            currentSessionTimePlayed = 0f
-                            CoroutineScope(Dispatchers.IO).launch {
-                                songRepository.addSecondsPlayed(song.id, timeToAdd)
-                            }
-                        }
+                    pendingPlaybackMs += UPDATE_INTERVAL
+                    val now = System.currentTimeMillis()
+                    if (now - lastBatchLogTime >= BATCH_LOG_MS) {
+                        flushPlaybackLog(force = false)
+                        lastBatchLogTime = now
                     }
                 }
-
                 onStateChanged?.invoke()
-                
-                // Continue updating regardless of play state
                 handler.postDelayed(this, UPDATE_INTERVAL)
             } ?: return
         }
+    }
+
+    private fun flushPlaybackLog(force: Boolean) {
+        val songToLog = _currentSong.value
+        if (songToLog != null && (pendingPlaybackMs >= MIN_LOG_MS || (force && pendingPlaybackMs > 0))) {
+            playbackLogRepository.logPlayback(
+                songId = songToLog.id.toString(),
+                artistId = songToLog.uploaderId.toString(),
+                artistName = songToLog.artist,
+                songTitle = songToLog.title,
+                listenedMs = pendingPlaybackMs
+            )
+            Log.d("MediaPlayerController", "Logged ${pendingPlaybackMs}ms for ${songToLog.title}")
+        } else if (songToLog != null && pendingPlaybackMs > 0) {
+            Log.d("MediaPlayerController", "Skipped logging ${pendingPlaybackMs}ms for ${songToLog.title} (less than ${MIN_LOG_MS}ms)")
+        }
+        pendingPlaybackMs = 0L
     }
 
     private lateinit var deviceCallback: AudioDeviceCallback
@@ -175,7 +185,6 @@ object MediaPlayerController {
 
     fun playSong(context: Context, index: Int) {
         if (index !in _songList.value.indices) return
-
         mediaPlayer?.release()
 
         val song: Song
@@ -189,11 +198,9 @@ object MediaPlayerController {
         }
 
         _currentSong.value = song
-        CoroutineScope(Dispatchers.IO).launch {
-            songRepository.addSecondsPlayed(song.id, currentSessionTimePlayed.toInt())
-            currentSessionTimePlayed = 0f
-            songRepository.updateLastPlayedDate(song)
-        }
+        pendingPlaybackMs = 0L
+        lastBatchLogTime = System.currentTimeMillis()
+
         mediaPlayer = MediaPlayer().apply {
             setDataSource(context.applicationContext, Uri.parse(song.audioUri))
             selectedOutput?.let { preferredDevice = it }
@@ -203,16 +210,10 @@ object MediaPlayerController {
             _totalDuration.value = duration
 
             setOnCompletionListener {
-                if (currentSessionTimePlayed > 0) {
-                    Log.d("TEST IN ON COMPLETION LISTENER", "SessionTimePlayed: $currentSessionTimePlayed")
-                    _currentSong.value?.let { song ->
-                        val timeToAdd = currentSessionTimePlayed.toInt()
-                        currentSessionTimePlayed = 0f
-                        CoroutineScope(Dispatchers.IO).launch {
-                            songRepository.addSecondsPlayed(song.id, timeToAdd)
-                        }
-                    }
-                }
+                flushPlaybackLog(force = true)
+                pendingPlaybackMs = 0L
+                lastBatchLogTime = System.currentTimeMillis()
+
                 when (_repeatMode.value) {
                     RepeatMode.REPEAT_ONE -> {// Replay current song
                         if (_isShuffleEnabled.value) {
@@ -333,11 +334,10 @@ object MediaPlayerController {
                         if (_isShuffleEnabled.value) {
                             if (shuffledIndex - 1 >= 0) {
                                 shuffledIndex--
-                                playSong(context, shuffledIndices[shuffledIndex])
                             } else {
                                 shuffledIndex = shuffledIndices.lastIndex
-                                playSong(context, shuffledIndices[shuffledIndex])
                             }
+                            playSong(context, shuffledIndices[shuffledIndex])
                         } else {
                             if (currentSongIndex - 1 >= 0) {
                                 playSong(context, currentSongIndex - 1)
@@ -385,18 +385,15 @@ object MediaPlayerController {
     }
 
     fun clearCurrentSong() {
-        _currentSong.value?.let { song ->
-            if (currentSessionTimePlayed > 0) {
-                val timeToAdd = currentSessionTimePlayed.toInt()
-                currentSessionTimePlayed = 0f
-                CoroutineScope(Dispatchers.IO).launch {
-                    songRepository.addSecondsPlayed(song.id, timeToAdd)
-                }
-            }
-        }
+        flushPlaybackLog(force = true)
         mediaPlayer?.stop()
         mediaPlayer?.reset()
         _currentSong.value = null
+        pendingPlaybackMs = 0L
+        _isPlaying.value = false
+        _progress.value = 0f
+        _currentTime.value = 0
+        onStateChanged?.invoke()
     }
 
     fun setRepeatMode(mode: RepeatMode) {
@@ -455,15 +452,8 @@ object MediaPlayerController {
 
     fun release() {
         handler.removeCallbacks(updateRunnable)
-        _currentSong.value?.let { song ->
-            if (currentSessionTimePlayed > 0) {
-                val timeToAdd = currentSessionTimePlayed.toInt()
-                currentSessionTimePlayed = 0f
-                CoroutineScope(Dispatchers.IO).launch {
-                    songRepository.addSecondsPlayed(song.id, timeToAdd)
-                }
-            }
-        }
+        flushPlaybackLog(force = true)
+
         if (deviceCallbackRegistered) {
             audioManager?.unregisterAudioDeviceCallback(deviceCallback)
             deviceCallbackRegistered = false
@@ -477,6 +467,7 @@ object MediaPlayerController {
         _currentTime.value = 0
         _totalDuration.value = 0
         currentSongIndex = -1
+        pendingPlaybackMs = 0L
         onStateChanged?.invoke()
     }
 

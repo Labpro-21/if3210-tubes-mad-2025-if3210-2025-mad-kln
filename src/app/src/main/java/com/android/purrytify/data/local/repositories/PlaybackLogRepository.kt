@@ -1,0 +1,99 @@
+package com.android.purrytify.data.local.repositories
+
+import android.util.Log
+import com.android.purrytify.data.local.dao.PlaybackLogDao
+import com.android.purrytify.data.local.entities.PlaybackLog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+
+class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
+    private val MIN_PLAYBACK_DURATION_MS = 5000L // 5 seconds minimum
+    private val BATCH_UPDATE_INTERVAL_MS = 60000L // 1 minute
+    private var pendingLogs = mutableListOf<PlaybackLog>()
+    private var lastBatchUpdateTime = System.currentTimeMillis()
+
+    fun logPlayback(songId: String, artistId: String, artistName: String, songTitle: String, listenedMs: Long) {
+        if (listenedMs < MIN_PLAYBACK_DURATION_MS) {
+            return
+        }
+
+        val calendar = Calendar.getInstance()
+        val yearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(calendar.time)
+        val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
+
+        val log = PlaybackLog(
+            songId = songId,
+            artistId = artistId,
+            artistName = artistName,
+            songTitle = songTitle,
+            durationMs = listenedMs,
+            timestamp = System.currentTimeMillis(),
+            yearMonth = yearMonth,
+            dayOfMonth = dayOfMonth
+        )
+
+        pendingLogs.add(log)
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBatchUpdateTime >= BATCH_UPDATE_INTERVAL_MS) {
+            flushLogs()
+        }
+    }
+
+    fun flushLogs() {
+        if (pendingLogs.isEmpty()) return
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                pendingLogs.forEach { log ->
+                    playbackLogDao.insert(log)
+                }
+                pendingLogs.clear()
+                lastBatchUpdateTime = System.currentTimeMillis()
+            } catch (e: Exception) {
+                Log.e("PlaybackLogRepository", "Error flushing logs", e)
+            }
+        }
+    }
+
+    suspend fun getLogsByYearMonth(yearMonth: String): List<PlaybackLog> {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getLogsByYearMonth(yearMonth)
+        }
+    }
+
+    suspend fun getLogsBySongId(songId: String): List<PlaybackLog> {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getLogsBySongId(songId)
+        }
+    }
+
+    suspend fun getLogsByArtistId(artistId: String): List<PlaybackLog> {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getLogsByArtistId(artistId)
+        }
+    }
+
+    suspend fun getTotalDurationByYearMonth(yearMonth: String): Long {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getTotalDurationByYearMonth(yearMonth)
+        }
+    }
+
+    suspend fun getTotalDurationBySongId(songId: String): Long {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getTotalDurationBySongId(songId)
+        }
+    }
+
+    suspend fun getTotalDurationByArtistId(artistId: String): Long {
+        return withContext(Dispatchers.IO) {
+            playbackLogDao.getTotalDurationByArtistId(artistId)
+        }
+    }
+} 

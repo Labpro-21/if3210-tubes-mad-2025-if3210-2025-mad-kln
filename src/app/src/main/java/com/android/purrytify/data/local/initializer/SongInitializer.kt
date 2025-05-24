@@ -12,13 +12,6 @@ object SongInitializer {
     suspend fun initializeSongs(songRepository: SongRepository, context: Context) {
         withContext(Dispatchers.IO) {
             songRepository.deleteAllSongs()
-//            val allSongs = songRepository.getAllSongs()
-//
-//            if (allSongs.size == 0) {
-//                val mockSongs = createMockSongs(context)
-//                songRepository.insertSongs(mockSongs)
-//            }
-//
             val mockSongs = createMockSongs(context)
             songRepository.insertSongs(mockSongs)
         }
@@ -37,9 +30,6 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-11 12:00:00",
                 context = context,
                 duration = 240,
-                secondsPlayed = 120,
-                dayStreak = 4,
-                maxStreak = 10,
             ),
             createSong(
                 id = 2,
@@ -52,9 +42,6 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-11 09:00:00",
                 context = context,
                 duration = 70,
-                secondsPlayed = 920,
-                dayStreak = 2,
-                maxStreak = 3,
             ),
             createSong(
                 id = 3,
@@ -66,7 +53,6 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-11 01:00:00",
                 context = context,
                 duration = 60,
-                secondsPlayed = 20,
             ),
             createSong(
                 id = 4,
@@ -79,7 +65,6 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-11 09:00:00",
                 context = context,
                 duration = 140,
-                secondsPlayed = 150,
             ),
             createSong(
                 id = 5,
@@ -91,7 +76,6 @@ object SongInitializer {
                 lastPlayedDate = "2025-04-11 04:00:00",
                 context = context,
                 duration = 150,
-                secondsPlayed = 50,
             ),
             createSong(
                 id = 6,
@@ -101,8 +85,6 @@ object SongInitializer {
                 audioResId = R.raw.audio_counting_stars,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 01:00:00",
-                dayStreak = 2,
-                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -113,8 +95,6 @@ object SongInitializer {
                 audioResId = R.raw.audio_just_forget,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 02:30:00",
-                dayStreak = 2,
-                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -125,8 +105,6 @@ object SongInitializer {
                 audioResId = R.raw.audio_shiki_no_uta,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 04:00:00",
-                dayStreak = 2,
-                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -137,8 +115,6 @@ object SongInitializer {
                 audioResId = R.raw.audio_whos_theme,
                 uploaderId = 127,
                 lastPlayedDate = "2025-04-12 05:30:00",
-                dayStreak = 2,
-                maxStreak = 2,
                 context = context
             ),
             createSong(
@@ -149,8 +125,6 @@ object SongInitializer {
                 audioResId = R.raw.audio_i_miss_you,
                 uploaderId = 127,
                 lastPlayedDate = "2025-05-18 12:00:00",
-                dayStreak = 3,
-                maxStreak = 3,
                 context = context
             ),
             createSong(
@@ -217,9 +191,6 @@ object SongInitializer {
         country: String = "",
         liked: Boolean = false,
         lastPlayedDate: String = "",
-        secondsPlayed: Int = 0,
-        dayStreak: Int = 0,
-        maxStreak: Int = 0,
         context: Context
     ): Song {
         return Song(
@@ -231,9 +202,6 @@ object SongInitializer {
             audioUri = Uri.parse("android.resource://${context.packageName}/$audioResId").toString(),
             liked = liked,
             lastPlayedDate = lastPlayedDate,
-            dayStreak = dayStreak,
-            maxStreak = maxStreak,
-            secondsPlayed = secondsPlayed,
             duration = duration,
         )
     }
