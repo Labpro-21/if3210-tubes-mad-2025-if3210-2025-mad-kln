@@ -263,9 +263,8 @@ fun TopArtistDetailModal(
                         rank = artistInfo.rank,
                         artistName = artistInfo.artist,
                         imageUri = artistInfo.imageUri,
-                        onClick = { /* Handle click if needed, e.g., navigate to artist page */ }
                     )
-                    Divider(color = Color.DarkGray, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(color = Color.DarkGray, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
                 }
             }
         }
@@ -401,9 +400,8 @@ fun TopSongDetailModal(
                 items(topSongs) { songInfo ->
                     TopSongItemCard(
                         songInfo = songInfo,
-                        onClick = {}
                     )
-                    Divider(color = Color.DarkGray, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(color = Color.DarkGray, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
                 }
             }
         }
@@ -495,12 +493,10 @@ fun TopArtistItemCard(
     rank: Int,
     artistName: String,
     imageUri: String,
-    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
             .padding(vertical = 8.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -536,12 +532,10 @@ fun TopArtistItemCard(
 @Composable
 fun TopSongItemCard(
     songInfo: TopSongInfo,
-    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
             .padding(vertical = 8.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.Top
     ) {
