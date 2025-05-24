@@ -75,10 +75,11 @@ object MediaPlayerController {
     private val updateRunnable = object : Runnable {
         override fun run() {
             mediaPlayer?.let { player ->
+                _progress.value = player.currentPosition.toFloat() / player.duration
+                _currentTime.value = player.currentPosition
+                _totalDuration.value = player.duration
+                
                 if (player.isPlaying) {
-                    _progress.value = player.currentPosition.toFloat() / player.duration
-                    _currentTime.value = player.currentPosition
-                    _totalDuration.value = player.duration
                     currentSessionTimePlayed += UPDATE_INTERVAL / 1000f
                     Log.d("TEST IN UPDATE RUNNABLE", "SessionTimePlayed: $currentSessionTimePlayed")
                     if (currentSessionTimePlayed >= 10) {
@@ -90,11 +91,12 @@ object MediaPlayerController {
                             }
                         }
                     }
-
-                    onStateChanged?.invoke()
-                    
-                    handler.postDelayed(this, UPDATE_INTERVAL)
                 }
+
+                onStateChanged?.invoke()
+                
+                // Continue updating regardless of play state
+                handler.postDelayed(this, UPDATE_INTERVAL)
             } ?: return
         }
     }
@@ -269,6 +271,8 @@ object MediaPlayerController {
             } else {
                 it.start()
                 _isPlaying.value = true
+                handler.removeCallbacks(updateRunnable)
+                handler.post(updateRunnable)
             }
             onStateChanged?.invoke()
         }

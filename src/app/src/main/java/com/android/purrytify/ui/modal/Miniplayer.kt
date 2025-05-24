@@ -44,6 +44,7 @@ import extractDominantColor
 import com.android.purrytify.view_model.PlayerViewModel
 import darkenColor
 import loadBitmapFromUri
+import loadBitmapFromUrl
 
 @Composable
 fun MiniPlayer(
@@ -60,9 +61,20 @@ fun MiniPlayer(
 
     LaunchedEffect(song?.imageUri) {
         song?.imageUri?.let { uri ->
-            val bitmap = loadBitmapFromUri(context, uri)
-            bitmap?.let {
-                dominantColor = extractDominantColor(it)
+            if (uri.startsWith("http://") || uri.startsWith("https://")) {
+                try {
+                    val bitmap = loadBitmapFromUrl(context, uri)
+                    bitmap?.let {
+                        dominantColor = extractDominantColor(it)
+                    }
+                } catch (e: Exception) {
+                    Log.e("MiniPlayer", "Error loading remote image: ${e.message}")
+                }
+            } else {
+                val bitmap = loadBitmapFromUri(context, uri)
+                bitmap?.let {
+                    dominantColor = extractDominantColor(it)
+                }
             }
         }
     }

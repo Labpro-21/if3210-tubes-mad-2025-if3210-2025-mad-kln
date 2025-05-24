@@ -6,23 +6,22 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.graphics.Color
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
-import com.android.purrytify.R
-import com.android.purrytify.controller.MediaPlayerController
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import com.android.purrytify.MainActivity
+import com.android.purrytify.R
+import com.android.purrytify.controller.MediaPlayerController
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.data.local.repositories.SongRepository
-import com.android.purrytify.ui.screens.formatTime
 import extractDominantColor
+import loadBitmapFromUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,7 +30,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import loadBitmapFromUri
+import loadBitmapFromUrl
 import kotlin.math.abs
 
 class MusicService : Service() {
@@ -160,17 +159,34 @@ class MusicService : Service() {
             putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.artist)
             putLong(MediaMetadataCompat.METADATA_KEY_DURATION, MediaPlayerController.totalDuration.value.toLong())
             
-            try {
-                val artwork = loadBitmapFromUri(this@MusicService, song.imageUri)
-                if (artwork != null) {
-                    putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+            if (!song.imageUri.startsWith("http://") && !song.imageUri.startsWith("https://")) {
+                try {
+                    val artwork = loadBitmapFromUri(this@MusicService, song.imageUri)
+                    if (artwork != null) {
+                        putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+                    }
+                } catch (e: Exception) {
+                    Log.e("MusicService", "Error loading artwork: ${e.message}")
                 }
-            } catch (e: Exception) {
-                Log.e("MusicService", "Error loading artwork: ${e.message}")
             }
         }
         
         mediaSession.setMetadata(metadataBuilder.build())
+        
+        if (song.imageUri.startsWith("http://") || song.imageUri.startsWith("https://")) {
+            serviceScope.launch {
+                try {
+                    val artwork = loadBitmapFromUrl(this@MusicService, song.imageUri)
+                    if (artwork != null) {
+                        val updatedMetadataBuilder = MediaMetadataCompat.Builder(mediaSession.controller.metadata)
+                        updatedMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+                        mediaSession.setMetadata(updatedMetadataBuilder.build())
+                    }
+                } catch (e: Exception) {
+                    Log.e("MusicService", "Error loading remote artwork: ${e.message}")
+                }
+            }
+        }
     }
     
     private fun updatePlaybackState() {
@@ -253,8 +269,6 @@ class MusicService : Service() {
     }
 
     private fun createNotification(song: Song, isPlaying: Boolean): Notification {
-        val currentPosition = MediaPlayerController.currentTime.value
-        val duration = MediaPlayerController.totalDuration.value
         val progressPercent = (MediaPlayerController.progress.value * 100).toInt().coerceIn(0, 100)
         
         val playPauseIntent = PendingIntent.getService(
@@ -292,54 +306,164 @@ class MusicService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        val albumArtBitmap = loadBitmapFromUri(this, song.imageUri)
-        val dominantColor = albumArtBitmap?.let { extractDominantColor(it) } ?: Color.Black
-        
-        val mediaStyle = MediaStyle()
-            .setMediaSession(mediaSession.sessionToken)
-            .setShowActionsInCompactView(0, 1, 2)
-        
-        val playPauseIcon = if (isPlaying) R.drawable.ic_pause_no_circle_36 else R.drawable.ic_play_no_circle_36
-        val playPauseText = if (isPlaying) "Pause" else "Play"
-        
-        val builder = NotificationCompat.Builder(this, "music_channel")
-            .setSmallIcon(R.drawable.ic_logo_3_white)
-            .setLargeIcon(albumArtBitmap)
-            .setContentTitle(song.title)
-            .setContentText(song.artist)
-            .setColorized(true)
-            .setColor(dominantColor.toArgb())
-            .setContentIntent(contentIntent)
-            .setSubText("${formatTime(currentPosition)} / ${formatTime(duration)}")
-            .setProgress(100, progressPercent, false)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setStyle(mediaStyle)
-            .addAction(R.drawable.ic_previous, "Previous", previousIntent)
-            .addAction(playPauseIcon, playPauseText, playPauseIntent)
-            .addAction(R.drawable.ic_next, "Next", nextIntent)
-            .addAction(R.drawable.ic_close, "Close", closeIntent)
-            .setShowWhen(false)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+        if (song.imageUri.startsWith("http://") || song.imageUri.startsWith("https://")) {
+            val initialMediaStyle = MediaStyle()
+                .setMediaSession(mediaSession.sessionToken)
+                .setShowActionsInCompactView(0, 1, 2)
             
-        if (!isPlaying) {
-            builder.setDeleteIntent(closeIntent)
-        }
-        
-        if (isPlaying) {
-            builder.setOngoing(true)
-                .setAutoCancel(false)
+            val playPauseIcon = if (isPlaying) R.drawable.ic_pause_no_circle_36 else R.drawable.ic_play_no_circle_36
+            val playPauseText = if (isPlaying) "Pause" else "Play"
+            
+            val initialBuilder = NotificationCompat.Builder(this, "music_channel")
+                .setSmallIcon(R.drawable.ic_logo_3_white)
+                .setContentTitle(song.title)
+                .setContentText(song.artist)
+                .setColorized(true)
+                .setColor(Color.BLACK)
+                .setContentIntent(contentIntent)
+                .setProgress(100, progressPercent, false)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setStyle(initialMediaStyle)
+                .addAction(R.drawable.ic_previous, "Previous", previousIntent)
+                .addAction(playPauseIcon, playPauseText, playPauseIntent)
+                .addAction(R.drawable.ic_next, "Next", nextIntent)
+                .addAction(R.drawable.ic_close, "Close", closeIntent)
+                .setShowWhen(false)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+            
+            if (!isPlaying) {
+                initialBuilder.setDeleteIntent(closeIntent)
+            }
+            
+            if (isPlaying) {
+                initialBuilder.setOngoing(true)
+                    .setAutoCancel(false)
+            } else {
+                initialBuilder.setOngoing(false)
+                    .setAutoCancel(true)
+            }
+            
+            val initialNotification = initialBuilder.build()
+            
+            if (isPlaying) {
+                initialNotification.flags = initialNotification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+            }
+            
+            serviceScope.launch {
+                try {
+                    val bitmap = loadBitmapFromUrl(this@MusicService, song.imageUri)
+                    if (bitmap != null) {
+                        val color = extractDominantColor(bitmap)
+                        val colorInt = Color.rgb(
+                            (color.red * 255).toInt(),
+                            (color.green * 255).toInt(),
+                            (color.blue * 255).toInt()
+                        )
+                        
+                        val updatedMediaStyle = MediaStyle()
+                            .setMediaSession(mediaSession.sessionToken)
+                            .setShowActionsInCompactView(0, 1, 2)
+                        
+                        val updatedBuilder = NotificationCompat.Builder(this@MusicService, "music_channel")
+                            .setSmallIcon(R.drawable.ic_logo_3_white)
+                            .setLargeIcon(bitmap)
+                            .setContentTitle(song.title)
+                            .setContentText(song.artist)
+                            .setColorized(true)
+                            .setColor(colorInt)
+                            .setContentIntent(contentIntent)
+                            .setProgress(100, progressPercent, false)
+                            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                            .setStyle(updatedMediaStyle)
+                            .addAction(R.drawable.ic_previous, "Previous", previousIntent)
+                            .addAction(playPauseIcon, playPauseText, playPauseIntent)
+                            .addAction(R.drawable.ic_next, "Next", nextIntent)
+                            .addAction(R.drawable.ic_close, "Close", closeIntent)
+                            .setShowWhen(false)
+                            .setPriority(NotificationCompat.PRIORITY_MAX)
+                        
+                        if (!isPlaying) {
+                            updatedBuilder.setDeleteIntent(closeIntent)
+                        }
+                        
+                        if (isPlaying) {
+                            updatedBuilder.setOngoing(true)
+                                .setAutoCancel(false)
+                        } else {
+                            updatedBuilder.setOngoing(false)
+                                .setAutoCancel(true)
+                        }
+                        
+                        val updatedNotification = updatedBuilder.build()
+                        
+                        if (isPlaying) {
+                            updatedNotification.flags = updatedNotification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+                        }
+                        
+                        notificationManager.notify(NOTIFICATION_ID, updatedNotification)
+                    }
+                } catch (e: Exception) {
+                    Log.e("MusicService", "Failed to load remote album art", e)
+                }
+            }
+            
+            return initialNotification
         } else {
-            builder.setOngoing(false)
-                .setAutoCancel(true)
-        }
+            val albumArtBitmap = loadBitmapFromUri(this, song.imageUri)
+            val dominantColorInt = albumArtBitmap?.let { 
+                val color = extractDominantColor(it)
+                Color.rgb(
+                    (color.red * 255).toInt(),
+                    (color.green * 255).toInt(),
+                    (color.blue * 255).toInt()
+                )
+            } ?: Color.BLACK
             
-        val notification = builder.build()
-        
-        if (isPlaying) {
-            notification.flags = notification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
-        }
+            val mediaStyle = MediaStyle()
+                .setMediaSession(mediaSession.sessionToken)
+                .setShowActionsInCompactView(0, 1, 2)
             
-        return notification
+            val playPauseIcon = if (isPlaying) R.drawable.ic_pause_no_circle_36 else R.drawable.ic_play_no_circle_36
+            val playPauseText = if (isPlaying) "Pause" else "Play"
+            
+            val builder = NotificationCompat.Builder(this, "music_channel")
+                .setSmallIcon(R.drawable.ic_logo_3_white)
+                .setLargeIcon(albumArtBitmap)
+                .setContentTitle(song.title)
+                .setContentText(song.artist)
+                .setColorized(true)
+                .setColor(dominantColorInt)
+                .setContentIntent(contentIntent)
+                .setProgress(100, progressPercent, false)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setStyle(mediaStyle)
+                .addAction(R.drawable.ic_previous, "Previous", previousIntent)
+                .addAction(playPauseIcon, playPauseText, playPauseIntent)
+                .addAction(R.drawable.ic_next, "Next", nextIntent)
+                .addAction(R.drawable.ic_close, "Close", closeIntent)
+                .setShowWhen(false)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                
+            if (!isPlaying) {
+                builder.setDeleteIntent(closeIntent)
+            }
+            
+            if (isPlaying) {
+                builder.setOngoing(true)
+                    .setAutoCancel(false)
+            } else {
+                builder.setOngoing(false)
+                    .setAutoCancel(true)
+            }
+                
+            val notification = builder.build()
+            
+            if (isPlaying) {
+                notification.flags = notification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+            }
+            
+            return notification
+        }
     }
 
     private fun createNotificationChannel() {
@@ -371,30 +495,41 @@ class MusicService : Service() {
     }
     
     fun updateSongInfo(title: String, artist: String, imageUri: String) {
-        // Force metadata update by resetting lastSongId
         lastSongId = null
         
-        val song = MediaPlayerController.currentSong.value ?: return
-        
-        // Update media session metadata
         val metadataBuilder = MediaMetadataCompat.Builder().apply {
             putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
             putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
             putLong(MediaMetadataCompat.METADATA_KEY_DURATION, MediaPlayerController.totalDuration.value.toLong())
             
-            try {
-                val artwork = loadBitmapFromUri(this@MusicService, imageUri)
-                if (artwork != null) {
-                    putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+            if (!imageUri.startsWith("http://") && !imageUri.startsWith("https://")) {
+                try {
+                    val artwork = loadBitmapFromUri(this@MusicService, imageUri)
+                    if (artwork != null) {
+                        putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+                    }
+                } catch (e: Exception) {
+                    Log.e("MusicService", "Error loading artwork: ${e.message}")
                 }
-            } catch (e: Exception) {
-                Log.e("MusicService", "Error loading artwork: ${e.message}")
             }
         }
         
         mediaSession.setMetadata(metadataBuilder.build())
         
-        // Force notification update
+        if (imageUri.startsWith("http://") || imageUri.startsWith("https://")) {
+            serviceScope.launch {
+                try {
+                    val artwork = loadBitmapFromUrl(this@MusicService, imageUri)
+                    if (artwork != null) {
+                        val updatedMetadataBuilder = MediaMetadataCompat.Builder(mediaSession.controller.metadata)
+                        updatedMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork)
+                        mediaSession.setMetadata(updatedMetadataBuilder.build())
+                    }
+                } catch (e: Exception) {
+                    Log.e("MusicService", "Error loading remote artwork: ${e.message}")
+                }
+            }
+        }
         updateNotification(true)
     }
 

@@ -18,11 +18,15 @@ import java.util.Locale
 // Utils func here
     fun loadBitmapFromUri(context: Context, uriString: String): Bitmap? {
         return try {
-            val uri = Uri.parse(uriString)
-            val inputStream = context.contentResolver.openInputStream(uri)
-            BitmapFactory.decodeStream(inputStream)
+            if (uriString.startsWith("http://") || uriString.startsWith("https://")) {
+                null
+            } else {
+                val uri = Uri.parse(uriString)
+                val inputStream = context.contentResolver.openInputStream(uri)
+                BitmapFactory.decodeStream(inputStream)
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("Utils", "Error loading bitmap from: $uriString", e)
             null
         }
     }

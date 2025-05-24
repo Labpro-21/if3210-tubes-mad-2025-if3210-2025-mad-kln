@@ -73,8 +73,12 @@ fun PurrytifyApp(context: Context, intent: Intent) {
             mediaPlayerViewModel.playSong(context, 0)
 
             delay(1000)
+            if (currentRoute != null && currentRoute != "login" && currentRoute != "blank" && currentRoute != "nowPlaying") {
+                lastMainRoute = currentRoute
+            }
+            
             navController.navigate("nowPlaying") {
-                popUpTo("home") { inclusive = true }
+                launchSingleTop = true
             }
             SharedSongState.clear()
         }
@@ -189,6 +193,9 @@ fun PurrytifyApp(context: Context, intent: Intent) {
                     } else {
                         NoInternetScreen()
                     }
+                }
+                composable("qr_scanner") {
+                    QRScannerScreen(navController)
                 }
             }
 
