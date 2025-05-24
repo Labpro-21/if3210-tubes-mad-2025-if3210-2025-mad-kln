@@ -110,7 +110,7 @@ fun ProfileScreen(
 
 
     // Stats state
-    var songCount by remember { mutableIntStateOf(0) }
+    var songCountStats by remember { mutableIntStateOf(0) }
     var likeCount by remember { mutableIntStateOf(0) }
     var listenedCount by remember { mutableIntStateOf(0) }
     
@@ -171,16 +171,16 @@ fun ProfileScreen(
         }
     }
 
-    fun editProfile(context:Context, country : String?, photo : File?){
-        val (location, image) = prepareMultipart(country, photo)
+    fun editProfile(context:Context, countryParam : String?, photo : File?){
+        val (locationValue, imageValue) = prepareMultipart(countryParam, photo)
         coroutineScope.launch {
             try {
                 val token = getToken(context)
                 val bearerToken = "Bearer $token"
                 api.editProfile(
                     token = bearerToken,
-                    location = location,
-                    profilePhoto = image
+                    location = locationValue,
+                    profilePhoto = imageValue
                 )
                 Log.d("Profile", "Update successful")
             } catch (e: Exception) {
@@ -209,11 +209,11 @@ fun ProfileScreen(
             Log.d("DEBUG_PROFILE", "profile url: $profileURL")
 
             val songs = songRepository.getSongsByUploader(id)
-            songCount = songs.size
+            songCountStats = songs.size
             likeCount = songRepository.getLikedSongsByUploader(id).size
             listenedCount = 0
 
-            Log.d("DEBUG_PROFILE", "song count: $songCount")
+            Log.d("DEBUG_PROFILE", "song count: $songCountStats")
             Log.d("DEBUG_PROFILE", "like count: $likeCount")
             Log.d("DEBUG_PROFILE", "listened count: $listenedCount")
 
@@ -248,7 +248,6 @@ fun ProfileScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Main profile content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -302,7 +301,7 @@ fun ProfileScreen(
                 editProfile = editProfile,
                 onEditClick = { editProfile = true },
                 onSaveClick = {
-                    editProfile(context, locationCode, photoProfileFile)
+                    editProfile(context, locationCode.ifEmpty { null }, photoProfileFile)
                     editProfile = false
                     fetchUser()
                     photoProfileFile = null
@@ -322,7 +321,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(number = songCount.toString(), label = "Songs")
+                StatItem(number = songCountStats.toString(), label = "Songs")
                 StatItem(number = likeCount.toString(), label = "Liked")
                 StatItem(number = listenedCount.toString(), label = "Listened")
             }
@@ -377,7 +376,13 @@ fun ProfileScreen(
         }
         
         if (showTimeListenedModal) {
-            TimeListenedDetailModal(onDismiss = { showTimeListenedModal = false })
+            TimeListenedDetailModal(
+                onDismiss = { showTimeListenedModal = false },
+                currentMonthYear = soundCapsuleViewModel.currentMonthYearForModal,
+                totalMinutes = soundCapsuleViewModel.totalMinutesInMonth,
+                dailyAverageMinutes = soundCapsuleViewModel.dailyAverageMinutesInMonth,
+                dailyPlayback = soundCapsuleViewModel.dailyPlaybackData
+            )
         }
         if (showTopArtistModal) {
             TopArtistDetailModal(
@@ -583,7 +588,6 @@ fun FileUploadDialog(
         onDismiss()
     }
 
-    // Create temporary file for camera
     fun createImageFile(context: Context): Pair<File, Uri> {
         val imageFile = File.createTempFile(
             "IMG_${System.currentTimeMillis()}",

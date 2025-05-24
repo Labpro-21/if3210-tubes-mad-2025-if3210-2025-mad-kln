@@ -1,5 +1,6 @@
 package com.android.purrytify.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,8 +18,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -28,11 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.android.purrytify.R
+import com.android.purrytify.view_model.DailyPlayback
 import com.android.purrytify.view_model.TopArtistInfo
 import com.android.purrytify.view_model.TopSongInfo
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 @Composable
 fun TimeListenedCard(
@@ -83,23 +94,48 @@ fun TimeListenedCard(
 }
 
 @Composable
-fun TimeListenedDetailModal(onDismiss: () -> Unit) {
+fun TimeListenedDetailModal(
+    onDismiss: () -> Unit,
+    currentMonthYear: String,
+    totalMinutes: Int,
+    dailyAverageMinutes: Int,
+    dailyPlayback: List<DailyPlayback>
+) {
+    val density = LocalDensity.current
+    val textPaint = remember {
+        android.graphics.Paint().apply {
+            color = Color.Gray.toArgb()
+            textSize = with(density) { 10.sp.toPx() }
+        }
+    }
+    val yAxisLabelPaint = remember {
+        android.graphics.Paint().apply {
+            color = Color.Gray.toArgb()
+            textSize = with(density) { 10.sp.toPx() }
+            textAlign = android.graphics.Paint.Align.RIGHT
+        }
+    }
+    val xAxisLabelPaint = remember {
+        android.graphics.Paint().apply {
+            color = Color.Gray.toArgb()
+            textSize = with(density) { 10.sp.toPx() }
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF121212))
-            .clickable(onClick = { onDismiss() }),
-        contentAlignment = Alignment.TopStart
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -111,22 +147,148 @@ fun TimeListenedDetailModal(onDismiss: () -> Unit) {
                         .padding(end = 16.dp)
                         .size(24.dp)
                 )
-                
                 Text(
-                    text = "Time Listened",
+                    text = "Time listened",
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Time Listened Detail Page",
-                color = Color.Gray,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
-            )
+
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text(
+                    text = currentMonthYear,
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = buildAnnotatedString {
+                        append("You listened to music for ")
+                        withStyle(style = SpanStyle(color = Color(0xFF1DB954), fontWeight = FontWeight.Bold)) {
+                            append("$totalMinutes minutes")
+                        }
+                        append(" this month.")
+                    },
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Daily average: $dailyAverageMinutes min",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(Color(0xFF1A1A1A), shape = RoundedCornerShape(8.dp)),
+            ) {
+                if (dailyPlayback.isNotEmpty()) {
+                    Canvas(modifier = Modifier.fillMaxSize().padding(start = 8.dp, end = 8.dp, top = 16.dp, bottom = 16.dp)) {
+                        val yAxisLabelOffset = 8.dp.toPx()
+                        val bottomPaddingForXAxisLabels = 30.dp.toPx()
+                        val leftPaddingForYAxisLabels = 40.dp.toPx()
+                        
+                        val chartHeight = size.height - bottomPaddingForXAxisLabels
+                        val chartWidth = size.width - leftPaddingForYAxisLabels
+
+                        val maxMinutesRaw = dailyPlayback.maxOfOrNull { it.minutesListened } ?: 0
+                        val maxMinutes = if (maxMinutesRaw == 0) 1 else maxMinutesRaw
+                        
+                        val calendar = Calendar.getInstance()
+                        try {
+                            val sdf = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                            val date = sdf.parse(currentMonthYear)
+                            if (date != null) calendar.time = date
+                        } catch (e: Exception) { }
+                        val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+                        drawLine(
+                            color = Color.Gray,
+                            start = Offset(leftPaddingForYAxisLabels, 0f),
+                            end = Offset(leftPaddingForYAxisLabels, chartHeight),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                        drawContext.canvas.nativeCanvas.save()
+                        drawContext.canvas.nativeCanvas.rotate(-90f, yAxisLabelOffset , chartHeight / 2)
+                        drawContext.canvas.nativeCanvas.drawText(
+                            "minutes",
+                            yAxisLabelOffset,
+                            chartHeight / 2  + textPaint.textSize / 3,
+                            textPaint.apply { textAlign = android.graphics.Paint.Align.CENTER}
+                        )
+                        drawContext.canvas.nativeCanvas.restore()
+
+                        val yLabelCount = 3
+                        for (i in 0 until yLabelCount) {
+                            val value = (maxMinutes.toFloat() / (yLabelCount - 1)) * i
+                            val yPos = chartHeight - (value / maxMinutes) * chartHeight
+                            val labelText = value.roundToInt().toString()
+                            drawContext.canvas.nativeCanvas.drawText(
+                                labelText,
+                                leftPaddingForYAxisLabels - yAxisLabelOffset,
+                                yPos + textPaint.textSize / 3,
+                                yAxisLabelPaint
+                            )
+                        }
+
+                        drawLine(
+                            color = Color.Gray,
+                            start = Offset(leftPaddingForYAxisLabels, chartHeight),
+                            end = Offset(size.width, chartHeight),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                        drawContext.canvas.nativeCanvas.drawText(
+                            "day",
+                            leftPaddingForYAxisLabels + chartWidth / 2,
+                            size.height - (bottomPaddingForXAxisLabels / 8) + 10.dp.toPx(),
+                            textPaint.apply { textAlign = android.graphics.Paint.Align.CENTER }
+                        )
+
+                        val xLabelPoints = listOf(1, (daysInMonth + 1) / 2, daysInMonth)
+                        xLabelPoints.distinct().forEach { day ->
+                             val xPos = leftPaddingForYAxisLabels + (day.toFloat() / daysInMonth) * chartWidth
+                             drawContext.canvas.nativeCanvas.drawText(
+                                day.toString(),
+                                xPos,
+                                chartHeight + bottomPaddingForXAxisLabels * 0.75f,
+                                xAxisLabelPaint
+                            )
+                        }
+
+                        val linePath = Path()
+                        dailyPlayback.sortedBy { it.dayOfMonth }.forEachIndexed { index, playback ->
+                            val x = leftPaddingForYAxisLabels + (playback.dayOfMonth.toFloat() / daysInMonth) * chartWidth
+                            val y = chartHeight - (playback.minutesListened.toFloat() / max(maxMinutes,1)) * chartHeight
+                            
+                            if (index == 0) {
+                                linePath.moveTo(x, y)
+                            } else {
+                                linePath.lineTo(x, y)
+                            }
+                        }
+                        drawPath(
+                            path = linePath,
+                            color = Color(0xFF1DB954),
+                            style = Stroke(width = 2.dp.toPx())
+                        )
+                    }
+                } else {
+                     Text(
+                        text = "No listening data for this month",
+                        color = Color.Gray,
+                        fontSize = 16.sp,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
         }
     }
 }
@@ -384,7 +546,7 @@ fun TopSongDetailModal(
                 Text(
                     text = buildAnnotatedString {
                         append("You played ")
-                        withStyle(style = SpanStyle(color = Color(0xFFF8E747), fontWeight = FontWeight.Bold)) { // Yellow for song count
+                        withStyle(style = SpanStyle(color = Color(0xFFF8E747), fontWeight = FontWeight.Bold)) { 
                             append("$songCount")
                         }
                         append(" different songs this month.")
