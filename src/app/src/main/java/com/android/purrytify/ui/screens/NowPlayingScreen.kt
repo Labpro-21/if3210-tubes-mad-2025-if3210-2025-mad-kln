@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -39,11 +38,17 @@ import com.android.purrytify.R
 import com.android.purrytify.controller.RepeatMode
 import com.android.purrytify.service.MusicService
 import com.android.purrytify.ui.components.LikeButton
+import com.android.purrytify.ui.components.ShareLinkButton
+import com.android.purrytify.ui.components.ShareQRButton
 import com.android.purrytify.ui.components.SongDetailButton
 import com.android.purrytify.view_model.PlayerViewModel
 import darkenColor
 import extractDominantColor
 import loadBitmapFromUri
+import loadBitmapFromUrl
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.common.BitMatrix
 
 @Composable
 fun NowPlayingScreen(
@@ -67,11 +72,21 @@ fun NowPlayingScreen(
 
     LaunchedEffect(song) {
         song?.let {
-            val bitmap = loadBitmapFromUri(context, it.imageUri)
-            bitmap?.let { bmp ->
-                dominantColor = extractDominantColor(bmp)
+            if (it.imageUri.startsWith("http")) {
+                try {
+                    val bitmap = loadBitmapFromUrl(context, it.imageUri)
+                    bitmap?.let { bmp ->
+                        dominantColor = extractDominantColor(bmp)
+                    }
+                } catch (e: Exception) {
+                    Log.e("NowPlayingScreen", "Error loading remote image: ${e.message}")
+                }
+            } else {
+                val bitmap = loadBitmapFromUri(context, it.imageUri)
+                bitmap?.let { bmp ->
+                    dominantColor = extractDominantColor(bmp)
+                }
             }
-
         } ?: onClose()
     }
 
@@ -209,6 +224,8 @@ fun NowPlayingScreen(
                     }
 
                     ShareLinkButton(songId = it.id)
+                    
+                    ShareQRButton(songId = it.id, song = it, dominantColor = dominantColor)
 
                     LikeButton(
                         type = "heart",
