@@ -108,6 +108,7 @@ fun ProfileScreen(
     var photoProfileFile by remember { mutableStateOf<File?>(null) }
     var uploadPhoto by remember { mutableStateOf(false) }
 
+
     // Stats state
     var songCount by remember { mutableIntStateOf(0) }
     var likeCount by remember { mutableIntStateOf(0) }
@@ -117,6 +118,8 @@ fun ProfileScreen(
     var showTimeListenedModal by remember { mutableStateOf(false) }
     var showTopArtistModal by remember { mutableStateOf(false) }
     var showTopSongModal by remember { mutableStateOf(false) }
+
+
 
     suspend fun fetchUserId(context: Context): Int {
         Log.d("DEBUG_PROFILE", "Fetching user ID")

@@ -8,13 +8,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.purrytify.data.local.RepositoryProvider
+import com.android.purrytify.data.local.entities.PlaybackLog
 import com.android.purrytify.data.local.entities.Song
+import com.android.purrytify.data.local.repositories.PlaybackLogRepository
 import com.android.purrytify.data.local.repositories.SongRepository
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SoundCapsuleViewModel(
     private val songRepository: SongRepository = RepositoryProvider.getSongRepository(),
+    private val playbackLogRepository: PlaybackLogRepository = RepositoryProvider.getPlaybackLogRepository()
 ) : ViewModel() {
 
     // Songs
@@ -48,7 +53,7 @@ class SoundCapsuleViewModel(
     var topSongData by mutableStateOf<List<TopSongInfo>>(emptyList())
         private set
 
-    var songCount by mutableIntStateOf(0)
+    var songCount by mutableStateOf(0)
         private set
 
     // Max Streak
@@ -63,26 +68,22 @@ class SoundCapsuleViewModel(
     var maxStreakDateRange by mutableStateOf("N/A")
         private set
 
+
     fun fetchSongs(userId: Int) {
         viewModelScope.launch {
             songs = songRepository.getSongsByUploader(userId) ?: emptyList()
 
-//            val gson = GsonBuilder().setPrettyPrinting().create()
-//            songs.forEach { song ->
-//                Log.d("SoundCapsuleViewModel", gson.toJson(song))
-//            }
-
-            timeListened = getTimeListened(songs)
+            val currentYearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+            val logs = playbackLogRepository.getLogsByYearMonth(currentYearMonth)
+            
+            timeListened = getTimeListened(logs)
             Log.d("SoundCapsuleViewModel", "Total Duration Played: $timeListened")
 
-            val (artistCountVal, topArtistDataVal) = getTopArtistData(songs, 5)
+            val (artistCountVal, topArtistDataVal) = getTopArtistData(logs, songs,5)
 
-            if (artistCountVal > 0 && topArtistDataVal.isNotEmpty()) {
+            if (artistCountVal > 0) {
                 topArtistName = topArtistDataVal[0].artist
                 topArtistImageUri = topArtistDataVal[0].imageUri
-            } else {
-                topArtistName = ""
-                topArtistImageUri = ""
             }
 
             topArtistData = topArtistDataVal
@@ -92,27 +93,15 @@ class SoundCapsuleViewModel(
 //                artist -> Log.d("SoundCapsuleViewModel", "Top Artist: ${artist.artist}, Image URI: ${artist.imageUri}")
 //            }
 
-            val (songCountVal, songDataVal) = getTopSongData(songs, 5)
+            val (songCountVal, songDataVal) = getTopSongData(logs, songs, 5)
 
-            if (songCountVal > 0 && songDataVal.isNotEmpty()) {
+            if (songCountVal > 0) {
                 topSongTitle = songDataVal[0].title
                 topSongImageUri = songDataVal[0].imageUri
-            } else {
-                topSongTitle = ""
-                topSongImageUri = ""
             }
 
             songCount = songCountVal
             topSongData = songDataVal
-
-            val maxStreakInfo = getMaxStreakInfo(songs)
-
-            maxStreakCount = maxStreakInfo.streakCount
-            maxStreakSongTitle = maxStreakInfo.title
-            maxStreakArtistName = maxStreakInfo.artist
-            maxStreakImageUri = maxStreakInfo.imageUri
-            maxStreakDateRange = maxStreakInfo.date
-
         }
     }
 }
@@ -123,14 +112,14 @@ fun getSoundCapsuleViewModel(): SoundCapsuleViewModel {
     return viewModel(activity)
 }
 
-fun getTimeListened(songs: List<Song>): String {
-    val totalDuration = songs.sumOf { it.secondsPlayed }
+fun getTimeListened(logs: List<PlaybackLog>): String {
+    val totalDuration = logs.sumOf { it.durationMs } / 1000 // Convert to seconds
     val minutes = totalDuration / 60
     val seconds = totalDuration % 60
 
     return when {
-        totalDuration == 0 -> "0 Minutes"
-        minutes == 0 -> "$seconds Seconds"
+        totalDuration == 0L -> "0 Minutes"
+        minutes == 0L -> "$seconds Seconds"
         else -> "$minutes Minutes"
     }
 }
@@ -141,82 +130,76 @@ data class TopArtistInfo(
     val imageUri: String
 )
 
-fun getTopArtistData(songs: List<Song>, limit: Int): Pair<Int, List<TopArtistInfo>> {
-    val artistListeningStats = mutableMapOf<String, Int>()
+fun getTopArtistData(logs: List<PlaybackLog>, songs: List<Song>, limit: Int): Pair<Int, List<TopArtistInfo>> {
+    val artistListeningStats = mutableMapOf<String, Long>()
 
-    songs.forEach { song ->
-        val artist = song.artist
-        val secondsPlayed = song.secondsPlayed
+    logs.forEach { log ->
+        val artist = log.artistName
+        val durationMs = log.durationMs
 
-        artistListeningStats[artist] = artistListeningStats.getOrDefault(artist, 0) + secondsPlayed
+        artistListeningStats[artist] = artistListeningStats.getOrDefault(artist, 0) + durationMs
     }
 
     val sortedArtists = artistListeningStats.entries.sortedByDescending { it.value }
 
     val topArtists = sortedArtists.take(limit).mapIndexed { index, entry ->
-        val representativeSong = songs.firstOrNull { it.artist == entry.key }
-        val imageUri = representativeSong?.imageUri ?: ""
+        val artistName = entry.key
+        val totalTime = entry.value
+
+        val representativeLog = logs.firstOrNull { it.artistName == artistName }
+        val imageUri = representativeLog?.let { log ->
+            songs.firstOrNull { it.artist == log.artistName }?.imageUri
+        } ?: ""
 
         TopArtistInfo(
             rank = index + 1,
-            artist = entry.key,
+            artist = artistName,
             imageUri = imageUri
         )
     }
 
-    return Pair(artistListeningStats.size, topArtists)
+    return Pair(topArtists.size, topArtists)
 }
 
 data class TopSongInfo(
     val rank: Int,
     val title: String,
-    val artist: String,
     val imageUri: String,
+    val durationMs: Long,
+    val artist: String,
     val playCount: Int
 )
 
-fun getTopSongData(songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> {
-    val playedSongs = songs.filter { it.secondsPlayed > 0 }
-    
-    val sortedSongs = playedSongs.sortedByDescending { it.secondsPlayed }
+fun getTopSongData(logs: List<PlaybackLog>, songs: List<Song>, limit: Int): Pair<Int, List<TopSongInfo>> {
+    val songListeningStats = mutableMapOf<String, Long>()
 
-    val topSongs = sortedSongs.take(limit).mapIndexed { index, song ->
+    logs.forEach { log ->
+        val songId = log.songId
+        val durationMs = log.durationMs
+
+        songListeningStats[songId] = songListeningStats.getOrDefault(songId, 0) + durationMs
+    }
+
+    val sortedSongs = songListeningStats.entries.sortedByDescending { it.value }
+
+    val topSongs = sortedSongs.take(limit).mapIndexed { index, entry ->
+        val songId = entry.key
+        val totalTime = entry.value
+
+        val representativeLog = logs.firstOrNull { it.songId == songId }
+        val imageUri = representativeLog?.let { log ->
+            songs.firstOrNull { it.id.toString() == log.songId }?.imageUri
+        } ?: ""
+
         TopSongInfo(
             rank = index + 1,
-            title = song.title,
-            artist = song.artist,
-            imageUri = song.imageUri ?: "",
+            title = representativeLog?.songTitle ?: "",
+            imageUri = imageUri,
+            durationMs = totalTime,
+            artist = "",
             playCount = 0
         )
     }
 
-    return Pair(playedSongs.distinctBy { it.id }.size, topSongs)
-}
-
-data class MaxStreakInfo(
-    val streakCount: Int,
-    val title: String,
-    val artist: String,
-    val imageUri: String,
-    val date: String,
-)
-
-fun getMaxStreakInfo(songs: List<Song>): MaxStreakInfo {
-
-    val songWithTopStreak = songs.maxByOrNull { it.maxStreak }
-        ?: return MaxStreakInfo(
-            streakCount = 0,
-            title = "No Songs",
-            artist = "N/A",
-            imageUri = "",
-            date = "N/A"
-        )
-
-    return MaxStreakInfo(
-        streakCount = songWithTopStreak.maxStreak,
-        title = songWithTopStreak.title,
-        artist = songWithTopStreak.artist,
-        imageUri = songWithTopStreak.imageUri ?: "",
-        date = songWithTopStreak.lastPlayedDate ?: "N/A"
-    )
+    return Pair(topSongs.size, topSongs)
 }
