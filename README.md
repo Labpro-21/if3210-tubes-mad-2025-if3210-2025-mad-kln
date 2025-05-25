@@ -284,7 +284,7 @@ Pada Milestone 2, kami diminta untuk mengimplementasikan sejumlah fitur tambahan
         <td>Maulana Muhammad Susetyo</td>
         <td>13522127</td>
         <td>Notification, Audio Routing, Share Song QR, Database Logging, Export to CSV sound capsule</td>
-        <td>0</td>
+        <td>5</td>
         <td>45</td>
     </tr>
     <tr>
@@ -292,7 +292,7 @@ Pada Milestone 2, kami diminta untuk mengimplementasikan sejumlah fitur tambahan
         <td>Ahmad Rafi Maliki</td>
         <td>13522137</td>
         <td>Online Songs, Download Online Songs, Sound Capsule UI, Share Song URL, Responsive Page, Song Recommendation</td>
-        <td>0</td>
+        <td>5</td>
         <td>45</td>
     </tr>
     <tr>
@@ -300,7 +300,7 @@ Pada Milestone 2, kami diminta untuk mengimplementasikan sejumlah fitur tambahan
         <td>Andi Marihot Sitorus</td>
         <td>13522138</td>
         <td>Edit Profil</td>
-        <td>0</td>
+        <td>5</td>
         <td>10</td>
     </tr>
 </table>
