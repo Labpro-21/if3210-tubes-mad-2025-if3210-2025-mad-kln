@@ -1,5 +1,7 @@
 package com.android.purrytify.ui.modal
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +20,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +38,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import downloadSong
+import fetchUserId
 
 @Composable
 fun SongDetailModal(
@@ -43,6 +49,11 @@ fun SongDetailModal(
     onDeleteSuccess: () -> Unit
 ) {
     val showConfirmDialog = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val isOnlineSong = song.uploaderId == 0
+    val isOfflineSong = song.uploaderId != 0
+    val canDownload = isOnlineSong && !song.isDownloaded
 
     if (showConfirmDialog.value) {
         ConfirmDeleteDialog(
@@ -71,19 +82,47 @@ fun SongDetailModal(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SongDetailActionButton(
-                iconRes = R.drawable.ic_edit,
-                text = "Edit",
-                onClick = onEditClick
-            )
+            if (isOfflineSong) {
+                SongDetailActionButton(
+                    iconRes = R.drawable.ic_edit,
+                    text = "Edit",
+                    onClick = onEditClick
+                )
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            SongDetailActionButton(
-                iconRes = R.drawable.ic_delete,
-                text = "Delete",
-                onClick = { showConfirmDialog.value = true }
-            )
+                SongDetailActionButton(
+                    iconRes = R.drawable.ic_delete,
+                    text = "Delete",
+                    onClick = { showConfirmDialog.value = true }
+                )
+            }
+
+            if (canDownload) {
+                SongDetailActionButton(
+                    iconRes = R.drawable.ic_download,
+                    text = "Download",
+                    onClick = {
+                        Log.d("Download Song","Downloading $song")
+                        scope.launch {
+                            try {
+                                val userId = fetchUserId(context)
+                                downloadSong(context, song, userId)
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Song downloaded successfully", Toast.LENGTH_SHORT).show()
+                                }
+                                onDismiss(true)
+                            } catch (e: Exception) {
+                                Log.e("Download Song", "Error downloading: ${e.message}")
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Failed to download song: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                                onDismiss(true)
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -134,8 +173,6 @@ fun ConfirmDeleteDialog(
         }
     }
 }
-
-
 
 @Composable
 fun SongDetailActionButton(iconRes: Int, text: String, onClick: () -> Unit) {

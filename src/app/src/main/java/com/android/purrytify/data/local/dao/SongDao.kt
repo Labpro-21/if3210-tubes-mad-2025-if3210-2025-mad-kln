@@ -63,5 +63,8 @@ interface SongDao {
 
     @Query("SELECT * FROM songs WHERE uploaderId = :uploaderId AND isDownloaded = 1 AND (LOWER(title) LIKE LOWER('%' || :query || '%') OR LOWER(artist) LIKE LOWER('%' || :query || '%'))")
     suspend fun searchDownloadedSongsByUploader(uploaderId: Int, query: String): List<Song>
+
+    @Query("UPDATE songs SET isDownloaded = :isDownloaded WHERE title = :title AND artist = :artist AND uploaderId = 0")
+    suspend fun updateIsDownloaded(title: String, artist: String, isDownloaded: Boolean)
 }
 

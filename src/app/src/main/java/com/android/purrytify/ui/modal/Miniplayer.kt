@@ -112,10 +112,12 @@ fun MiniPlayer(
                         Text(it.artist, color = Color.Gray, fontSize = 12.sp, maxLines = 1)
                     }
 
-                    LikeButton(
-                        type = "plus",
-                        songId = it.id,
-                    )
+                    if (it.uploaderId != 0) {
+                        LikeButton(
+                            type = "plus",
+                            songId = it.id,
+                        )
+                    }
 
                     IconButton(
                         onClick = { viewModel.togglePlayPause(context) },

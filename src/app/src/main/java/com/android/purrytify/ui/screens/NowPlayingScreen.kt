@@ -227,14 +227,17 @@ fun NowPlayingScreen(
                             }
                         }
 
-                        ShareLinkButton(songId = it.id)
+                        if (it.uploaderId == 0) {
+                            ShareLinkButton(songId = it.id)
+                            ShareQRButton(songId = it.id, song = it, dominantColor = dominantColor)
+                        }
 
-                        ShareQRButton(songId = it.id, song = it, dominantColor = dominantColor)
-
-                        LikeButton(
-                            type = "heart",
-                            songId = it.id,
-                        )
+                        if (it.uploaderId != 0) {
+                            LikeButton(
+                                type = "heart",
+                                songId = it.id,
+                            )
+                        }
                     }
                 }
 
@@ -477,9 +480,17 @@ fun NowPlayingScreen(
                                         }
                                     }
 
-                                    ShareLinkButton(songId = it.id)
-                                    ShareQRButton(songId = it.id, song = it, dominantColor = dominantColor)
-                                    LikeButton(type = "heart", songId = it.id)
+                                    if (it.uploaderId == 0) {
+                                        ShareLinkButton(songId = it.id)
+                                        ShareQRButton(songId = it.id, song = it, dominantColor = dominantColor)
+                                    }
+
+                                    if (it.uploaderId != 0) {
+                                        LikeButton(
+                                            type = "heart",
+                                            songId = it.id,
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -439,15 +439,15 @@ fun ProfileScreen(
                             )
                         }
 
-                        // Export button
                         IconButton(
                             onClick = { handleExport() },
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(32.dp),
+                            enabled = soundCapsuleViewModel.totalMinutesInMonth > 0
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_export),
                                 contentDescription = "Export Sound Capsule Data",
-                                tint = Color.White,
+                                tint = if (soundCapsuleViewModel.totalMinutesInMonth > 0) Color.White else Color.Gray,
                                 modifier = Modifier.size(20.dp)
                             )
                         }

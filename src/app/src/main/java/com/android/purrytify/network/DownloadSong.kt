@@ -83,6 +83,7 @@ suspend fun downloadSong(context: Context, song: Song, userId: Int) {
                 rank = 0,
             )
         )
+        RepositoryProvider.getSongRepository().updateIsDownloaded(song.title, song.artist, true)
         Log.d("Download", "Song ${song.title} downloaded and saved to DB.")
     } else {
         Log.e("Download", "Download failed, not inserting to DB.")
