@@ -43,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
+import android.content.pm.ActivityInfo
 
 @Composable
 fun QRScannerScreen(navController: NavHostController) {
@@ -170,6 +171,8 @@ fun QRScannerScreen(navController: NavHostController) {
             onDispose {
                 lifecycleOwner.lifecycle.removeObserver(observer)
                 captureManager?.onDestroy()
+                val activity = context as? androidx.activity.ComponentActivity
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
         }
         
