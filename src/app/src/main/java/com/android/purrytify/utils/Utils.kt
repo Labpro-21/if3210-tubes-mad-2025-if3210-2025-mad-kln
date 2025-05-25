@@ -72,10 +72,10 @@ fun darkenColor(color: Color, factor: Float = 0.7f): Color {
 }
 
 suspend fun fetchUserId(context: Context): Int {
-    Log.d("DEBUG_PROFILE", "Fetching user ID")
-    return TokenManager.getCurrentId(context).firstOrNull()!!
+    Log.d("DEBUG_PROFILE", "Fetching user ID from Utils.kt")
+    return TokenManager.getCurrentId(context).firstOrNull() ?: 0
 }
 
-suspend fun getToken(context: Context): String{
-    return TokenManager.getToken(context).firstOrNull()!!
+suspend fun getToken(context: Context): String? {
+    return TokenManager.getToken(context).firstOrNull()
 }

@@ -51,7 +51,7 @@ fun LikeButton(
                 isLiked.value = updatedSong?.liked ?: false
             }
             if (updatedSong != null) {
-                libraryViewModel.fetchLibrary(id)
+                libraryViewModel.fetchLibrary(id!!, "")
                 delay(200)
                 mediaPlayerViewModel.setSongs(libraryViewModel.activeSongs)
             }

@@ -30,6 +30,12 @@ import com.android.purrytify.ui.components.CustomBottomSheet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun SongEditModal(
@@ -109,23 +115,68 @@ fun EditSongContent(
                     .padding(bottom = 8.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            EditMediaRow(photoUri)
-            Spacer(modifier = Modifier.height(16.dp))
-            InputField(title.value, { title.value = it }, "Title")
-            Spacer(modifier = Modifier.height(16.dp))
-            InputField(artist.value, { artist.value = it }, "Artist")
-            UploadButtons(onCancel, onSave)
-            Spacer(modifier = Modifier.height(16.dp))
+
+            val configuration = LocalConfiguration.current
+            val scrollState = rememberScrollState()
+
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    EditMediaRow(photoUri)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    InputField(title.value, { title.value = it }, "Title")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    InputField(artist.value, { artist.value = it }, "Artist")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    UploadButtons(onCancel, onSave)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
+                        .verticalScroll(scrollState),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        EditMediaRow(photoUri, isLandscape = true)
+                    }
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            InputField(title.value, { title.value = it }, "Title")
+                            Spacer(modifier = Modifier.height(16.dp))
+                            InputField(artist.value, { artist.value = it }, "Artist")
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        UploadButtons(onCancel, onSave, orientation = "landscape")
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 }
 
 @Composable
-fun EditMediaRow(photoUri: MutableState<Uri?>) {
+fun EditMediaRow(
+    photoUri: MutableState<Uri?>,
+    isLandscape: Boolean = false
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = if (isLandscape) Arrangement.Center else Arrangement.SpaceEvenly
     ) {
-        PhotoUploadBox(uri = photoUri.value, onUpload = { photoUri.value = it })
+        PhotoUploadBox(
+            uri = photoUri.value, 
+            onUpload = { photoUri.value = it }, 
+            modifier = if (isLandscape) Modifier.fillMaxWidth(0.8f) else Modifier.size(120.dp)
+        )
     }
 }

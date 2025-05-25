@@ -46,6 +46,12 @@ import fetchUserId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.Dp
 
 
 @Composable
@@ -69,7 +75,7 @@ fun SongUploadModal(
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            userId.value = fetchUserId(context)
+            userId.value = fetchUserId(context)!!
         }
     }
 
@@ -151,13 +157,50 @@ fun UploadSongContent(
                     .padding(bottom = 8.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            UploadMediaRow(photoUri, audioUri, title, artist)
-            Spacer(modifier = Modifier.height(16.dp))
-            InputField(title.value, { title.value = it }, "Title")
-            Spacer(modifier = Modifier.height(16.dp))
-            InputField(artist.value, { artist.value = it }, "Artist")
-            UploadButtons(onCancel, onSave)
-            Spacer(modifier = Modifier.height(16.dp))
+
+            val configuration = LocalConfiguration.current
+            val scrollState = rememberScrollState()
+
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    UploadMediaRow(photoUri, audioUri, title, artist)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    InputField(title.value, { title.value = it }, "Title")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    InputField(artist.value, { artist.value = it }, "Artist")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    UploadButtons(onCancel, onSave)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
+                        .verticalScroll(scrollState),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        UploadMediaRow(photoUri, audioUri, title, artist, isLandscape = true)
+                    }
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            InputField(title.value, { title.value = it }, "Title")
+                            Spacer(modifier = Modifier.height(16.dp))
+                            InputField(artist.value, { artist.value = it }, "Artist")
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        UploadButtons(onCancel, onSave, orientation = "landscape")
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 }
@@ -167,37 +210,62 @@ fun UploadMediaRow(
     photoUri: MutableState<Uri?>,
     audioUri: MutableState<Uri?>,
     title: MutableState<String>,
-    artist: MutableState<String>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        PhotoUploadBox(uri = photoUri.value, onUpload = { photoUri.value = it })
-        AudioUploadBox(uri = audioUri.value, onUpload = { audioUri.value = it }, title, artist)
+    artist: MutableState<String>,
+    isLandscape: Boolean = false
+) {
+    if (isLandscape) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            PhotoUploadBox(uri = photoUri.value, onUpload = { photoUri.value = it }, modifier = Modifier.fillMaxWidth(0.8f))
+            AudioUploadBox(uri = audioUri.value, onUpload = { audioUri.value = it }, title, artist, modifier = Modifier.fillMaxWidth(0.8f))
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            PhotoUploadBox(uri = photoUri.value, onUpload = { photoUri.value = it })
+            AudioUploadBox(uri = audioUri.value, onUpload = { audioUri.value = it }, title, artist)
+        }
     }
 }
 
 @Composable
-fun UploadButtons(onCancel: () -> Unit, onSave: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 32.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        StyledButton(text = "Cancel", backgroundColor = Color(0xFF535353), onClick = onCancel)
-        StyledButton(text = "Save", backgroundColor = Color(0xFF1DB955), onClick = onSave)
+fun UploadButtons(onCancel: () -> Unit, onSave: () -> Unit, orientation: String = "portrait") {
+    if (orientation == "portrait") {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 32.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            StyledButton(text = "Cancel", backgroundColor = Color(0xFF535353), onClick = onCancel)
+            StyledButton(text = "Save", backgroundColor = Color(0xFF1DB955), onClick = onSave)
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 32.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            StyledButton(text = "Cancel", backgroundColor = Color(0xFF535353), onClick = onCancel, width = 110.dp)
+            StyledButton(text = "Save", backgroundColor = Color(0xFF1DB955), onClick = onSave, width = 110.dp)
+        }
     }
 }
 
 @Composable
-fun StyledButton(text: String, backgroundColor: Color, onClick: () -> Unit) {
+fun StyledButton(text: String, backgroundColor: Color, onClick: () -> Unit, width: Dp = 170.dp) {
     Button(
         onClick = onClick,
         modifier = Modifier
             .padding(16.dp)
             .height(50.dp)
-            .width(170.dp),
+            .width(width),
         colors = ButtonDefaults.buttonColors(containerColor = backgroundColor, contentColor = Color.White)
     ) {
         Text(text = text, fontSize = 18.sp)
@@ -208,6 +276,7 @@ fun StyledButton(text: String, backgroundColor: Color, onClick: () -> Unit) {
 fun PhotoUploadBox(
     uri: Uri?,
     onUpload: (Uri) -> Unit,
+    modifier: Modifier = Modifier.size(120.dp)
 ) {
     val context = LocalContext.current
 
@@ -228,8 +297,7 @@ fun PhotoUploadBox(
     }
 
     Box(
-        modifier = Modifier
-            .size(120.dp)
+        modifier = modifier
             .clickable { launcher.launch(arrayOf("image/*")) }
             .background(Color(0xFF212121), RoundedCornerShape(8.dp))
             .aspectRatio(1f)
@@ -291,6 +359,7 @@ fun AudioUploadBox(
     onUpload: (Uri) -> Unit,
     title: MutableState<String>,
     artist: MutableState<String>,
+    modifier: Modifier = Modifier.size(120.dp)
 ) {
     val context = LocalContext.current
 
@@ -338,8 +407,7 @@ fun AudioUploadBox(
 
 
     Box(
-        modifier = Modifier
-            .size(120.dp)
+        modifier = modifier
             .clickable { launcher.launch(arrayOf("audio/*")) }
             .background(Color(0xFF212121), RoundedCornerShape(8.dp))
             .aspectRatio(1f)

@@ -108,40 +108,64 @@ fun PurrytifyApp(context: Context, intent: Intent) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        mediaPlayerViewModel.initialize(context)
+    var initialNavigationDone by rememberSaveable { mutableStateOf(false) }
 
-        checkToken(context)
-        delay(100)
-        if (token.isNullOrEmpty()) {
-            navController.navigate("login") {
-                popUpTo(0)
-            }
-        } else {
-            if (intent.getBooleanExtra("open_now_playing", false)) {
-                Log.d("LAST ROUTE",lastMainRoute ?: "NULL")
-                val routeToRestore = lastMainRoute ?: "home"
-                navController.navigate(routeToRestore) {
-                    popUpTo(0)
-                    launchSingleTop = true
-                }
-                navController.navigate("nowPlaying") {
-                    launchSingleTop = true
+    LaunchedEffect(Unit, token, lastMainRoute) {
+        if (!initialNavigationDone) {
+            mediaPlayerViewModel.initialize(context)
+            checkToken(context)
+            delay(100)
+
+            val currentDestination = navController.currentDestination?.route
+
+            if (token.isNullOrEmpty()) {
+                if (currentDestination != "login") {
+                    navController.navigate("login") {
+                        popUpTo(0)
+                    }
                 }
             } else {
-                navController.navigate("home") {
-                    popUpTo(0)
+                if (intent.getBooleanExtra("open_now_playing", false) && currentSong != null) {
+                    val routeToRestore = lastMainRoute ?: "home"
+                    if (currentDestination != routeToRestore && currentDestination != "nowPlaying") {
+                        navController.navigate(routeToRestore) {
+                            popUpTo(0)
+                            launchSingleTop = true
+                        }
+                    }
+                    if (currentDestination != "nowPlaying") {
+                        navController.navigate("nowPlaying") {
+                            launchSingleTop = true
+                        }
+                    }
+                } else if (lastMainRoute != null && lastMainRoute != currentDestination) {
+                    navController.navigate(lastMainRoute!!) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                } else if (currentDestination == "blank" || currentDestination == null) {
+                    navController.navigate("home") {
+                        popUpTo(0)
+                    }
                 }
             }
+            initialNavigationDone = true
         }
+    }
 
-        hasLoaded = true
-        systemUiController.isStatusBarVisible = false
-
-
+    LaunchedEffect(Unit) {
+        delay(5000)
         while (true) {
-            delay(5 * 60 * 1000)
             checkToken(context)
+            delay(5 * 60 * 1000)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        systemUiController.isStatusBarVisible = false
+        if (!hasLoaded) {
+            mediaPlayerViewModel.initialize(context)
+            hasLoaded = true
         }
     }
 

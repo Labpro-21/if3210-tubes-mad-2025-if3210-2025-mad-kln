@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
@@ -78,12 +79,14 @@ import com.google.android.gms.location.LocationServices
 import extractDominantColor
 import getCountryNameFromCode
 import getToken
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import loadBitmapFromUrl
 import java.io.File
 import java.io.IOException
 import java.util.Locale
+import fetchUserId
 
 
 @Composable
@@ -119,12 +122,11 @@ fun ProfileScreen(
     var showTopArtistModal by remember { mutableStateOf(false) }
     var showTopSongModal by remember { mutableStateOf(false) }
 
+    // Add state for loading and error
+    var isLoadingProfile by remember { mutableStateOf(true) }
+    var profileError by remember { mutableStateOf<String?>(null) }
+    var currentUserId by remember { mutableStateOf<Int?>(null) }
 
-
-    suspend fun fetchUserId(context: Context): Int {
-        Log.d("DEBUG_PROFILE", "Fetching user ID")
-        return TokenManager.getCurrentId(context).firstOrNull()!!
-    }
 
     fun useCurrentLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -191,36 +193,61 @@ fun ProfileScreen(
 
     fun fetchUser() {
         editProfile = false
+        isLoadingProfile = true // Start loading
+        profileError = null
+
         coroutineScope.launch {
-            checkToken(context)
+            val token = getToken(context)
+            if (token == null) {
+                profileError = "Not logged in. Please log in again."
+                isLoadingProfile = false
+                return@launch
+            }
+
             val id = fetchUserId(context)
+            currentUserId = id
+
+            if (id == null) {
+                profileError = "Failed to fetch user profile. Please try again."
+                isLoadingProfile = false
+                Log.e("DEBUG_PROFILE", "User ID is null after fetch.")
+                return@launch
+            }
+
             soundCapsuleViewModel.fetchSongs(id)
             Log.d("DEBUG_PROFILE", "Fetched user ID: $id")
 
-            val bearerToken = "Bearer ${getToken(context)}"
+            val bearerToken = "Bearer $token"
             Log.d("DEBUG_PROFILE", "Bearer Token: $bearerToken")
-            val user = RetrofitClient.api.getProfile(bearerToken)
 
-            Log.d("DEBUG_PROFILE", "Fetched user: $user")
-            username = user.username
-            country = getCountryNameFromCode(user.location)
-            profileURL = "http://34.101.226.132:3000/uploads/profile-picture/${user.profilePhoto}"
+            try {
+                val user = RetrofitClient.api.getProfile(bearerToken)
+                Log.d("DEBUG_PROFILE", "Fetched user: $user")
+                username = user.username
+                country = getCountryNameFromCode(user.location)
+                profileURL = "http://34.101.226.132:3000/uploads/profile-picture/${user.profilePhoto}"
+                Log.d("DEBUG_PROFILE", "profile url: $profileURL")
 
-            Log.d("DEBUG_PROFILE", "profile url: $profileURL")
+                val songs = songRepository.getSongsByUploader(id)
+                songCountStats = songs.size
+                likeCount = songRepository.getLikedSongsByUploader(id).size
+                listenedCount = 0
 
-            val songs = songRepository.getSongsByUploader(id)
-            songCountStats = songs.size
-            likeCount = songRepository.getLikedSongsByUploader(id).size
-            listenedCount = 0
+                Log.d("DEBUG_PROFILE", "song count: $songCountStats")
+                Log.d("DEBUG_PROFILE", "like count: $likeCount")
+                Log.d("DEBUG_PROFILE", "listened count: $listenedCount")
 
-            Log.d("DEBUG_PROFILE", "song count: $songCountStats")
-            Log.d("DEBUG_PROFILE", "like count: $likeCount")
-            Log.d("DEBUG_PROFILE", "listened count: $listenedCount")
-
-            for (song in songs){
-                if (song.lastPlayedDate != "") {
-                    listenedCount++
-                } 
+                for (song in songs) {
+                    if (song.lastPlayedDate.isNotBlank()) { 
+                        listenedCount++
+                    }
+                }
+                profileError = null
+            } catch (e: Exception) {
+                Log.e("DEBUG_PROFILE", "Error fetching profile data from API: ${e.message}", e)
+                profileError = "Could not load profile details."
+            } finally {
+                isLoadingProfile = false
             }
         }
     }
@@ -239,7 +266,7 @@ fun ProfileScreen(
     }
     
     LaunchedEffect(profileURL) {
-        if (profileURL.isNotBlank()) {
+        if (profileURL.isNotBlank() && profileURL.startsWith("http")) { // Add http check
             val bitmap = loadBitmapFromUrl(context, profileURL)
             bitmap?.let {
                 dominantColor = extractDominantColor(it)
@@ -248,233 +275,259 @@ fun ProfileScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            dominantColor,
-                            Color(0xFF121212),
-                            Color(0xFF121212)
-                        )
-                    )
-                )
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(48.dp))
-    
-            // Profile picture
-            ProfilePicture(
-                profileURL = profileURL,
-                editProfile = editProfile,
-                onEditClick = { uploadPhoto = true }
-            )
-    
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // User info
-            Text(username, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-            Text(country, color = Color.LightGray, fontSize = 14.sp)
-    
-            // Edit location button
-            if(editProfile) {
-                IconButton(
-                    onClick = { editLocation = true },
-                    modifier = Modifier
-                        .offset(x = 50.dp, y = (-15).dp)
-                        .size(15.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_edit),
-                        contentDescription = "Edit Location",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+        if (isLoadingProfile) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (profileError != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = profileError!!, color = Color.Red, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { fetchUser() }) { // Retry button
+                        Text("Retry")
+                    }
+                    Button(onClick = { logout() }) { // Logout button if error persists
+                        Text("Logout")
+                    }
                 }
             }
-    
-            // Profile action buttons
-            Spacer(modifier = Modifier.height(16.dp))
-            ProfileActionButtons(
-                editProfile = editProfile,
-                onEditClick = { editProfile = true },
-                onSaveClick = {
-                    editProfile(context, locationCode.ifEmpty { null }, photoProfileFile)
-                    editProfile = false
-                    fetchUser()
-                    photoProfileFile = null
-                    locationCode = ""
-                },
-                onCancelClick = {
-                    editProfile = false
-                    fetchUser()
-                },
-                onLogoutClick = { logout() }
-            )
-    
-            Spacer(modifier = Modifier.height(32.dp))
-    
-            // Stats row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatItem(number = songCountStats.toString(), label = "Songs")
-                StatItem(number = likeCount.toString(), label = "Liked")
-                StatItem(number = listenedCount.toString(), label = "Listened")
+        } else if (currentUserId == null) {
+             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("User not identified. Please try logging out and back in.", color = Color.Red, textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+                 Button(onClick = { logout() }) {
+                     Text("Logout")
+                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sound Capsule Section
-            Row(
+        } else {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                dominantColor,
+                                Color(0xFF121212),
+                                Color(0xFF121212)
+                            )
+                        )
+                    )
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Your Sound Capsule",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                Spacer(modifier = Modifier.height(48.dp))
+        
+                // Profile picture
+                ProfilePicture(
+                    profileURL = profileURL,
+                    editProfile = editProfile,
+                    onEditClick = { uploadPhoto = true }
                 )
+        
+                Spacer(modifier = Modifier.height(12.dp))
                 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                // User info
+                Text(username, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                Text(country, color = Color.LightGray, fontSize = 14.sp)
+        
+                // Edit location button
+                if(editProfile) {
                     IconButton(
-                        onClick = { soundCapsuleViewModel.navigateToPreviousMonth() },
-                        modifier = Modifier.size(32.dp),
-                        enabled = soundCapsuleViewModel.hasPreviousMonth
+                        onClick = { editLocation = true },
+                        modifier = Modifier
+                            .offset(x = 50.dp, y = (-15).dp)
+                            .size(15.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ChevronLeft,
-                            contentDescription = "Previous Month",
-                            tint = if (soundCapsuleViewModel.hasPreviousMonth) Color.White else Color.Gray
+                            painter = painterResource(id = R.drawable.ic_edit),
+                            contentDescription = "Edit Location",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    
+                }
+        
+                // Profile action buttons
+                Spacer(modifier = Modifier.height(16.dp))
+                ProfileActionButtons(
+                    editProfile = editProfile,
+                    onEditClick = { editProfile = true },
+                    onSaveClick = {
+                        editProfile(context, locationCode.ifEmpty { null }, photoProfileFile)
+                        editProfile = false
+                        fetchUser()
+                        photoProfileFile = null
+                        locationCode = ""
+                    },
+                    onCancelClick = {
+                        editProfile = false
+                        fetchUser()
+                    },
+                    onLogoutClick = { logout() }
+                )
+        
+                Spacer(modifier = Modifier.height(32.dp))
+        
+                // Stats row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem(number = songCountStats.toString(), label = "Songs")
+                    StatItem(number = likeCount.toString(), label = "Liked")
+                    StatItem(number = listenedCount.toString(), label = "Listened")
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Sound Capsule Section
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = soundCapsuleViewModel.currentMonthDisplay,
+                        text = "Your Sound Capsule",
                         color = Color.White,
-                        fontSize = 14.sp
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
                     )
                     
-                    IconButton(
-                        onClick = { soundCapsuleViewModel.navigateToNextMonth() },
-                        modifier = Modifier.size(32.dp),
-                        enabled = soundCapsuleViewModel.hasNextMonth
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = "Next Month",
-                            tint = if (soundCapsuleViewModel.hasNextMonth) Color.White else Color.Gray
+                        IconButton(
+                            onClick = { soundCapsuleViewModel.navigateToPreviousMonth() },
+                            modifier = Modifier.size(32.dp),
+                            enabled = soundCapsuleViewModel.hasPreviousMonth
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronLeft,
+                                contentDescription = "Previous Month",
+                                tint = if (soundCapsuleViewModel.hasPreviousMonth) Color.White else Color.Gray
+                            )
+                        }
+                        
+                        Text(
+                            text = soundCapsuleViewModel.currentMonthDisplay,
+                            color = Color.White,
+                            fontSize = 14.sp
                         )
+                        
+                        IconButton(
+                            onClick = { soundCapsuleViewModel.navigateToNextMonth() },
+                            modifier = Modifier.size(32.dp),
+                            enabled = soundCapsuleViewModel.hasNextMonth
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "Next Month",
+                                tint = if (soundCapsuleViewModel.hasNextMonth) Color.White else Color.Gray
+                            )
+                        }
                     }
                 }
-            }
-    
-            // Time listened card
-            TimeListenedCard(
-                timeListened = soundCapsuleViewModel.timeListened,
-                onClick = { showTimeListenedModal = true }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Top Artist and Top Song Row
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                TopArtistCard(
-                    title = soundCapsuleViewModel.topArtistName,
-                    imageUri = soundCapsuleViewModel.topArtistImageUri,
-                    onClick = { showTopArtistModal = true }
-                )
-                TopSongCard(
-                    title = soundCapsuleViewModel.topSongTitle,
-                    imageUri = soundCapsuleViewModel.topSongImageUri,
-                    onClick = { showTopSongModal = true }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            MaxStreakCard(
-                songTitle = soundCapsuleViewModel.maxStreakSongTitle,
-                artistName = soundCapsuleViewModel.maxStreakArtistName,
-                streakCount = soundCapsuleViewModel.maxStreakCount,
-                imageUri = soundCapsuleViewModel.maxStreakImageUri,
-                dateRange = soundCapsuleViewModel.maxStreakDateRange,
-            )
-
-            Spacer(modifier = Modifier.height(160.dp))
-        }
         
-        if (showTimeListenedModal) {
-            TimeListenedDetailModal(
-                onDismiss = { showTimeListenedModal = false },
-                currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
-                totalMinutes = soundCapsuleViewModel.totalMinutesInMonth,
-                dailyAverageMinutes = soundCapsuleViewModel.dailyAverageMinutesInMonth,
-                dailyPlayback = soundCapsuleViewModel.dailyPlaybackData
-            )
-        }
-        if (showTopArtistModal) {
-            TopArtistDetailModal(
-                onDismiss = { showTopArtistModal = false },
-                currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
-                topArtists = soundCapsuleViewModel.topArtistData,
-                artistCount = soundCapsuleViewModel.artistCount
-            )
-        }
-        if (showTopSongModal) {
-            TopSongDetailModal(
-                onDismiss = { showTopSongModal = false },
-                currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
-                topSongs = soundCapsuleViewModel.topSongData,
-                songCount = soundCapsuleViewModel.songCount
-            )
-        }
-        
-        // Dialogs
-        if (uploadPhoto) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    context as Activity,
-                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    1000
+                // Time listened card
+                TimeListenedCard(
+                    timeListened = soundCapsuleViewModel.timeListened,
+                    onClick = { showTimeListenedModal = true }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Top Artist and Top Song Row
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    TopArtistCard(
+                        title = soundCapsuleViewModel.topArtistName,
+                        imageUri = soundCapsuleViewModel.topArtistImageUri,
+                        onClick = { showTopArtistModal = true }
+                    )
+                    TopSongCard(
+                        title = soundCapsuleViewModel.topSongTitle,
+                        imageUri = soundCapsuleViewModel.topSongImageUri,
+                        onClick = { showTopSongModal = true }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                MaxStreakCard(
+                    songTitle = soundCapsuleViewModel.maxStreakSongTitle,
+                    artistName = soundCapsuleViewModel.maxStreakArtistName,
+                    streakCount = soundCapsuleViewModel.maxStreakCount,
+                    imageUri = soundCapsuleViewModel.maxStreakImageUri,
+                    dateRange = soundCapsuleViewModel.maxStreakDateRange,
+                )
+
+                Spacer(modifier = Modifier.height(160.dp))
+            }
+            
+            if (showTimeListenedModal) {
+                TimeListenedDetailModal(
+                    onDismiss = { showTimeListenedModal = false },
+                    currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
+                    totalMinutes = soundCapsuleViewModel.totalMinutesInMonth,
+                    dailyAverageMinutes = soundCapsuleViewModel.dailyAverageMinutesInMonth,
+                    dailyPlayback = soundCapsuleViewModel.dailyPlaybackData
                 )
             }
-            FileUploadDialog(
-                onDismiss = { uploadPhoto = false },
-                onImageSelected = { path -> profileURL = path },
-                onFileSelected = { file ->
-                    photoProfileFile = file
+            if (showTopArtistModal) {
+                TopArtistDetailModal(
+                    onDismiss = { showTopArtistModal = false },
+                    currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
+                    topArtists = soundCapsuleViewModel.topArtistData,
+                    artistCount = soundCapsuleViewModel.artistCount
+                )
+            }
+            if (showTopSongModal) {
+                TopSongDetailModal(
+                    onDismiss = { showTopSongModal = false },
+                    currentMonthYear = soundCapsuleViewModel.currentMonthDisplay,
+                    topSongs = soundCapsuleViewModel.topSongData,
+                    songCount = soundCapsuleViewModel.songCount
+                )
+            }
+            
+            // Dialogs
+            if (uploadPhoto) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                        context as Activity,
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                        1000
+                    )
                 }
-            )
-        }
-    
-        if (editLocation) {
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            LocationDialog(
-                onDismiss = { editLocation = false },
-                onUseCurrentLocation = { useCurrentLocation() },
-                onPickFromMap = { 
-                    val intent = Intent(context, MapPickerActivity::class.java)
-                    mapLauncher.launch(intent) 
-                }
-            )
-        }
+                FileUploadDialog(
+                    onDismiss = { uploadPhoto = false },
+                    onImageSelected = { path -> profileURL = path },
+                    onFileSelected = { file ->
+                        photoProfileFile = file
+                    }
+                )
+            }
+        
+            if (editLocation) {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                LocationDialog(
+                    onDismiss = { editLocation = false },
+                    onUseCurrentLocation = { useCurrentLocation() },
+                    onPickFromMap = { 
+                        val intent = Intent(context, MapPickerActivity::class.java)
+                        mapLauncher.launch(intent) 
+                    }
+                )
+            }
 
-        Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(80.dp))
+        }
     }
 }
 

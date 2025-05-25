@@ -31,6 +31,11 @@ import com.android.purrytify.view_model.getPlayerViewModel
 import downloadSong
 import fetchUserId
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.android.purrytify.data.local.entities.Song
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -112,7 +117,7 @@ fun ChartScreen(
     fun fetchUser() {
         scope.launch {
             Log.d("LibraryScreen", "Fetching user ID")
-            userId.intValue = fetchUserId(context)
+            userId.intValue = fetchUserId(context)!!
             Log.d("LibraryScreen", "Fetched user ID: ${userId.intValue}")
         }
     }
@@ -132,6 +137,9 @@ fun ChartScreen(
                 .background(scrimColor)
         )
 
+        val configuration = LocalConfiguration.current
+        val scrollState = rememberScrollState()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -142,8 +150,8 @@ fun ChartScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(top = 24.dp, start = 16.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(onClick = onClose) {
                     Icon(
@@ -155,139 +163,264 @@ fun ChartScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .size(width = 250.dp, height = 250.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        brush = Brush.verticalGradient(gradientColors)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = chartViewModel.title.value,
-                        color = Color.White,
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .width(140.dp)
-                            .padding(vertical = 20.dp),
-                        color = Color.White.copy(alpha = 0.5f),
-                        thickness = 1.dp
-                    )
-                    Text(
-                        text = chartViewModel.subtitle.value,
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 24.sp
-                    )
-                }
-            }
-
-            Text(
-                text = chartViewModel.description.value,
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .padding(top = 24.dp, bottom = 12.dp, start= 16.dp, end = 16.dp)
-                    .fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-
-            if (songs.isNotEmpty()) {
-                Text(
-                    text = chartViewModel.totalDuration.value,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Column(
                     modifier = Modifier
-                        .padding(bottom = 0.dp, start= 16.dp, end = 16.dp)
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-                        .height(40.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(1f)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    IconButton(onClick = {
-                        Log.d("ActionButtons", "Download button clicked")
-                        scope.launch {
-                            var downloadedCount = 0
-                            isDownloading.value = true
-                            songs.forEach { song ->
-                                downloadSong(context, song, userId.intValue)
-                                downloadedCount++
-                                downloadProgress.value = downloadedCount.toFloat() / songs.size.toFloat()
-                            }
-                            isDownloading.value = false
-                        }
-                    }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_download),
-                            contentDescription = "Download",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ChartInfoBox(chartViewModel, gradientColors)
+                    ChartDescription(chartViewModel)
+                    if (songs.isNotEmpty()) {
+                        ChartSongInfoAndActions(
+                            chartViewModel = chartViewModel,
+                            songs = songs,
+                            context = context,
+                            scope = scope,
+                            userId = userId,
+                            isDownloading = isDownloading,
+                            downloadProgress = downloadProgress,
+                            mediaPlayerViewModel = mediaPlayerViewModel
                         )
+                        DownloadProgressIndicator(isDownloading, downloadProgress)
+                        SongList(songs, mediaPlayerViewModel, context)
+                    } else {
+                        NoSongsMessage()
                     }
-
-                    IconButton(onClick = {
-                        Log.d("ActionButtons", "Play button clicked")
-                        mediaPlayerViewModel.setSongs(songs)
-                        mediaPlayerViewModel.playSong(context, 0)
-                    }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_play),
-                            contentDescription = "Play",
-                            tint = Color(0xFF1DB95B),
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
-                }
-                if (downloadProgress.value < 1f && isDownloading.value) {
-                    DownloadProgress(downloadProgress)
-                }
-
-                LazyColumn(
-                    modifier = Modifier
-                        .height(240.dp)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(bottom = 80.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(songs) { song ->
-                        SongCard(
-                            type = "small",
-                            song = song,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    mediaPlayerViewModel.setSongs(songs)
-                                    mediaPlayerViewModel.playSong(context, songs.indexOf(song))
-                                }
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             } else {
-                Text(
-                    text = "Songs are not available for this chart.",
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 14.sp,
+                Row(
                     modifier = Modifier
+                        .weight(1f)
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    textAlign = TextAlign.Center
-                )
+                        .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(0.4f)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ChartInfoBox(chartViewModel, gradientColors, isLandscape = true)
+                        ChartDescription(chartViewModel)
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(0.6f)
+                            .fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (songs.isNotEmpty()) {
+                            ChartSongInfoAndActions(
+                                chartViewModel = chartViewModel,
+                                songs = songs,
+                                context = context,
+                                scope = scope,
+                                userId = userId,
+                                isDownloading = isDownloading,
+                                downloadProgress = downloadProgress,
+                                mediaPlayerViewModel = mediaPlayerViewModel,
+                                isLandscape = true
+                            )
+                            DownloadProgressIndicator(isDownloading, downloadProgress)
+                            SongList(songs, mediaPlayerViewModel, context, modifier = Modifier.weight(1f))
+                        } else {
+                            NoSongsMessage()
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
+}
+
+@Composable
+fun ChartInfoBox(
+    chartViewModel: ChartViewModel,
+    gradientColors: List<Color>,
+    isLandscape: Boolean = false
+) {
+    val boxSize = if (isLandscape) 200.dp else 250.dp
+    val titleFontSize = if (isLandscape) 32.sp else 40.sp
+    val subtitleFontSize = if (isLandscape) 20.sp else 24.sp
+
+    Box(
+        modifier = Modifier
+            .size(width = boxSize, height = boxSize)
+            .clip(RoundedCornerShape(4.dp))
+            .background(
+                brush = Brush.verticalGradient(gradientColors)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = chartViewModel.title.value,
+                color = Color.White,
+                fontSize = titleFontSize,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            HorizontalDivider(
+                modifier = Modifier
+                    .width(if (isLandscape) 100.dp else 140.dp)
+                    .padding(vertical = if (isLandscape) 12.dp else 20.dp),
+                color = Color.White.copy(alpha = 0.5f),
+                thickness = 1.dp
+            )
+            Text(
+                text = chartViewModel.subtitle.value,
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = subtitleFontSize,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun ChartDescription(chartViewModel: ChartViewModel) {
+    Text(
+        text = chartViewModel.description.value,
+        color = Color.White.copy(alpha = 0.8f),
+        fontSize = 12.sp,
+        modifier = Modifier
+            .padding(top = 24.dp, bottom = 12.dp)
+            .fillMaxWidth(),
+        textAlign = TextAlign.Center
+    )
+}
+
+@Composable
+fun ChartSongInfoAndActions(
+    chartViewModel: ChartViewModel,
+    songs: List<Song>,
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    userId: MutableState<Int>,
+    isDownloading: MutableState<Boolean>,
+    downloadProgress: MutableState<Float>,
+    mediaPlayerViewModel: PlayerViewModel,
+    isLandscape: Boolean = false
+) {
+    Text(
+        text = chartViewModel.totalDuration.value,
+        color = Color.White.copy(alpha = 0.8f),
+        fontSize = if (isLandscape) 14.sp else 16.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .padding(bottom = 0.dp)
+            .fillMaxWidth(),
+        textAlign = TextAlign.Center
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+            .height(40.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = {
+            Log.d("ActionButtons", "Download button clicked")
+            scope.launch {
+                var downloadedCount = 0
+                isDownloading.value = true
+                songs.forEach { song ->
+                    downloadSong(context, song, userId.value)
+                    downloadedCount++
+                    downloadProgress.value = downloadedCount.toFloat() / songs.size.toFloat()
+                }
+                isDownloading.value = false
+            }
+        }) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_download),
+                contentDescription = "Download",
+                tint = Color.White,
+                modifier = Modifier.size(if (isLandscape) 20.dp else 24.dp)
+            )
+        }
+
+        IconButton(onClick = {
+            Log.d("ActionButtons", "Play button clicked")
+            mediaPlayerViewModel.setSongs(songs)
+            mediaPlayerViewModel.playSong(context, 0)
+        }) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_play),
+                contentDescription = "Play",
+                tint = Color(0xFF1DB95B),
+                modifier = Modifier.size(if (isLandscape) 32.dp else 40.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun DownloadProgressIndicator(
+    isDownloading: State<Boolean>,
+    downloadProgress: State<Float>
+) {
+    if (downloadProgress.value < 1f && isDownloading.value) {
+        DownloadProgress(downloadProgress)
+    }
+}
+
+@Composable
+fun SongList(
+    songs: List<Song>,
+    mediaPlayerViewModel: PlayerViewModel,
+    context: android.content.Context,
+    modifier: Modifier = Modifier
+) {
+    val configuration = LocalConfiguration.current
+    val lazyColumnModifier = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        modifier.fillMaxWidth()
+    } else {
+        modifier
+            .heightIn(max = 240.dp)
+            .fillMaxWidth()
+    }
+
+    LazyColumn(
+        modifier = lazyColumnModifier,
+        contentPadding = PaddingValues(bottom = if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) 80.dp else 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(songs) { song ->
+            SongCard(
+                type = "small",
+                song = song,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        mediaPlayerViewModel.setSongs(songs)
+                        mediaPlayerViewModel.playSong(context, songs.indexOf(song))
+                    }
+            )
+        }
+    }
+}
+
+@Composable
+fun NoSongsMessage() {
+    Text(
+        text = "Songs are not available for this chart.",
+        color = Color.White.copy(alpha = 0.6f),
+        fontSize = 14.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        textAlign = TextAlign.Center
+    )
 }
