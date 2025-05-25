@@ -632,12 +632,7 @@ fun MaxStreakCard(
                         color = Color.Gray,
                         fontSize = 12.sp
                     )
-                    Icon(
-                        imageVector = Icons.Filled.Share,
-                        contentDescription = "Share Streak",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+
                 }
             }
         }
