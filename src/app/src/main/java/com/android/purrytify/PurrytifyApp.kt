@@ -76,7 +76,7 @@ fun PurrytifyApp(context: Context, intent: Intent) {
             if (currentRoute != null && currentRoute != "login" && currentRoute != "blank" && currentRoute != "nowPlaying") {
                 lastMainRoute = currentRoute
             }
-            
+
             navController.navigate("nowPlaying") {
                 launchSingleTop = true
             }
@@ -110,7 +110,7 @@ fun PurrytifyApp(context: Context, intent: Intent) {
 
     var initialNavigationDone by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit, token, lastMainRoute) {
+    LaunchedEffect(Unit) {
         if (!initialNavigationDone) {
             mediaPlayerViewModel.initialize(context)
             checkToken(context)
@@ -235,7 +235,7 @@ fun PurrytifyApp(context: Context, intent: Intent) {
                             QRScannerScreen(navController)
                         }
                     }
-                     if (currentRoute != "profile") {
+                    if (currentRoute != "profile") {
                         NetworkStatus(networkMonitor)
                     }
                 }
