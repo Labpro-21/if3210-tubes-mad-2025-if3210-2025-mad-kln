@@ -157,7 +157,7 @@ fun PurrytifyApp(context: Context, intent: Intent) {
         delay(5000)
         while (true) {
             checkToken(context)
-            delay(5 * 60 * 1000)
+            delay(5 * 55 * 1000)
         }
     }
 

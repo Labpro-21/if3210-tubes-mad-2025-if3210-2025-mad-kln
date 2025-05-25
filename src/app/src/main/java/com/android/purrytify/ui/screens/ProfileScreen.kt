@@ -334,31 +334,33 @@ fun ProfileScreen(
                     onEditClick = { uploadPhoto = true }
                 )
         
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 // User info
-                Text(username, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                Text(country, color = Color.LightGray, fontSize = 14.sp)
-        
-                // Edit location button
-                if(editProfile) {
-                    IconButton(
-                        onClick = { editLocation = true },
-                        modifier = Modifier
-                            .offset(x = 50.dp, y = (-15).dp)
-                            .size(15.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_edit),
-                            contentDescription = "Edit Location",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
+                Text(username, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(country, color = Color.LightGray, fontSize = 16.sp)
+                    if(editProfile && country.isNotBlank()) {
+                        IconButton(
+                            onClick = { editLocation = true },
+                            modifier = Modifier.size(24.dp).padding(start = 4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_edit),
+                                contentDescription = "Edit Location",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    } else if (editProfile && country.isBlank()){
+                        TextButton(onClick = { editLocation = true }) {
+                            Text("Add Location", color = Color.LightGray, fontSize = 16.sp)
+                        }
                     }
                 }
         
                 // Profile action buttons
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 ProfileActionButtons(
                     editProfile = editProfile,
                     onEditClick = { editProfile = true },
@@ -581,7 +583,7 @@ fun ProfilePicture(
     editProfile: Boolean,
     onEditClick: () -> Unit
 ) {
-    Box {
+    Box(contentAlignment = Alignment.Center) {
         AsyncImage(
             model = profileURL,
             contentDescription = "Profile Picture",
@@ -590,22 +592,23 @@ fun ProfilePicture(
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )
-        
+
         if (editProfile) {
             IconButton(
                 onClick = onEditClick,
                 modifier = Modifier
-                    .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
-                    .offset(x = 50.dp, y = (-20).dp)
-                    .size(15.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-8).dp, y = (-8).dp)
+                    .size(36.dp)
                     .background(Color.White, CircleShape)
                     .border(1.dp, Color.LightGray, CircleShape)
+                    .padding(8.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_edit),
                     contentDescription = "Edit Profile Picture",
                     tint = Color.Black,
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -620,33 +623,32 @@ fun ProfileActionButtons(
     onCancelClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (!editProfile) {
-                Button(
-                    onClick = onEditClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(32.dp)
-                ) {
-                    Text("Edit Profile")
-                }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        if (!editProfile) {
+            Button(
+                onClick = onEditClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.DarkGray,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(32.dp),
+                modifier = Modifier.fillMaxWidth(0.6f) // Make button wider
+            ) {
+                Text("Edit Profile")
             }
-    
-            if(editProfile) {
+        } else {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp), // Add space between buttons
+                modifier = Modifier.fillMaxWidth(0.8f) // Control width of the row
+            ) {
                 Button(
                     onClick = onSaveClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF1DB954),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(32.dp)
+                    shape = RoundedCornerShape(32.dp),
+                    modifier = Modifier.weight(1f) // Distribute space equally
                 ) {
                     Text("Save")
                 }
@@ -656,20 +658,22 @@ fun ProfileActionButtons(
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(32.dp)
+                    shape = RoundedCornerShape(32.dp),
+                    modifier = Modifier.weight(1f) // Distribute space equally
                 ) {
                     Text("Cancel")
                 }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Button(
             onClick = onLogoutClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.DarkGray,
+                containerColor = Color.DarkGray.copy(alpha = 0.6f), // Make logout slightly transparent
                 contentColor = Color.White
             ),
-            shape = RoundedCornerShape(32.dp)
+            shape = RoundedCornerShape(32.dp),
+            modifier = Modifier.fillMaxWidth(0.6f) // Make button wider
         ) {
             Text("Logout")
         }
