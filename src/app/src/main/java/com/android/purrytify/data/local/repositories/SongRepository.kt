@@ -142,4 +142,10 @@ class SongRepository(private val songDao: SongDao) {
             songDao.searchDownloadedSongsByUploader(uploaderId, query)
         }
     }
+
+    suspend fun updateIsDownloaded(title: String, artist: String, isDownloaded: Boolean) {
+        withContext(Dispatchers.IO) {
+            songDao.updateIsDownloaded(title, artist, isDownloaded)
+        }
+    }
 }
