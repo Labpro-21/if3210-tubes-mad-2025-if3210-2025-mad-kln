@@ -54,11 +54,14 @@ fun OnlineSongResponse.toSong(): Song {
 class ChartViewModel : ViewModel() {
 
     private var _userId = mutableStateOf(0)
+    val userId: State<Int> get() = _userId
+
+    private val _globalChartSongs = mutableStateOf<List<Song>>(emptyList())
+    private val _countryChartSongs = mutableStateOf<List<Song>>(emptyList())
+    private val _forYouChartSongs = mutableStateOf<List<Song>>(emptyList())
 
     private var _chartSongs = mutableStateOf<List<Song>>(emptyList())
     val chartSongs: State<List<Song>> get() = _chartSongs
-
-    private var currentCountry by mutableStateOf("")
 
     private var _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> get() = _isLoading
@@ -75,57 +78,165 @@ class ChartViewModel : ViewModel() {
     val color: State<String> get() = _color
     val totalDuration: State<String> get() = _totalDuration
 
-    fun setUserId(userId: Int) {
-        _userId.value = userId
+    private var currentDisplayChartType: String? = null
+    private var loadedCountryForCountryChart: String? = null
+    private var loadedCountryForForYouChart: String? = null
+    private var userIdForForYouChart: Int? = null
+
+    fun setUserId(id: Int) {
+        if (id != 0 && _userId.value != id) {
+            val oldUserId = _userId.value
+            _userId.value = id
+            if (_forYouChartSongs.value.isNotEmpty() && userIdForForYouChart != id) {
+                _forYouChartSongs.value = emptyList()
+                userIdForForYouChart = null 
+                loadedCountryForForYouChart = null
+                if (currentDisplayChartType == "foryou") {
+                    _chartSongs.value = emptyList()
+                    _totalDuration.value = "00:00"
+                }
+            }
+        } else if (id == 0 && _userId.value != 0) { 
+             _userId.value = id
+             _forYouChartSongs.value = emptyList()
+             userIdForForYouChart = null
+             loadedCountryForForYouChart = null
+             if (currentDisplayChartType == "foryou") {
+                 _chartSongs.value = emptyList()
+                 _totalDuration.value = "00:00"
+             }
+        }
     }
 
-    private fun loadChart(chartType: String, country: String = "") {
-        Log.d("ChartViewModel", "Fetching chart for type: $chartType, country: $country")
+    fun fetchAllChartsInitial(userCountry: String) {
+        if (_userId.value == 0 && userCountry.isBlank()) {
+            return
+        }
+        if (_globalChartSongs.value.isEmpty()) {
+            loadChart("global")
+        }
+        if (userCountry.isNotBlank() && (_countryChartSongs.value.isEmpty() || loadedCountryForCountryChart != userCountry)) {
+            loadChart("country", userCountry)
+        }
+        if (_userId.value != 0 && (_forYouChartSongs.value.isEmpty() || loadedCountryForForYouChart != userCountry || userIdForForYouChart != _userId.value)) {
+            loadChart("foryou", userCountry)
+        }
+    }
+
+    private fun loadChart(chartTypeToLoad: String, countryForApi: String = "") {
+        if (chartTypeToLoad == "foryou" && _userId.value == 0) {
+            _isLoading.value = false
+            return
+        }
+        if (chartTypeToLoad == "country" && countryForApi.isBlank()) {
+            _isLoading.value = false
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val chartSongsResponse = when (chartType) {
+                val chartSongsResponse = when (chartTypeToLoad) {
                     "global" -> RetrofitClient.api.getTopSongsGlobal().map { it.toSong() }
-                    "country" -> RetrofitClient.api.getTopSongsCountry(country).map { it.toSong() }
-                    "foryou" -> getForYouSongs(country, _userId.value)
+                    "country" -> RetrofitClient.api.getTopSongsCountry(countryForApi).map { it.toSong() }
+                    "foryou" -> getForYouSongs(countryForApi, _userId.value)
                     else -> emptyList()
+                }.sortedBy { it.rank }
+
+                when (chartTypeToLoad) {
+                    "global" -> _globalChartSongs.value = chartSongsResponse
+                    "country" -> {
+                        _countryChartSongs.value = chartSongsResponse
+                        loadedCountryForCountryChart = countryForApi
+                    }
+                    "foryou" -> {
+                        _forYouChartSongs.value = chartSongsResponse
+                        loadedCountryForForYouChart = countryForApi
+                        userIdForForYouChart = _userId.value
+                    }
                 }
-
-                _chartSongs.value = chartSongsResponse.sortedBy { it.rank }
-
-                _totalDuration.value = secondsToDuration(
-                    _chartSongs.value.sumOf { it.duration }
-                )
+                if (currentDisplayChartType == chartTypeToLoad) {
+                    _chartSongs.value = chartSongsResponse
+                    _totalDuration.value = secondsToDuration(chartSongsResponse.sumOf { it.duration })
+                }
             } catch (e: Exception) {
-                Log.e("ChartViewModel", "Error fetching chart songs", e)
+                when (chartTypeToLoad) {
+                    "global" -> _globalChartSongs.value = emptyList()
+                    "country" -> { _countryChartSongs.value = emptyList(); loadedCountryForCountryChart = null }
+                    "foryou" -> { _forYouChartSongs.value = emptyList(); loadedCountryForForYouChart = null; userIdForForYouChart = null }
+                }
+                if (currentDisplayChartType == chartTypeToLoad) {
+                    _chartSongs.value = emptyList()
+                    _totalDuration.value = "00:00"
+                }
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun setChartType(chartType: String, country: String = "") {
+    fun setChartType(newChartType: String, newCountryParameter: String = "") {
+        currentDisplayChartType = newChartType
+        var shouldFetch = false
+        var targetList: List<Song> = emptyList()
 
-        currentCountry = country
-        loadChart(chartType, country)
+        when (newChartType) {
+            "global" -> {
+                if (_globalChartSongs.value.isEmpty()) {
+                    shouldFetch = true
+                }
+                targetList = _globalChartSongs.value
+            }
+            "country" -> {
+                if (newCountryParameter.isNotBlank()) {
+                    if (_countryChartSongs.value.isEmpty() || loadedCountryForCountryChart != newCountryParameter) {
+                        shouldFetch = true
+                    }
+                    targetList = _countryChartSongs.value
+                } else {
+                    targetList = emptyList()
+                     _chartSongs.value = emptyList()
+                     _totalDuration.value = "00:00"
+                }
+            }
+            "foryou" -> {
+                if (_userId.value != 0) {
+                    if (_forYouChartSongs.value.isEmpty() || userIdForForYouChart != _userId.value || loadedCountryForForYouChart != newCountryParameter) {
+                        shouldFetch = true
+                    }
+                    targetList = _forYouChartSongs.value
+                } else {
+                     targetList = emptyList()
+                     _chartSongs.value = emptyList()
+                     _totalDuration.value = "00:00"
+                }
+            }
+            else -> {
+                _chartSongs.value = emptyList()
+                _totalDuration.value = "00:00"
+            }
+        }
 
-        when (chartType) {
+        if (shouldFetch) {
+            loadChart(newChartType, newCountryParameter)
+        } else {
+            _chartSongs.value = targetList
+            _totalDuration.value = secondsToDuration(targetList.sumOf { it.duration })
+        }
+        
+        when (newChartType) {
             "global" -> {
                 _title.value = "Top 50"
                 _subtitle.value = "Global"
-                _description.value =
-                    "Your daily update of the most played tracks right now - Global."
+                _description.value = "Your daily update of the most played tracks right now - Global."
                 _color.value = "blue"
             }
-
             "country" -> {
                 _title.value = "Top 10"
-                _subtitle.value = country
-                _description.value =
-                    "Your daily update of the most played tracks right now - $country."
+                _subtitle.value = newCountryParameter.ifEmpty { loadedCountryForCountryChart ?: "Country" }
+                _description.value = "Your daily update of the most played tracks right now - ${_subtitle.value}."
                 _color.value = "red"
             }
-
             "foryou" -> {
                 _title.value = "For You"
                 _subtitle.value = "Personalized"
@@ -143,10 +254,10 @@ fun getChartViewModel(): ChartViewModel {
 }
 
 suspend fun getForYouSongs(country: String, userId: Int): List<Song> {
-    Log.d("ChartViewModel_ForYou", "Fetching 'For You' songs for country: $country")
+    if (userId == 0) return emptyList()
 
     val globalList = RetrofitClient.api.getTopSongsGlobal().shuffled()
-    val countryList = RetrofitClient.api.getTopSongsCountry(country).shuffled()
+    val countryList = if (country.isNotBlank()) RetrofitClient.api.getTopSongsCountry(country).shuffled() else emptyList()
 
     val songRepository = RepositoryProvider.getSongRepository()
     val recentlyPlayed = songRepository.getRecentlyPlayedSongsByUploader(userId, 5) ?: emptyList()
@@ -173,18 +284,20 @@ suspend fun getForYouSongs(country: String, userId: Int): List<Song> {
         }
     }
 
-    val combinedChartList = (globalList + countryList).shuffled()
-    for (song in combinedChartList) {
+    val combinedChartList = (globalList + countryList).distinctBy { it.title }.shuffled()
+    for (songResponse in combinedChartList) {
+        if (result.size >= 10) break
+        val song = songResponse.toSong()
         if (seenTitles.add(song.title)) {
-            result.add(song.toSong())
-            if (result.size >= 10) break
+            result.add(song)
         }
     }
+    
+    val finalResult = if (result.size > 10) result.take(10) else result
 
-    result.forEachIndexed { index, song ->
+    finalResult.forEachIndexed { index, song ->
         song.rank = index + 1
     }
 
-    Log.d("ChartViewModel_ForYou", "Final 'For You' songs: ${result.size} items")
-    return result
+    return finalResult
 }

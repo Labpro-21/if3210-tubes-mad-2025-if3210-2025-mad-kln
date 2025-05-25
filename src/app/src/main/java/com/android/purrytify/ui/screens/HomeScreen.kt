@@ -32,6 +32,7 @@ import com.android.purrytify.view_model.ChartViewModel
 import com.android.purrytify.view_model.PlayerViewModel
 import com.android.purrytify.view_model.getChartViewModel
 import fetchUserId
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -47,32 +48,35 @@ fun HomeScreen(
 
     val newSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
     val recentlyPlayedSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
-    val hasFetched = remember { mutableStateOf(false) }
+    val userLocationState = remember { mutableStateOf("") }
+    val userIdState = remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            delay(200)
-            val userId = fetchUserId(context)
-            newSongs.value = songRepository.getNewSongsByUploader(userId, 5)
-            recentlyPlayedSongs.value = songRepository.getRecentlyPlayedSongsByUploader(userId, 5)
-            hasFetched.value = true
-            chartViewModel.setUserId(userId)
-        }
-    }
+            val fetchedUserId = fetchUserId(context)
+            userIdState.value = fetchedUserId
+            chartViewModel.setUserId(fetchedUserId)
 
-    val userLocation = remember { mutableStateOf("") }
+            try {
+                checkToken(context)
+                val bearerToken = "Bearer ${getToken(context)}"
+                val user = RetrofitClient.api.getProfile(bearerToken)
+                userLocationState.value = user.location
+            } catch (e: Exception) {
+                userLocationState.value = ""
+            }
 
-    fun fetchUser() {
-        coroutineScope.launch {
-            checkToken(context)
-            val bearerToken = "Bearer ${getToken(context)}"
-            Log.d("Bearer Token", bearerToken)
-            val user = RetrofitClient.api.getProfile(bearerToken)
-            userLocation.value = user.location
+            if (userIdState.value != 0) {
+                Log.d("HomeScreen", "Fetching datas")
+                chartViewModel.fetchAllChartsInitial(userLocationState.value)
+                newSongs.value = songRepository.getNewSongsByUploader(userIdState.value, 5)
+                recentlyPlayedSongs.value = songRepository.getRecentlyPlayedSongsByUploader(userIdState.value, 5)
+
+                for (song in recentlyPlayedSongs.value) {
+                    Log.d("HomeScreen", "Recently Played Song: ${song.title}")
+                }
+            }
         }
-    }
-    LaunchedEffect (Unit){
-        fetchUser()
     }
 
     Scaffold(
@@ -111,10 +115,10 @@ fun HomeScreen(
                         ChartCard(
                             color = "red",
                             title = "Top 10",
-                            subtitle = userLocation.value,
-                            description = "Your daily update of the most played tracks right now - ${userLocation.value}",
+                            subtitle = userLocationState.value.ifEmpty { "Country" },
+                            description = "Your daily update of the most played tracks right now - ${userLocationState.value.ifEmpty { "your country" }}",
                             onClick = {
-                                chartViewModel.setChartType("country", userLocation.value)
+                                chartViewModel.setChartType("country", userLocationState.value)
                                 navController.navigate("chart")
                             }
                         )
@@ -126,7 +130,7 @@ fun HomeScreen(
                             subtitle = "Personalized",
                             description = "Your personalized chart based on your listening habits",
                             onClick = {
-                                chartViewModel.setChartType("foryou", userLocation.value)
+                                chartViewModel.setChartType("foryou", userLocationState.value)
                                 navController.navigate("chart")
                             }
                         )
