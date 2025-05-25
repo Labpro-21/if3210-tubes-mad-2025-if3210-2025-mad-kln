@@ -1,5 +1,9 @@
 package com.android.purrytify.view_model
 
+import android.content.ContentValues
+import android.content.Context
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
@@ -12,8 +16,9 @@ import com.android.purrytify.data.local.entities.PlaybackLog
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.data.local.repositories.PlaybackLogRepository
 import com.android.purrytify.data.local.repositories.SongRepository
-import com.google.gson.GsonBuilder
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -130,7 +135,7 @@ class SoundCapsuleViewModel(
     fun fetchSongs(userId: Int) {
         viewModelScope.launch {
             if (songs.isEmpty()) {
-                songs = songRepository.getSongsByUploader(userId) ?: emptyList()
+                songs = songRepository.getSongsByUploader(userId)
             }
 
             val currentYearMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(calendar.time)
@@ -197,16 +202,87 @@ class SoundCapsuleViewModel(
 
         if (logs.isNotEmpty()) {
             val distinctDaysPlayed = logs.map { it.dayOfMonth }.distinct().size
-            if (distinctDaysPlayed > 0) {
-                dailyAverageMinutesInMonth = (totalMinutesInMonth.toDouble() / distinctDaysPlayed).roundToInt()
+            dailyAverageMinutesInMonth = if (distinctDaysPlayed > 0) {
+                (totalMinutesInMonth.toDouble() / distinctDaysPlayed).roundToInt()
             } else {
-                dailyAverageMinutesInMonth = 0
+                0
             }
         } else {
             dailyAverageMinutesInMonth = 0
         }
 
         Log.d("SoundCapsuleVM", "TotalMin: $totalMinutesInMonth, AvgMin: $dailyAverageMinutesInMonth, DailyData: ${dailyPlaybackData.size} entries")
+    }
+
+    private fun exportToCSV(): String {
+        val csvBuilder = StringBuilder()
+        
+        csvBuilder.appendLine("Sound Capsule Data for $currentMonthDisplay")
+        csvBuilder.appendLine()
+        
+        csvBuilder.appendLine("Overall Statistics")
+        csvBuilder.appendLine("Total Time Listened,$timeListened")
+        csvBuilder.appendLine("Total Minutes in Month,$totalMinutesInMonth")
+        csvBuilder.appendLine("Daily Average Minutes,$dailyAverageMinutesInMonth")
+        csvBuilder.appendLine("Total Artists,$artistCount")
+        csvBuilder.appendLine("Total Songs,$songCount")
+        csvBuilder.appendLine()
+        
+        csvBuilder.appendLine("Daily Playback Data")
+        csvBuilder.appendLine("Day,Minutes Listened")
+        dailyPlaybackData.forEach { data ->
+            csvBuilder.appendLine("${data.dayOfMonth},${data.minutesListened}")
+        }
+        csvBuilder.appendLine()
+        
+        csvBuilder.appendLine("Top Artists")
+        csvBuilder.appendLine("Rank,Artist Name")
+        topArtistData.forEach { artist ->
+            csvBuilder.appendLine("${artist.rank},${artist.artist}")
+        }
+        csvBuilder.appendLine()
+        
+        csvBuilder.appendLine("Top Songs")
+        csvBuilder.appendLine("Rank,Title,Artist,Play Count")
+        topSongData.forEach { song ->
+            csvBuilder.appendLine("${song.rank},${song.title},${song.artist},${song.playCount}")
+        }
+        csvBuilder.appendLine()
+        
+        csvBuilder.appendLine("Longest Listening Streak")
+        csvBuilder.appendLine("Song,${maxStreakSongTitle}")
+        csvBuilder.appendLine("Artist,${maxStreakArtistName}")
+        csvBuilder.appendLine("Streak Count,${maxStreakCount}")
+        csvBuilder.appendLine("Date Range,${maxStreakDateRange}")
+        
+        return csvBuilder.toString()
+    }
+
+    fun saveToCSV(context: Context): String {
+        val csvData = exportToCSV()
+        val fileName = "sound_capsule_${currentMonthDisplay.replace(" ", "_")}.csv"
+        
+        return try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                put(MediaStore.Downloads.MIME_TYPE, "text/csv")
+                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+
+            uri?.let {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    OutputStreamWriter(outputStream).use { writer ->
+                        writer.write(csvData)
+                    }
+                }
+                "CSV file saved successfully to Downloads/$fileName"
+            } ?: throw IOException("Failed to create file")
+        } catch (e: Exception) {
+            "Error saving CSV file: ${e.message}"
+        }
     }
 }
 
@@ -327,7 +403,7 @@ fun calculateMaxStreak(logs: List<PlaybackLog>, songs: List<Song>): MaxStreakInf
         if (distinctDaysPlayed.isEmpty()) continue
 
         var currentStreak = 0
-        var currentStreakStartDay = 0
+        var currentStreakStartDay: Int
         var songMaxStreak = 0
         var songStreakStartDay = 0
         var songStreakEndDay = 0
@@ -367,10 +443,11 @@ fun calculateMaxStreak(logs: List<PlaybackLog>, songs: List<Song>): MaxStreakInf
         val representativeLog = logs.firstOrNull { it.songId == bestSongIdForStreak }
         val songDetails = songs.firstOrNull { it.id.toString() == bestSongIdForStreak }
 
-        val startDateFormatted = SimpleDateFormat("MMM d", Locale.getDefault()).format(streakStartDate!!.time)
-        val endDateFormatted = SimpleDateFormat("d, yyyy", Locale.getDefault()).format(streakEndDate!!.time)
+        val startDateFormatted = SimpleDateFormat("MMM d", Locale.getDefault()).format(
+            streakStartDate.time)
+        val endDateFormatted = SimpleDateFormat("d, yyyy", Locale.getDefault()).format(streakEndDate.time)
         val dateRangeStr = if (overallMaxStreak == 1) {
-            SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(streakStartDate!!.time)
+            SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(streakStartDate.time)
         } else {
             "$startDateFormatted–$endDateFormatted"
         }

@@ -127,6 +127,7 @@ fun ProfileScreen(
     var profileError by remember { mutableStateOf<String?>(null) }
     var currentUserId by remember { mutableStateOf<Int?>(null) }
 
+    var showExportResult by remember { mutableStateOf<String?>(null) }
 
     fun useCurrentLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -258,6 +259,15 @@ fun ProfileScreen(
             Log.d("DEBUG_PROFILE", "Logged out")
             mediaPlayerViewModel.clearCurrent()
             navController.navigate("login")
+        }
+    }
+
+    fun handleExport() {
+        val result = soundCapsuleViewModel.saveToCSV(context)
+        showExportResult = result
+        coroutineScope.launch {
+            delay(3000)
+            showExportResult = null
         }
     }
 
@@ -428,6 +438,40 @@ fun ProfileScreen(
                                 tint = if (soundCapsuleViewModel.hasNextMonth) Color.White else Color.Gray
                             )
                         }
+
+                        // Export button
+                        IconButton(
+                            onClick = { handleExport() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_export),
+                                contentDescription = "Export Sound Capsule Data",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                showExportResult?.let { message ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = message,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                                .background(
+                                    color = Color(0xFF2E2E2E),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(8.dp)
+                        )
                     }
                 }
         
