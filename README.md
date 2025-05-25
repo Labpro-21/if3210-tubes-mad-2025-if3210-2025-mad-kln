@@ -2,10 +2,14 @@
 Purrytify App
 </h1>
 
-> Repository Tugas Besar 1 Pengembangan Aplikasi Piranti Bergerak 2025 - Kelompok KLN
+> Repository Tugas Besar Pengembangan Aplikasi Piranti Bergerak 2025 - Kelompok KLN
 
 <p align="justify"> 
-Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player seperti Spotify menggunakan Android Native dengan bahasa Kotlin. Fitur utama dari aplikasi ini adalah login, home page, library page, music player page, dan profile page. Setiap fitur memiliki fungsionalitas yang berbeda, seperti pada halaman login, pengguna dapat masuk dengan akun mereka, sedangkan di halaman home, pengguna dapat melihat lagu terbaru. Di halaman library, pengguna bisa mengelola lagu favorit mereka, dan pada music player page, mereka dapat memutar, menjeda, dan mengontrol musik yang sedang diputar. Terakhir, di halaman profile, pengguna dapat melihat informasi mengenai akun mereka dan menyunting foto profil serta lokasi. Selain itu, aplikasi ini juga menyediakan fungsionalitas untuk mengunggah lagu, mencari lagu berdasarkan judul atau artist, serta menyimpan preferensi musik pengguna. 
+Pada Milestone 1, kami diminta untuk membuat sebuah aplikasi music player seperti Spotify menggunakan Android Native dengan bahasa Kotlin. Fitur utama dari aplikasi ini adalah login, home page, library page, music player page, dan profile page. Setiap fitur memiliki fungsionalitas yang berbeda, seperti pada halaman login, pengguna dapat masuk dengan akun mereka, sedangkan di halaman home, pengguna dapat melihat lagu terbaru. Di halaman library, pengguna bisa mengelola lagu favorit mereka, dan pada music player page, mereka dapat memutar, menjeda, dan mengontrol musik yang sedang diputar. Terakhir, di halaman profile, pengguna dapat melihat informasi mengenai akun mereka. Selain itu, aplikasi ini juga menyediakan fungsionalitas untuk mengunggah lagu, mencari lagu berdasarkan judul atau artist, serta menyimpan preferensi musik pengguna.
+</p>
+
+<p align="justify"> 
+Pada Milestone 2, kami diminta untuk mengimplementasikan sejumlah fitur tambahan guna meningkatkan fungsionalitas dan pengalaman pengguna. Fitur pertama adalah kemampuan untuk memutar lagu secara online dari database yang telah disediakan, serta memberikan opsi bagi pengguna untuk mengunduh lagu tersebut. Di halaman beranda, ditambahkan fitur chart seperti Top Global, Top Country, dan Recommended for You yang ditampilkan berdasarkan riwayat pemutaran dan popularitas lagu. Di halaman profil, terdapat penambahan fitur Sound Capsule, yaitu rangkuman analitik dari riwayat pemutaran lagu pengguna. Selain itu, pengguna juga dapat memperbarui foto profil dan informasi lokasi mereka. Fitur lain yang ditambahkan mencakup kontrol notifikasi serta audio routing, yang memungkinkan pengguna memilih perangkat output audio sesuai kebutuhan. Kami juga menambahkan kemampuan untuk membagikan lagu online melalui tautan dan QR code. Terakhir, seluruh halaman aplikasi dimodifikasi agar bersifat responsif dan dapat ditampilkan dengan baik di orientasi portrait ataupun landscape.
 </p>
 
 <p align="center">
