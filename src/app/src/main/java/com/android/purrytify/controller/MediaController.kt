@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 enum class RepeatMode {
     NONE,
@@ -31,6 +32,9 @@ object MediaPlayerController {
     private var mediaPlayer: MediaPlayer? = null
     private var handler = Handler(Looper.getMainLooper())
     private const val UPDATE_INTERVAL = 500L
+    private const val SEEK_UPDATE_INTERVAL = 16L
+    private var _isSeeking = false
+    val isSeeking: Boolean get() = _isSeeking
 
     private var currentSongIndex = -1
 
@@ -80,20 +84,30 @@ object MediaPlayerController {
     private val updateRunnable = object : Runnable {
         override fun run() {
             mediaPlayer?.let { player ->
-                _progress.value = player.currentPosition.toFloat() / player.duration
-                _currentTime.value = player.currentPosition
-                _totalDuration.value = player.duration
-                
-                if (player.isPlaying) {
-                    pendingPlaybackMs += UPDATE_INTERVAL
-                    val now = System.currentTimeMillis()
-                    if (now - lastBatchLogTime >= BATCH_LOG_MS) {
-                        flushPlaybackLog(force = false)
-                        lastBatchLogTime = now
+                try {
+                    if (player.isPlaying || _isPlaying.value) {
+                        val newProgress = player.currentPosition.toFloat() / player.duration
+                        val newCurrentTime = player.currentPosition
+                        
+                        if (isSeeking || abs(_progress.value - newProgress) > 0.01f) {
+                            _progress.value = newProgress
+                            _currentTime.value = newCurrentTime
+                        }
+                        
+                        if (player.isPlaying) {
+                            pendingPlaybackMs += UPDATE_INTERVAL
+                            val now = System.currentTimeMillis()
+                            if (now - lastBatchLogTime >= BATCH_LOG_MS) {
+                                flushPlaybackLog(force = false)
+                                lastBatchLogTime = now
+                            }
+                        }
+                        onStateChanged?.invoke()
                     }
+                } catch (e: Exception) {
+                    Log.e("MediaPlayerController", "Error updating progress: ${e.message}")
                 }
-                onStateChanged?.invoke()
-                handler.postDelayed(this, UPDATE_INTERVAL)
+                handler.postDelayed(this, if (isSeeking) SEEK_UPDATE_INTERVAL else UPDATE_INTERVAL)
             } ?: return
         }
     }
@@ -292,10 +306,24 @@ object MediaPlayerController {
 
     fun seekTo(position: Float) {
         mediaPlayer?.let {
-            val target = (it.duration * position).toInt()
-            it.seekTo(target)
-            _progress.value = position
-            onStateChanged?.invoke()
+            try {
+                _isSeeking = true
+                val target = (it.duration * position).toInt()
+                it.seekTo(target)
+                _progress.value = position
+                _currentTime.value = target
+                
+                MusicService.instance?.updateNotification(true)
+                
+                onStateChanged?.invoke()
+                
+                handler.postDelayed({
+                    _isSeeking = false
+                }, 32L)
+            } catch (e: Exception) {
+                Log.e("MediaPlayerController", "Error seeking: ${e.message}")
+                _isSeeking = false
+            }
         }
     }
 
@@ -355,7 +383,7 @@ object MediaPlayerController {
                             }
                         }
                     } else {
-                        playSong(context, currentSongIndex) // Replay Current Song
+                        seekTo(0f)
                     }
                 }
             }

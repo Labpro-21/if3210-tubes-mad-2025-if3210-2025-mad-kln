@@ -221,17 +221,14 @@ class MusicService : Service() {
                     val song = MediaPlayerController.currentSong.value
                     val currentProgress = MediaPlayerController.progress.value
 
-                    if (song != null && !isSeeking) {
-                        val significantChange = abs(currentProgress - lastProgress) > 0.01f
-                        lastProgress = currentProgress
-
-                        updatePlaybackState()
-
-                        if ((significantChange || currentProgress > 0.98f) && MediaPlayerController.isPlaying.value) {
-                            updateNotification(false)
+                    if (song != null) {
+                        if (MediaPlayerController.isSeeking || abs(currentProgress - lastProgress) > 0.01f) {
+                            lastProgress = currentProgress
+                            updatePlaybackState()
+                            updateNotification(true)  // Force update
                         }
                     }
-                    delay(PROGRESS_UPDATE_INTERVAL)
+                    delay(if (MediaPlayerController.isSeeking) 16L else PROGRESS_UPDATE_INTERVAL)
                 }
             } catch (e: Exception) {
                 Log.e("MusicService", "Error in playback tracking", e)
