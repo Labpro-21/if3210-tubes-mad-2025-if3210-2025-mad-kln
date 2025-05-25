@@ -62,11 +62,9 @@ class PlayerViewModel : ViewModel() {
 
     fun togglePlayPause(context: Context) {
         controller.playPause()
-        if (isPlaying.value){
-            val serviceIntent = Intent(context, MusicService::class.java)
-            ContextCompat.startForegroundService(context, serviceIntent)
-            MusicService.instance?.updateNotification()
-        }
+        val serviceIntent = Intent(context, MusicService::class.java)
+        ContextCompat.startForegroundService(context, serviceIntent)
+        MusicService.instance?.updateNotification(true)
     }
 
     fun seekTo(position: Float) {
@@ -101,6 +99,10 @@ class PlayerViewModel : ViewModel() {
 
     fun setAudioOutput(deviceInfo: AudioDeviceInfo) {
         controller.setAudioOutput(deviceInfo)
+    }
+
+    fun release() {
+        controller.release()
     }
 
     override fun onCleared() {

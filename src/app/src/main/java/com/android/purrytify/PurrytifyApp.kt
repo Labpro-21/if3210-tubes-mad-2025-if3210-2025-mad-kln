@@ -5,20 +5,15 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import android.content.Intent
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +32,7 @@ import androidx.navigation.compose.*
 import com.android.purrytify.datastore.TokenManager
 import com.android.purrytify.network.NetworkMonitor
 import com.android.purrytify.network.checkToken
+import com.android.purrytify.service.MusicService
 import com.android.purrytify.ui.components.BottomNavbar
 import com.android.purrytify.ui.components.NetworkStatus
 import com.android.purrytify.ui.components.SideNavbar
@@ -59,6 +55,7 @@ fun PurrytifyApp(context: Context, intent: Intent) {
     val isConnected by networkMonitor.isConnected.collectAsState()
 
     val token by TokenManager.getToken(context).collectAsState(initial = null)
+    val persistedRoute by TokenManager.getLastRoute(context).collectAsState(initial = null)
     var hasLoaded by remember { mutableStateOf(false) }
 
     val deepLinkedSong by SharedSongState.deepLinkedSong.collectAsState()
@@ -85,13 +82,13 @@ fun PurrytifyApp(context: Context, intent: Intent) {
     }
 
     LaunchedEffect(token) {
-        if (hasLoaded && token != null) {
-            if (token!!.isEmpty()) {
+        if (hasLoaded) {
+            if (token.isNullOrEmpty()) {
+                Log.d("TOKEN_CHECK", "Token is empty or null, navigating to login")
+                mediaPlayerViewModel.clearCurrent()
+                MusicService.instance?.clearNotification()
+                mediaPlayerViewModel.release()
                 navController.navigate("login") {
-                    popUpTo(0)
-                }
-            } else {
-                navController.navigate("home") {
                     popUpTo(0)
                 }
             }
@@ -99,12 +96,29 @@ fun PurrytifyApp(context: Context, intent: Intent) {
     }
 
     LaunchedEffect(currentRoute) {
-        Log.d("CURRENT ROUTE",currentRoute ?: "NULL")
+        Log.d("CURRENT ROUTE", "Current: $currentRoute, Last: $lastMainRoute, Persisted: $persistedRoute")
         if (!currentRoute.isNullOrEmpty() &&
             currentRoute != "nowPlaying" &&
             currentRoute != "blank" &&
             currentRoute != "login") {
+            Log.d("ROUTE_UPDATE", "Updating last route from $lastMainRoute to $currentRoute")
             lastMainRoute = currentRoute
+            MusicService.updateLastRoute(currentRoute)
+            try {
+                TokenManager.saveLastRoute(context, currentRoute)
+                Log.d("ROUTE_UPDATE", "Successfully saved route to DataStore: $currentRoute")
+            } catch (e: Exception) {
+                Log.e("ROUTE_UPDATE", "Failed to save route to DataStore: ${e.message}")
+            }
+        }
+    }
+
+    LaunchedEffect(persistedRoute) {
+        Log.d("ROUTE_RESTORE", "Attempting to restore route. Persisted: $persistedRoute, Current: $lastMainRoute")
+        if (persistedRoute != null && persistedRoute != "blank" && persistedRoute != "login") {
+            Log.d("ROUTE_RESTORE", "Restoring route to: $persistedRoute")
+            lastMainRoute = persistedRoute
+            MusicService.updateLastRoute(persistedRoute)
         }
     }
 
@@ -113,12 +127,17 @@ fun PurrytifyApp(context: Context, intent: Intent) {
     LaunchedEffect(Unit) {
         if (!initialNavigationDone) {
             mediaPlayerViewModel.initialize(context)
-            checkToken(context)
+            val isValid = checkToken(context)
+            if (!isValid) {
+                Log.d("TOKEN_CHECK", "Initial token check failed, clearing token")
+                TokenManager.clearToken(context)
+            }
             delay(100)
 
             val currentDestination = navController.currentDestination?.route
 
             if (token.isNullOrEmpty()) {
+                Log.d("NAVIGATION", "Token empty, navigating to login")
                 if (currentDestination != "login") {
                     navController.navigate("login") {
                         popUpTo(0)
@@ -126,24 +145,23 @@ fun PurrytifyApp(context: Context, intent: Intent) {
                 }
             } else {
                 if (intent.getBooleanExtra("open_now_playing", false) && currentSong != null) {
-                    val routeToRestore = lastMainRoute ?: "home"
-                    if (currentDestination != routeToRestore && currentDestination != "nowPlaying") {
+                    val routeToRestore = intent.getStringExtra("restore_route") ?: persistedRoute
+                    Log.d("NAVIGATION", "Opening from notification, route to restore: $routeToRestore")
+                    if (routeToRestore != null && routeToRestore != "blank" && routeToRestore != "login") {
+                        Log.d("NAVIGATION", "Navigating to restored route: $routeToRestore")
                         navController.navigate(routeToRestore) {
                             popUpTo(0)
-                            launchSingleTop = true
                         }
-                    }
-                    if (currentDestination != "nowPlaying") {
-                        navController.navigate("nowPlaying") {
-                            launchSingleTop = true
+                        navController.navigate("nowPlaying")
+                    } else {
+                        Log.d("NAVIGATION", "No valid restore route, navigating to home")
+                        navController.navigate("home") {
+                            popUpTo(0)
                         }
-                    }
-                } else if (lastMainRoute != null && lastMainRoute != currentDestination) {
-                    navController.navigate(lastMainRoute!!) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        launchSingleTop = true
+                        navController.navigate("nowPlaying")
                     }
                 } else if (currentDestination == "blank" || currentDestination == null) {
+                    Log.d("NAVIGATION", "No destination, navigating to home")
                     navController.navigate("home") {
                         popUpTo(0)
                     }
@@ -156,7 +174,16 @@ fun PurrytifyApp(context: Context, intent: Intent) {
     LaunchedEffect(Unit) {
         delay(5000)
         while (true) {
-            checkToken(context)
+            try {
+                val isValid = checkToken(context)
+                if (!isValid) {
+                    Log.d("TOKEN_CHECK", "Token check failed, clearing token")
+                    TokenManager.clearToken(context)
+                }
+            } catch (e: Exception) {
+                Log.e("TOKEN_CHECK", "Error checking token: ${e.message}")
+                TokenManager.clearToken(context)
+            }
             delay(5 * 55 * 1000)
         }
     }

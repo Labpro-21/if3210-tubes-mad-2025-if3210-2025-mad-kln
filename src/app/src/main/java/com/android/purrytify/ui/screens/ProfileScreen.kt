@@ -87,6 +87,7 @@ import java.io.File
 import java.io.IOException
 import java.util.Locale
 import fetchUserId
+import com.android.purrytify.service.MusicService
 
 
 @Composable
@@ -255,9 +256,11 @@ fun ProfileScreen(
 
     fun logout(){
         coroutineScope.launch {
+            mediaPlayerViewModel.clearCurrent()
+            MusicService.instance?.clearNotification()
+            mediaPlayerViewModel.release()
             TokenManager.clearToken(context)
             Log.d("DEBUG_PROFILE", "Logged out")
-            mediaPlayerViewModel.clearCurrent()
             navController.navigate("login")
         }
     }

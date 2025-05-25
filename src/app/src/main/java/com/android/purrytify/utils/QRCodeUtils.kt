@@ -15,13 +15,11 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
+
 
 object QRCodeUtils {
     
-    fun generateQRCode(link: String, width: Int = 512, height: Int = 512): Bitmap {
+    private fun generateQRCode(link: String, width: Int = 512, height: Int = 512): Bitmap {
         val bitMatrix: BitMatrix = try {
             MultiFormatWriter().encode(
                 link,
@@ -125,36 +123,7 @@ object QRCodeUtils {
             it
         }
     }
-    
-    private fun saveImageToExternalStorage(context: Context, bitmap: Bitmap, fileName: String): Uri? {
-        val imagesDir = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-            "Purrytify"
-        )
-        if (!imagesDir.exists()) {
-            imagesDir.mkdirs()
-        }
-        
-        val imageFile = File(imagesDir, "$fileName.png")
-        var outputStream: OutputStream? = null
-        
-        try {
-            outputStream = FileOutputStream(imageFile)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        } catch (e: IOException) {
-            e.printStackTrace()
-            return null
-        } finally {
-            try {
-                outputStream?.close()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-        
-        return Uri.fromFile(imageFile)
-    }
-    
+
     fun isValidPurrytifyQRCode(url: String): Boolean {
         return url.startsWith("https://purrytify-be.vercel.app/play?songId=") || 
                url.startsWith("purrytify://open?songId=")

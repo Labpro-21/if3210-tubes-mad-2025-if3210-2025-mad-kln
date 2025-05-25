@@ -14,13 +14,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 
 
-suspend fun checkToken(context: Context) {
+suspend fun checkToken(context: Context): Boolean {
     val token = TokenManager.getToken(context).firstOrNull()
     val refresh_Token = TokenManager.getRefreshToken(context).firstOrNull()
 
     if (token.isNullOrEmpty() || refresh_Token.isNullOrEmpty()) {
         Log.d("CHECK_TOKEN", "Token or Refresh Token is null/empty")
-        return
+        return false
     }
 
     try {
@@ -28,20 +28,26 @@ suspend fun checkToken(context: Context) {
         val verifyResponse = RetrofitClient.api.verifyToken(bearerToken)
         if (verifyResponse.valid) {
             Log.d("VERIFY_TOKEN", "Token is valid ✅")
+            return true
         }
+        return false
     } catch (e: retrofit2.HttpException) {
         if (e.code() == 401) {
             Log.d("VERIFY_TOKEN", "Token invalid (401), refreshing...")
             try {
                 refreshToken(context, refresh_Token)
+                return true
             } catch (refreshErr: Exception) {
                 Log.e("REFRESH_TOKEN", "Failed to refresh token: ${refreshErr.message}")
+                return false
             }
         } else {
             Log.e("VERIFY_TOKEN", "Unexpected HTTP error: ${e.code()} - ${e.message()}")
+            return false
         }
     } catch (e: Exception) {
         Log.e("VERIFY_TOKEN", "Unexpected error: ${e.message}")
+        return false
     }
 }
 

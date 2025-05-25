@@ -354,11 +354,10 @@ fun NowPlayingScreen(
             }
         } else { // Landscape
             Column(modifier = Modifier.fillMaxSize()) {
-                // Top Bar: Close & Song Detail Button (remains full width)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, start = 16.dp, end = 16.dp), // Adjusted padding
+                        .padding(top = 16.dp, start = 16.dp, end = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -399,13 +398,12 @@ fun NowPlayingScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp), // Outer padding for the two main columns
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Column: Album Art
-                    Column(
+                        Column(
                         modifier = Modifier
-                            .weight(0.4f) // Takes 40% of the width
+                            .weight(0.4f)
                             .fillMaxHeight(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
@@ -415,25 +413,23 @@ fun NowPlayingScreen(
                                 painter = rememberAsyncImagePainter(it),
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .aspectRatio(1f) // Maintain aspect ratio
-                                    .fillMaxSize(0.8f) // Occupy 80% of this column's space
+                                    .aspectRatio(1f)
+                                    .fillMaxSize(0.8f)
                                     .clip(RoundedCornerShape(4.dp)),
                                 contentScale = ContentScale.Crop
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp)) // Space between album art and controls
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                    // Right Column: Song Info, Progress, Controls
                     Column(
                         modifier = Modifier
-                            .weight(0.6f) // Takes 60% of the width
+                            .weight(0.6f)
                             .fillMaxHeight()
-                            .padding(start = 8.dp), // Padding for this column's content
-                        verticalArrangement = Arrangement.SpaceAround // Distribute space evenly
+                            .padding(start = 8.dp),
+                        verticalArrangement = Arrangement.SpaceAround
                     ) {
-                        // Title, Artist & Action Buttons
                         song?.let {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -444,7 +440,7 @@ fun NowPlayingScreen(
                                     Text(
                                         text = it.title,
                                         color = Color.White,
-                                        fontSize = 20.sp, // Slightly smaller for landscape
+                                        fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold,
                                         maxLines = 2
                                     )
@@ -452,21 +448,20 @@ fun NowPlayingScreen(
                                     Text(
                                         text = it.artist,
                                         color = Color.LightGray,
-                                        fontSize = 14.sp, // Slightly smaller for landscape
+                                        fontSize = 14.sp,
                                         maxLines = 1
                                     )
                                 }
-                                // Row for action icons to prevent them from taking too much vertical space
                                 Row {
                                     IconButton(
                                         onClick = { expanded = true },
-                                        modifier = Modifier.size(36.dp) // Adjusted size
+                                        modifier = Modifier.size(36.dp)
                                     ) {
                                         Icon(
                                             painter = painterResource(id = R.drawable.ic_audio_output),
                                             contentDescription = "Audio Output",
                                             tint = Color.Unspecified,
-                                            modifier = Modifier.size(28.dp) // Adjusted size
+                                            modifier = Modifier.size(28.dp)
                                         )
                                     }
                                      DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -495,7 +490,6 @@ fun NowPlayingScreen(
                             }
                         }
 
-                        // Progress Bar & Duration (grouped together)
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Slider(
                                 value = progress,
@@ -510,18 +504,18 @@ fun NowPlayingScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 4.dp), // Reduced padding
+                                    .padding(horizontal = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
                                     formatTime(currentTime),
                                     color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 12.sp // Slightly smaller
+                                    fontSize = 12.sp
                                 )
                                 Text(
                                     formatTime(totalDuration),
                                     color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 12.sp // Slightly smaller
+                                    fontSize = 12.sp
                                 )
                             }
                         }
@@ -532,12 +526,12 @@ fun NowPlayingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly, // Evenly distribute for landscape
+                            horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             IconButton(
                                 onClick = { viewModel.toggleRepeatMode() },
-                                modifier = Modifier.size(36.dp) // Adjusted size
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 val repeatIcon = when (repeatMode) {
                                     RepeatMode.NONE -> R.drawable.ic_repeat_none
@@ -548,56 +542,56 @@ fun NowPlayingScreen(
                                     painter = painterResource(id = repeatIcon),
                                     contentDescription = "Repeat Mode",
                                     tint = Color.Unspecified,
-                                    modifier = Modifier.size(28.dp) // Adjusted size
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
 
                             IconButton(
                                 onClick = { viewModel.playPrevious(context) },
-                                modifier = Modifier.size(36.dp) // Adjusted size
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_previous),
                                     contentDescription = "Previous",
                                     tint = Color.White,
-                                    modifier = Modifier.size(28.dp) // Adjusted size
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
 
                             IconButton(
                                 onClick = { viewModel.togglePlayPause(context) },
-                                modifier = Modifier.size(64.dp) // Adjusted size
+                                modifier = Modifier.size(64.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
                                     contentDescription = if (isPlaying) "Pause" else "Play",
                                     tint = Color.White,
-                                    modifier = Modifier.size(64.dp) // Adjusted size
+                                    modifier = Modifier.size(64.dp)
                                 )
                             }
 
                             IconButton(
                                 onClick = { viewModel.playNext(context) },
                                 enabled = !(isLastSong && repeatMode == RepeatMode.NONE),
-                                modifier = Modifier.size(36.dp) // Adjusted size
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_next),
                                     contentDescription = "Next",
                                     tint = if (isLastSong && repeatMode == RepeatMode.NONE) Color.Gray else Color.White,
-                                    modifier = Modifier.size(28.dp) // Adjusted size
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
 
                             IconButton(
                                 onClick = { viewModel.toggleShuffle() },
-                                modifier = Modifier.size(36.dp) // Adjusted size
+                                modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = if (!isShuffled) R.drawable.ic_shuffle_inactive else R.drawable.ic_shuffle_active),
                                     contentDescription = "Shuffle",
                                     tint = Color.Unspecified,
-                                    modifier = Modifier.size(28.dp) // Adjusted size
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
@@ -613,31 +607,4 @@ fun formatTime(timeMs: Int): String {
     val minutes = (timeMs / 1000) / 60
     val seconds = (timeMs / 1000) % 60
     return "%d:%02d".format(minutes, seconds)
-}
-
-@Composable
-fun ShareLinkButton(songId: Int) {
-    val context = LocalContext.current
-    val shareLink = "https://purrytify-be.vercel.app/play?songId=$songId"
-
-    IconButton(
-        onClick = {
-            val sendIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, shareLink)
-                type = "text/plain"
-            }
-
-            val shareIntent = Intent.createChooser(sendIntent, "Share song")
-            context.startActivity(shareIntent)
-        },
-        modifier = Modifier.size(32.dp)
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_share),
-            contentDescription = "Share",
-            tint = Color.Unspecified,
-            modifier = Modifier.size(32.dp)
-        )
-    }
 }

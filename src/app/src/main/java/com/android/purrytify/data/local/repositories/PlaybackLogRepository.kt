@@ -72,36 +72,6 @@ class PlaybackLogRepository(private val playbackLogDao: PlaybackLogDao) {
         }
     }
 
-    suspend fun getLogsBySongId(songId: String): List<PlaybackLog> {
-        return withContext(Dispatchers.IO) {
-            playbackLogDao.getLogsBySongId(songId)
-        }
-    }
-
-    suspend fun getLogsByArtistId(artistId: String): List<PlaybackLog> {
-        return withContext(Dispatchers.IO) {
-            playbackLogDao.getLogsByArtistId(artistId)
-        }
-    }
-
-    suspend fun getTotalDurationByYearMonth(yearMonth: String): Long {
-        return withContext(Dispatchers.IO) {
-            playbackLogDao.getTotalDurationByYearMonth(yearMonth)
-        }
-    }
-
-    suspend fun getTotalDurationBySongId(songId: String): Long {
-        return withContext(Dispatchers.IO) {
-            playbackLogDao.getTotalDurationBySongId(songId)
-        }
-    }
-
-    suspend fun getTotalDurationByArtistId(artistId: String): Long {
-        return withContext(Dispatchers.IO) {
-            playbackLogDao.getTotalDurationByArtistId(artistId)
-        }
-    }
-
     suspend fun getOldestLogYearMonth(userId: Int): String? {
         return withContext(Dispatchers.IO) {
             playbackLogDao.getOldestLogYearMonth(userId)

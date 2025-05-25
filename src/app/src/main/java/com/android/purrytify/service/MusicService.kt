@@ -46,6 +46,11 @@ class MusicService : Service() {
         var instance: MusicService? = null
         private const val NOTIFICATION_ID = 101
         private const val PROGRESS_UPDATE_INTERVAL = 250L
+        private var lastRoute: String? = null
+
+        fun updateLastRoute(route: String?) {
+            lastRoute = route
+        }
     }
     
     private var progressJob: Job? = null
@@ -136,14 +141,12 @@ class MusicService : Service() {
                 }
             }
             "ACTION_CLOSE" -> {
-                if (!MediaPlayerController.isPlaying.value) {
-                    MediaPlayerController.clearCurrentSong()
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
-                    return START_NOT_STICKY
-                } else {
-                    updateNotification(true)
-                }
+                stopProgressUpdates()
+                MediaPlayerController.clearCurrentSong()
+                mediaSession.isActive = false
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                return START_NOT_STICKY
             }
             else -> {
                 updateNotification(false)
@@ -295,7 +298,10 @@ class MusicService : Service() {
         val contentIntent = PendingIntent.getActivity(
             this,
             3,
-            Intent(this, MainActivity::class.java).apply { putExtra("open_now_playing", true) },
+            Intent(this, MainActivity::class.java).apply { 
+                putExtra("open_now_playing", true)
+                putExtra("restore_route", lastRoute)
+            },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
@@ -330,10 +336,7 @@ class MusicService : Service() {
                 .addAction(R.drawable.ic_close, "Close", closeIntent)
                 .setShowWhen(false)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-            
-            if (!isPlaying) {
-                initialBuilder.setDeleteIntent(closeIntent)
-            }
+                .setDeleteIntent(closeIntent)
             
             if (isPlaying) {
                 initialBuilder.setOngoing(true)
@@ -346,7 +349,7 @@ class MusicService : Service() {
             val initialNotification = initialBuilder.build()
             
             if (isPlaying) {
-                initialNotification.flags = initialNotification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+                initialNotification.flags = initialNotification.flags or Notification.FLAG_ONGOING_EVENT
             }
             
             serviceScope.launch {
@@ -381,10 +384,7 @@ class MusicService : Service() {
                             .addAction(R.drawable.ic_close, "Close", closeIntent)
                             .setShowWhen(false)
                             .setPriority(NotificationCompat.PRIORITY_MAX)
-                        
-                        if (!isPlaying) {
-                            updatedBuilder.setDeleteIntent(closeIntent)
-                        }
+                            .setDeleteIntent(closeIntent)
                         
                         if (isPlaying) {
                             updatedBuilder.setOngoing(true)
@@ -397,7 +397,7 @@ class MusicService : Service() {
                         val updatedNotification = updatedBuilder.build()
                         
                         if (isPlaying) {
-                            updatedNotification.flags = updatedNotification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+                            updatedNotification.flags = updatedNotification.flags or Notification.FLAG_ONGOING_EVENT
                         }
                         
                         notificationManager.notify(NOTIFICATION_ID, updatedNotification)
@@ -443,10 +443,7 @@ class MusicService : Service() {
                 .addAction(R.drawable.ic_close, "Close", closeIntent)
                 .setShowWhen(false)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                
-            if (!isPlaying) {
-                builder.setDeleteIntent(closeIntent)
-            }
+                .setDeleteIntent(closeIntent)
             
             if (isPlaying) {
                 builder.setOngoing(true)
@@ -459,7 +456,7 @@ class MusicService : Service() {
             val notification = builder.build()
             
             if (isPlaying) {
-                notification.flags = notification.flags or Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR
+                notification.flags = notification.flags or Notification.FLAG_ONGOING_EVENT
             }
             
             return notification

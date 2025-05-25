@@ -14,8 +14,11 @@ import androidx.core.content.ContextCompat
 import com.android.purrytify.data.local.RepositoryProvider
 import com.android.purrytify.data.local.entities.Song
 import com.android.purrytify.service.MusicService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 enum class RepeatMode {
     NONE,
@@ -67,6 +70,7 @@ object MediaPlayerController {
     private const val BATCH_LOG_MS: Long = 60000L
 
     private val playbackLogRepository= RepositoryProvider.getPlaybackLogRepository()
+    private val songRepository= RepositoryProvider.getSongRepository()
     private var onStateChanged: (() -> Unit)? = null
     private var audioManager: AudioManager? = null
     private var deviceCallbackRegistered = false
@@ -206,7 +210,9 @@ object MediaPlayerController {
 
         flushPlaybackLog(force = true)
         _currentSong.value = song
-
+        CoroutineScope(Dispatchers.IO).launch {
+            songRepository.updateLastPlayedDate(song)
+        }
         pendingPlaybackMs = 0L
         lastBatchLogTime = System.currentTimeMillis()
 
@@ -391,13 +397,17 @@ object MediaPlayerController {
 
     fun clearCurrentSong() {
         flushPlaybackLog(force = true)
+        handler.removeCallbacks(updateRunnable)
+        mediaPlayer?.setOnCompletionListener(null)
         mediaPlayer?.stop()
-        mediaPlayer?.reset()
+        mediaPlayer?.release()
+        mediaPlayer = null
         _currentSong.value = null
         pendingPlaybackMs = 0L
         _isPlaying.value = false
         _progress.value = 0f
         _currentTime.value = 0
+        _totalDuration.value = 0
         onStateChanged?.invoke()
     }
 

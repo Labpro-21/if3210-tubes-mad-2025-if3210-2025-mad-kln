@@ -8,7 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
-import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class SongRepository(private val songDao: SongDao) {
@@ -64,15 +65,15 @@ class SongRepository(private val songDao: SongDao) {
     }
 
     suspend fun updateLastPlayedDate(song: Song) {
-        val today = LocalDate.now()
-        val lastPlayed = song.lastPlayedDate
-            .takeIf { it.length >= 10 }
-            ?.substring(0, 10)
-            ?.let { LocalDate.parse(it) }
+        val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+//        val lastPlayed = song.lastPlayedDate
+//            .takeIf { it.length >= 10 }
+//            ?.substring(0, 10)
+//            ?.let { LocalDate.parse(it) }
+//
+//        if (lastPlayed == today) return
 
-        if (lastPlayed == today) return
-
-        songDao.updateLastPlayedDate(song.id, today.toString())
+        songDao.updateLastPlayedDate(song.id, now)
     }
 
     suspend fun getSongsByUploader(uploaderId: Int, query: String = ""): List<Song> {
@@ -94,12 +95,6 @@ class SongRepository(private val songDao: SongDao) {
         }
         return withContext(Dispatchers.IO) {
             songDao.getLikedSongsByUploader(uploaderId)
-        }
-    }
-
-    suspend fun getListenedSongsByUploader(uploaderId: Int): List<Song> {
-        return withContext(Dispatchers.IO) {
-            songDao.getListenedSongByUploader(uploaderId)
         }
     }
 
@@ -128,12 +123,6 @@ class SongRepository(private val songDao: SongDao) {
     suspend fun getNewSongsByUploader(uploaderId: Int, limit: Int): List<Song> {
         return withContext(Dispatchers.IO) {
             songDao.getNewSongsByUploader(uploaderId, limit)
-        }
-    }
-
-    suspend fun getListenedSongsCount(uploaderId: Int): Int {
-        return withContext(Dispatchers.IO) {
-            songDao.getListenedSongsCount(uploaderId)
         }
     }
 
