@@ -102,7 +102,7 @@ fun ProfileScreen(
     val coroutineScope = rememberCoroutineScope()
     var dominantColor by remember { mutableStateOf(Color.Black) }
 
-    // Profile state
+    // Profile
     var editProfile by remember { mutableStateOf(false) }
     var editLocation by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("USER") }
@@ -113,17 +113,16 @@ fun ProfileScreen(
     var uploadPhoto by remember { mutableStateOf(false) }
 
 
-    // Stats state
+    // Stats 
     var songCountStats by remember { mutableIntStateOf(0) }
     var likeCount by remember { mutableIntStateOf(0) }
     var listenedCount by remember { mutableIntStateOf(0) }
     
-    // Modal states
+    // Modal 
     var showTimeListenedModal by remember { mutableStateOf(false) }
     var showTopArtistModal by remember { mutableStateOf(false) }
     var showTopSongModal by remember { mutableStateOf(false) }
 
-    // Add state for loading and error
     var isLoadingProfile by remember { mutableStateOf(true) }
     var profileError by remember { mutableStateOf<String?>(null) }
     var currentUserId by remember { mutableStateOf<Int?>(null) }
@@ -195,7 +194,7 @@ fun ProfileScreen(
 
     fun fetchUser() {
         editProfile = false
-        isLoadingProfile = true // Start loading
+        isLoadingProfile = true
         profileError = null
 
         coroutineScope.launch {
@@ -279,7 +278,7 @@ fun ProfileScreen(
     }
     
     LaunchedEffect(profileURL) {
-        if (profileURL.isNotBlank() && profileURL.startsWith("http")) { // Add http check
+        if (profileURL.isNotBlank() && profileURL.startsWith("http")) {
             val bitmap = loadBitmapFromUrl(context, profileURL)
             bitmap?.let {
                 dominantColor = extractDominantColor(it)
@@ -297,10 +296,10 @@ fun ProfileScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(text = profileError!!, color = Color.Red, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { fetchUser() }) { // Retry button
+                    Button(onClick = { fetchUser() }) { 
                         Text("Retry")
                     }
-                    Button(onClick = { logout() }) { // Logout button if error persists
+                    Button(onClick = { logout() }) { 
                         Text("Logout")
                     }
                 }
@@ -383,7 +382,7 @@ fun ProfileScreen(
         
                 Spacer(modifier = Modifier.height(32.dp))
         
-                // Stats row
+                // Stats
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -395,7 +394,7 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Sound Capsule Section
+                // Sound Capsule
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -480,7 +479,7 @@ fun ProfileScreen(
                     }
                 }
         
-                // Time listened card
+                // Time listened 
                 TimeListenedCard(
                     timeListened = soundCapsuleViewModel.timeListened,
                     onClick = { showTimeListenedModal = true }
@@ -488,7 +487,7 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Top Artist and Top Song Row
+                // Top Artist and Top Song
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.SpaceAround
@@ -635,14 +634,14 @@ fun ProfileActionButtons(
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(32.dp),
-                modifier = Modifier.fillMaxWidth(0.6f) // Make button wider
+                modifier = Modifier.fillMaxWidth(0.6f) 
             ) {
                 Text("Edit Profile")
             }
         } else {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp), // Add space between buttons
-                modifier = Modifier.fillMaxWidth(0.8f) // Control width of the row
+                horizontalArrangement = Arrangement.spacedBy(16.dp), 
+                modifier = Modifier.fillMaxWidth(0.8f)
             ) {
                 Button(
                     onClick = onSaveClick,
@@ -651,7 +650,7 @@ fun ProfileActionButtons(
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(32.dp),
-                    modifier = Modifier.weight(1f) // Distribute space equally
+                    modifier = Modifier.weight(1f) 
                 ) {
                     Text("Save")
                 }
@@ -662,7 +661,7 @@ fun ProfileActionButtons(
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(32.dp),
-                    modifier = Modifier.weight(1f) // Distribute space equally
+                    modifier = Modifier.weight(1f) 
                 ) {
                     Text("Cancel")
                 }
@@ -672,11 +671,11 @@ fun ProfileActionButtons(
         Button(
             onClick = onLogoutClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.DarkGray.copy(alpha = 0.6f), // Make logout slightly transparent
+                containerColor = Color.DarkGray.copy(alpha = 0.6f),
                 contentColor = Color.White
             ),
             shape = RoundedCornerShape(32.dp),
-            modifier = Modifier.fillMaxWidth(0.6f) // Make button wider
+            modifier = Modifier.fillMaxWidth(0.6f) 
         ) {
             Text("Logout")
         }
@@ -711,7 +710,6 @@ fun FileUploadDialog(
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var tempFile by remember { mutableStateOf<File?>(null)}
 
-    // Launcher: Gallery
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
@@ -724,7 +722,6 @@ fun FileUploadDialog(
         onDismiss()
     }
 
-    // Launcher: Camera
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->

@@ -281,7 +281,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>13522127</td>
         <td>Notification, Audio Routing, Share Song QR, Database Logging, Export to CSV sound capsule</td>
         <td>0</td>
-        <td>40</td>
+        <td>45</td>
     </tr>
     <tr>
         <td>2</td>
@@ -289,7 +289,7 @@ Pada tugas besar 1, kami diminta untuk membuat sebuah aplikasi music player sepe
         <td>13522137</td>
         <td>Online Songs, Download Online Songs, Sound Capsule UI, Share Song URL, Responsive Page, Song Recommendation</td>
         <td>0</td>
-        <td>40</td>
+        <td>45</td>
     </tr>
     <tr>
         <td>3</td>
